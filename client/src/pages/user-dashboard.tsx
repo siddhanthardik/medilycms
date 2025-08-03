@@ -101,7 +101,7 @@ export default function UserDashboard() {
                 <FileText className="h-8 w-8 text-primary mr-3" />
                 <div>
                   <p className="text-2xl font-bold text-gray-900">
-                    {applications?.length || 0}
+                    {(applications as any[])?.length || 0}
                   </p>
                   <p className="text-sm text-gray-600">Applications</p>
                 </div>
@@ -115,7 +115,7 @@ export default function UserDashboard() {
                 <CheckCircle className="h-8 w-8 text-green-600 mr-3" />
                 <div>
                   <p className="text-2xl font-bold text-gray-900">
-                    {applications?.filter((app: any) => app.status === 'accepted').length || 0}
+                    {(applications as any[])?.filter((app: any) => app.status === 'accepted').length || 0}
                   </p>
                   <p className="text-sm text-gray-600">Accepted</p>
                 </div>
@@ -129,7 +129,7 @@ export default function UserDashboard() {
                 <Clock className="h-8 w-8 text-yellow-600 mr-3" />
                 <div>
                   <p className="text-2xl font-bold text-gray-900">
-                    {applications?.filter((app: any) => app.status === 'pending').length || 0}
+                    {(applications as any[])?.filter((app: any) => app.status === 'pending').length || 0}
                   </p>
                   <p className="text-sm text-gray-600">Pending</p>
                 </div>
@@ -143,7 +143,7 @@ export default function UserDashboard() {
                 <Heart className="h-8 w-8 text-red-600 mr-3" />
                 <div>
                   <p className="text-2xl font-bold text-gray-900">
-                    {favorites?.length || 0}
+                    {(favorites as any[])?.length || 0}
                   </p>
                   <p className="text-sm text-gray-600">Favorites</p>
                 </div>
@@ -173,9 +173,9 @@ export default function UserDashboard() {
                     </div>
                   ))}
                 </div>
-              ) : applications && applications.length > 0 ? (
+              ) : applications && (applications as any[]).length > 0 ? (
                 <div className="space-y-4">
-                  {applications.slice(0, 5).map((application: any) => (
+                  {(applications as any[]).slice(0, 5).map((application: any) => (
                     <div key={application.id} className="p-4 bg-gray-50 rounded-lg flex justify-between items-center">
                       <div>
                         <h4 className="font-medium text-gray-900">
@@ -214,16 +214,18 @@ export default function UserDashboard() {
                     <Label htmlFor="firstName">First Name</Label>
                     <Input
                       id="firstName"
-                      value={user?.firstName || ""}
+                      value={(user as any)?.firstName || ""}
                       placeholder="Enter first name"
+                      readOnly
                     />
                   </div>
                   <div>
                     <Label htmlFor="lastName">Last Name</Label>
                     <Input
                       id="lastName"
-                      value={user?.lastName || ""}
+                      value={(user as any)?.lastName || ""}
                       placeholder="Enter last name"
+                      readOnly
                     />
                   </div>
                 </div>
@@ -233,8 +235,9 @@ export default function UserDashboard() {
                   <Input
                     id="email"
                     type="email"
-                    value={user?.email || ""}
+                    value={(user as any)?.email || ""}
                     placeholder="Enter email"
+                    readOnly
                   />
                 </div>
                 
@@ -243,8 +246,9 @@ export default function UserDashboard() {
                     <Label htmlFor="medicalSchool">Medical School</Label>
                     <Input
                       id="medicalSchool"
-                      value={user?.medicalSchool || ""}
+                      value={(user as any)?.medicalSchool || ""}
                       placeholder="Enter medical school"
+                      readOnly
                     />
                   </div>
                   <div>
@@ -252,8 +256,9 @@ export default function UserDashboard() {
                     <Input
                       id="graduationYear"
                       type="number"
-                      value={user?.graduationYear || ""}
+                      value={(user as any)?.graduationYear || ""}
                       placeholder="Enter graduation year"
+                      readOnly
                     />
                   </div>
                 </div>
@@ -262,8 +267,9 @@ export default function UserDashboard() {
                   <Label htmlFor="specialtyOfInterest">Specialty of Interest</Label>
                   <Input
                     id="specialtyOfInterest"
-                    value={user?.specialtyOfInterest || ""}
+                    value={(user as any)?.specialtyOfInterest || ""}
                     placeholder="Enter specialty"
+                    readOnly
                   />
                 </div>
                 
@@ -291,9 +297,9 @@ export default function UserDashboard() {
                   </div>
                 ))}
               </div>
-            ) : favorites && favorites.length > 0 ? (
+            ) : favorites && (favorites as any[]).length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {favorites.map((favorite: any) => (
+                {(favorites as any[]).map((favorite: any) => (
                   <div key={favorite.id} className="p-4 border border-gray-200 rounded-lg">
                     <h4 className="font-medium text-gray-900 mb-2">
                       {favorite.programTitle || 'Favorite Program'}
