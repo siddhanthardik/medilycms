@@ -66,16 +66,16 @@ export default function Navbar() {
                   <Button variant="ghost" className="flex items-center space-x-2 text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-primary">
                     <Avatar className="h-8 w-8">
                       <AvatarImage 
-                        src={user.profileImageUrl} 
-                        alt={`${user.firstName} ${user.lastName}`}
+                        src={(user as any).profileImageUrl} 
+                        alt={`${(user as any).firstName} ${(user as any).lastName}`}
                         className="object-cover"
                       />
                       <AvatarFallback>
-                        {(user.firstName?.[0] || '') + (user.lastName?.[0] || '')}
+                        {((user as any).firstName?.[0] || '') + ((user as any).lastName?.[0] || '')}
                       </AvatarFallback>
                     </Avatar>
                     <span className="hidden md:block text-gray-700">
-                      {user.firstName} {user.lastName}
+                      {(user as any).firstName} {(user as any).lastName}
                     </span>
                     <ChevronDown className="h-4 w-4 text-gray-500" />
                   </Button>
@@ -91,7 +91,7 @@ export default function Navbar() {
                       Profile Settings
                     </Link>
                   </DropdownMenuItem>
-                  {user.isAdmin && (
+                  {(user as any).isAdmin && (
                     <>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem asChild>
