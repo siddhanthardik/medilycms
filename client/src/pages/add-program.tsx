@@ -73,9 +73,10 @@ export default function AddProgram() {
       setLocation("/admin");
     },
     onError: (error) => {
+      console.error("Program creation error:", error);
       toast({
         title: "Error",
-        description: "Failed to create program. Please try again.",
+        description: `Failed to create program: ${error.message || "Please try again."}`,
         variant: "destructive",
       });
     },
@@ -123,24 +124,40 @@ export default function AddProgram() {
     e.preventDefault();
     
     // Validate required fields
-    if (!formData.title || !formData.hospitalName || !formData.location || !formData.specialtyId || !formData.mentorName) {
+    if (!formData.title || !formData.hospitalName || !formData.location || !formData.specialtyId || !formData.mentorName || !formData.country || !formData.city || !formData.type || !formData.duration || !formData.availableSeats || !formData.totalSeats || !formData.startDate) {
       toast({
         title: "Validation Error",
-        description: "Please fill in all required fields.",
+        description: "Please fill in all required fields (title, hospital, mentor, location, country, city, type, duration, seats, start date).",
         variant: "destructive",
       });
       return;
     }
 
     const programData = {
-      ...formData,
-      fee: parseFloat(formData.fee) || null,
-      duration: parseInt(formData.duration) || null,
-      availableSeats: parseInt(formData.availableSeats) || 1,
-      totalSeats: parseInt(formData.totalSeats) || parseInt(formData.availableSeats) || 1,
-      startDate: formData.startDate ? new Date(formData.startDate) : new Date(),
+      title: formData.title,
+      type: formData.type as 'observership' | 'hands_on' | 'fellowship' | 'clerkship',
+      specialtyId: formData.specialtyId,
+      hospitalName: formData.hospitalName,
+      mentorName: formData.mentorName,
+      mentorTitle: formData.mentorTitle || null,
+      location: formData.location,
+      country: formData.country,
+      city: formData.city,
+      startDate: new Date(formData.startDate),
+      duration: parseInt(formData.duration),
+      intakeMonths: formData.intakeMonths,
+      availableSeats: parseInt(formData.availableSeats),
+      totalSeats: parseInt(formData.totalSeats),
+      fee: formData.fee ? parseFloat(formData.fee) : null,
+      currency: 'USD',
+      isHandsOn: formData.type === 'hands_on',
+      description: formData.description || '',
+      requirements: formData.requirements,
+      isActive: true,
+      isFeatured: false,
     };
 
+    console.log("Creating program with data:", programData);
     createProgramMutation.mutate(programData);
   };
 
@@ -274,7 +291,7 @@ export default function AddProgram() {
                 </div>
 
                 <div>
-                  <Label htmlFor="type">Program Type</Label>
+                  <Label htmlFor="type">Program Type *</Label>
                   <Select onValueChange={(value) => handleInputChange("type", value)}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select type" />
@@ -283,7 +300,7 @@ export default function AddProgram() {
                       <SelectItem value="observership">Observership</SelectItem>
                       <SelectItem value="clerkship">Clerkship</SelectItem>
                       <SelectItem value="fellowship">Fellowship</SelectItem>
-                      <SelectItem value="hands-on">Hands-on Training</SelectItem>
+                      <SelectItem value="hands_on">Hands-on Training</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -340,13 +357,14 @@ export default function AddProgram() {
               </div>
 
               <div>
-                <Label htmlFor="description">Description</Label>
+                <Label htmlFor="description">Description *</Label>
                 <Textarea
                   id="description"
                   value={formData.description}
                   onChange={(e) => handleInputChange("description", e.target.value)}
                   placeholder="Describe the program, what participants will learn..."
                   rows={4}
+                  required
                 />
               </div>
 
