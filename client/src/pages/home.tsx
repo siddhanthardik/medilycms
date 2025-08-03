@@ -1,0 +1,156 @@
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import Navbar from "@/components/navbar";
+import HeroSection from "@/components/hero-section";
+import SearchFilters from "@/components/search-filters";
+import ProgramCard from "@/components/program-card";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
+
+export default function Home() {
+  const [filters, setFilters] = useState({
+    specialty: "",
+    location: "",
+    type: "",
+    minDuration: undefined as number | undefined,
+    maxDuration: undefined as number | undefined,
+    isFree: undefined as boolean | undefined,
+    search: "",
+  });
+
+  const [sortBy, setSortBy] = useState("relevant");
+
+  const { data: programs = [], isLoading } = useQuery({
+    queryKey: ['/api/programs', filters],
+    queryFn: async () => {
+      const searchParams = new URLSearchParams();
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== "") {
+          searchParams.append(key, value.toString());
+        }
+      });
+      const response = await fetch(`/api/programs?${searchParams}`);
+      if (!response.ok) throw new Error('Failed to fetch programs');
+      return response.json();
+    },
+    enabled: true,
+  });
+
+  const { data: specialties = [] } = useQuery({
+    queryKey: ['/api/specialties'],
+  });
+
+  const handleSearch = (searchFilters: any) => {
+    setFilters({ ...filters, ...searchFilters });
+  };
+
+  const handleFilterChange = (newFilters: any) => {
+    setFilters({ ...filters, ...newFilters });
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Navbar />
+      <HeroSection onSearch={handleSearch} specialties={specialties as any[]} />
+      
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex flex-col lg:flex-row gap-8">
+          <div className="lg:w-1/4">
+            <SearchFilters 
+              filters={filters}
+              onFilterChange={handleFilterChange}
+              specialties={specialties as any[]}
+            />
+          </div>
+
+          <div className="lg:w-3/4">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-gray-900">Available Rotations</h2>
+              <div className="flex items-center space-x-4">
+                <span className="text-sm text-gray-500">
+                  Showing {programs.length || 0} programs
+                </span>
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger className="w-48">
+                    <SelectValue placeholder="Sort by" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="relevant">Most Relevant</SelectItem>
+                    <SelectItem value="newest">Newest First</SelectItem>
+                    <SelectItem value="price-low">Price: Low to High</SelectItem>
+                    <SelectItem value="duration">Duration: Short to Long</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {isLoading ? (
+              <div className="grid gap-6">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="bg-white rounded-xl border border-gray-200 p-6">
+                    <Skeleton className="h-6 w-3/4 mb-4" />
+                    <Skeleton className="h-4 w-full mb-2" />
+                    <Skeleton className="h-4 w-2/3 mb-4" />
+                    <div className="grid grid-cols-4 gap-4 mb-4">
+                      {[...Array(4)].map((_, j) => (
+                        <Skeleton key={j} className="h-4 w-full" />
+                      ))}
+                    </div>
+                    <div className="flex justify-between items-center pt-4 border-t">
+                      <div className="flex items-center space-x-4">
+                        <Skeleton className="w-12 h-12 rounded-lg" />
+                        <div>
+                          <Skeleton className="h-4 w-24 mb-1" />
+                          <Skeleton className="h-3 w-20" />
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <Skeleton className="h-6 w-16 mb-2" />
+                        <Skeleton className="h-8 w-24" />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : programs && programs.length > 0 ? (
+              <>
+                <div className="grid gap-6">
+                  {programs.map((program: any) => (
+                    <ProgramCard key={program.id} program={program} />
+                  ))}
+                </div>
+                
+                <div className="text-center mt-8">
+                  <Button variant="outline" className="px-8">
+                    Load More Programs
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <div className="text-center py-12">
+                <div className="bg-white rounded-xl border border-gray-200 p-8">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No programs found</h3>
+                  <p className="text-gray-600 mb-4">
+                    Try adjusting your search criteria or filters to find more results.
+                  </p>
+                  <Button onClick={() => setFilters({
+                    specialty: "",
+                    location: "",
+                    type: "",
+                    minDuration: undefined,
+                    maxDuration: undefined,
+                    isFree: undefined,
+                    search: "",
+                  })}>
+                    Clear Filters
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
