@@ -50,7 +50,12 @@ export interface IStorage {
     isFree?: boolean;
     isActive?: boolean;
     search?: string;
-  }): Promise<Program[]>;
+  }, page?: number, limit?: number): Promise<{
+    programs: Program[];
+    totalCount: number;
+    hasMore: boolean;
+    currentPage: number;
+  }>;
   getProgram(id: string): Promise<Program | undefined>;
   createProgram(program: InsertProgram): Promise<Program>;
   updateProgram(id: string, updates: Partial<Program>): Promise<Program>;
@@ -150,7 +155,12 @@ export class DatabaseStorage implements IStorage {
     isFree?: boolean;
     isActive?: boolean;
     search?: string;
-  }): Promise<Program[]> {
+  }, page: number = 1, limit: number = 10): Promise<{
+    programs: Program[];
+    totalCount: number;
+    hasMore: boolean;
+    currentPage: number;
+  }> {
     const conditions = [];
     
     if (filters?.specialty) {
@@ -191,11 +201,25 @@ export class DatabaseStorage implements IStorage {
       );
     }
     
-    if (conditions.length > 0) {
-      return await db.select().from(programs).where(and(...conditions)).orderBy(desc(programs.createdAt));
-    }
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
     
-    return await db.select().from(programs).orderBy(desc(programs.createdAt));
+    // Get total count
+    const [totalResult] = await db.select({ count: count() }).from(programs).where(whereClause);
+    const totalCount = totalResult.count;
+    
+    // Get paginated programs
+    const programsData = await db.select().from(programs)
+      .where(whereClause)
+      .orderBy(desc(programs.createdAt))
+      .limit(limit)
+      .offset((page - 1) * limit);
+    
+    return {
+      programs: programsData,
+      totalCount,
+      hasMore: (page * limit) < totalCount,
+      currentPage: page,
+    };
   }
 
   async getProgram(id: string): Promise<Program | undefined> {

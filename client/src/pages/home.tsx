@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/navbar";
 import HeroSection from "@/components/hero-section";
@@ -20,9 +20,17 @@ export default function Home() {
   });
 
   const [sortBy, setSortBy] = useState("relevant");
+  const [page, setPage] = useState(1);
+  const [allPrograms, setAllPrograms] = useState<any[]>([]);
+
+  // Reset page and programs when filters change
+  useEffect(() => {
+    setPage(1);
+    setAllPrograms([]);
+  }, [filters, sortBy]);
 
   const { data: programs = [], isLoading } = useQuery({
-    queryKey: ['/api/programs', filters],
+    queryKey: ['/api/programs', filters, page],
     queryFn: async () => {
       const searchParams = new URLSearchParams();
       Object.entries(filters).forEach(([key, value]) => {
@@ -30,9 +38,19 @@ export default function Home() {
           searchParams.append(key, value.toString());
         }
       });
+      searchParams.append('page', page.toString());
+      searchParams.append('limit', '10');
       const response = await fetch(`/api/programs?${searchParams}`);
       if (!response.ok) throw new Error('Failed to fetch programs');
-      return response.json();
+      const data = await response.json();
+      
+      if (page === 1) {
+        setAllPrograms(data.programs || []);
+      } else {
+        setAllPrograms(prev => [...prev, ...(data.programs || [])]);
+      }
+      
+      return data;
     },
     enabled: true,
   });
@@ -113,19 +131,26 @@ export default function Home() {
                   </div>
                 ))}
               </div>
-            ) : programs && programs.length > 0 ? (
+            ) : allPrograms && allPrograms.length > 0 ? (
               <>
                 <div className="grid gap-6">
-                  {programs.map((program: any) => (
+                  {allPrograms.map((program: any) => (
                     <ProgramCard key={program.id} program={program} />
                   ))}
                 </div>
                 
-                <div className="text-center mt-8">
-                  <Button variant="outline" className="px-8">
-                    Load More Programs
-                  </Button>
-                </div>
+                {programs?.hasMore !== false && (
+                  <div className="text-center mt-8">
+                    <Button 
+                      variant="outline" 
+                      className="px-8"
+                      onClick={() => setPage(prev => prev + 1)}
+                      disabled={isLoading}
+                    >
+                      {isLoading ? "Loading..." : "Load More Programs"}
+                    </Button>
+                  </div>
+                )}
               </>
             ) : (
               <div className="text-center py-12">

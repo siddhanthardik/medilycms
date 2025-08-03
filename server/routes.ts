@@ -46,8 +46,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         search: req.query.search as string,
       };
       
-      const programs = await storage.getPrograms(filters);
-      res.json(programs);
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+      
+      const result = await storage.getPrograms(filters, page, limit);
+      res.json(result);
     } catch (error) {
       console.error("Error fetching programs:", error);
       res.status(500).json({ message: "Failed to fetch programs" });
