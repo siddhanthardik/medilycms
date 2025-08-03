@@ -1,0 +1,211 @@
+I want you to create a full-stack web application named MEDILY that serves as a clinical rotation marketplace for medical professionals. This platform will help users find short-term clinical experiences such as:
+
+Clerkships
+
+Observerships
+
+Fellowships
+
+Hands-on training
+
+
+
+---
+
+🩺 Objective: To build a user-friendly platform similar to AMOpportunities.org, allowing healthcare professionals to find and apply for rotations based on subject specialty, location, duration, availability, and intake session. It should also provide an admin backend to manage inventory and users.
+
+
+---
+
+🔐 User Roles:
+
+1. Medical Professional (User)
+
+Sign up / Sign in / Forgot password
+
+Browse available clinical rotations
+
+Search & filter by specialty, country, duration, dates, availability, session intake, seat count, paid/free
+
+Apply/book a rotation
+
+View booking status, past rotations
+
+Profile management
+
+
+
+2. Admin (Super Admin + Sub-admins)
+
+Sign in to a secure admin dashboard
+
+Add, update, or delete rotation listings
+
+Block or close listings when full
+
+Manage users, bookings, and payments
+
+Assign roles to sub-admins (with access rights like view-only, edit, or manage-users)
+
+View analytics: most viewed programs, booking rate, user demographics
+
+
+
+
+
+---
+
+🧠 Features & Functionality:
+
+Frontend (HTML, CSS, JS/React preferred):
+
+Clean UI/UX for medical professionals
+
+Search bar with filters (specialty, city/country, duration, availability, intake months, cost)
+
+Program details page with full info: hospital/clinic name, mentor/doctor name, duration, location, fee, hands-on/observership, available seats
+
+Secure user authentication
+
+Responsive design for mobile/desktop
+
+
+Backend (Node.js + Express.js OR Django preferred):
+
+User authentication (JWT/token-based)
+
+REST APIs for program listings, user data, admin controls
+
+Session tracking and booking engine
+
+Payment gateway integration (Stripe/PayPal - dummy for now)
+
+
+Database:
+
+MongoDB / PostgreSQL
+
+Tables/Collections for: Users, Programs, Bookings, Admins, Reviews, Specialties
+
+
+Admin Panel (simple and functional):
+
+Dashboard to see all listings and filter by availability
+
+Add/edit/disable program listings
+
+Track user registrations and bookings
+
+Send email notifications to users on booking, confirmation, rejection, etc.
+
+Analytics graphs for total bookings, revenue (mock), and user interest
+
+
+Additional Nice-to-Haves:
+
+Bookmark/favorite rotation
+
+User reviews/testimonials
+
+Email verification on signup
+
+Secure file upload for CV/documents
+
+Chat or contact form for user queries
+
+Waitlist if program is full
+
+Newsletter subscription
+
+
+
+
+---
+
+🧑‍💼 Business Strategy Simulation: Assume I have previously worked at AMOpportunities.org. Now I want to launch MEDILY with a more flexible, user-friendly, and partner-driven approach where hospitals and mentors can also log in and post their rotation availability directly (for future roadmap). This version should have provision for future scalability.
+
+
+---
+
+🎯 Goal: This app should be fully deployable on Replit, with all major routes, user journeys, and admin flows in place. Ensure modularity in code for future extension (e.g., mentor accounts, multi-language support, WhatsApp integration).
+
+
+---
+
+🔖 Tech Stack Suggestion:
+
+Frontend: React.js or HTML/CSS/JS with Bootstrap/Tailwind
+
+Backend: Express.js (Node) or Django
+
+Database: MongoDB or PostgreSQL
+
+Authentication: JWT
+
+Deployment: Replit hosting with .env support
+
+Optional: Firebase for notifications
+
+
+
+---
+
+📁 Deliverables:
+
+1. Working app on Replit with frontend + backend
+
+
+2. Live demo link
+
+
+3. README with instructions to run locally and deploy
+
+
+4. Sample admin credentials
+
+
+5. Seed data for testing (5-10 rotation listings)
+
+
+
+
+---
+
+🧪 Example Rotation Listing Fields:
+
+Program Title
+
+Type: Observership / Hands-on / Fellowship
+
+Specialty
+
+Location (City, Country)
+
+Hospital/Clinic Name
+
+Mentor Name
+
+Start Date
+
+Duration (in weeks)
+
+Intake Months
+
+Available Seats
+
+Fees
+
+Hands-on Access: Yes/No
+
+Description
+
+Requirements (e.g., MBBS/USMLE etc.)
+
+
+
+---
+
+🎯 Name the App: MEDILY
+📣 Tagline: Empowering Global Medical Careers
+
+Now go ahead and build this full project on Replit with the above scope. Start with user auth, listing database, and search filters. Use placeholder data where needed. Final app should be intuitive, functional, and scalable for real-world launch.
