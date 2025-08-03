@@ -95,7 +95,7 @@ export default function HeroSection({ onSearch, specialties }: HeroSectionProps)
                       <SelectValue placeholder="Any Duration" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Any Duration</SelectItem>
+                      <SelectItem value="any">Any Duration</SelectItem>
                       <SelectItem value="1-2">1-2 weeks</SelectItem>
                       <SelectItem value="3-4">3-4 weeks</SelectItem>
                       <SelectItem value="5-8">5-8 weeks</SelectItem>
