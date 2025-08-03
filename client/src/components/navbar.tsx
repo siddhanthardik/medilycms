@@ -20,6 +20,7 @@ export default function Navbar() {
     { href: "/dashboard", label: "My Applications", active: location === "/dashboard" },
     { href: "/favorites", label: "Favorites", active: location === "/favorites" },
     { href: "/reviews", label: "Reviews", active: location === "/reviews" },
+    ...((user as any)?.isAdmin ? [{ href: "/admin", label: "Admin Panel", active: location === "/admin" }] : []),
   ];
 
   return (

@@ -23,7 +23,7 @@ export default function AdminDashboard() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading, user } = useAuth();
 
-  // Redirect to home if not authenticated
+  // Redirect if not authenticated or not admin
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       toast({
@@ -36,7 +36,19 @@ export default function AdminDashboard() {
       }, 500);
       return;
     }
-  }, [isAuthenticated, isLoading, toast]);
+    
+    if (!isLoading && isAuthenticated && !(user as any)?.isAdmin) {
+      toast({
+        title: "Access Denied",
+        description: "You don't have admin privileges to access this page.",
+        variant: "destructive",
+      });
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 500);
+      return;
+    }
+  }, [isAuthenticated, isLoading, user, toast]);
 
   const { data: analytics, isLoading: analyticsLoading } = useQuery({
     queryKey: ['/api/analytics'],
@@ -56,7 +68,7 @@ export default function AdminDashboard() {
     retry: false,
   });
 
-  if (!isAuthenticated || isLoading) {
+  if (!isAuthenticated || isLoading || !(user as any)?.isAdmin) {
     return <div>Loading...</div>;
   }
 
@@ -67,7 +79,10 @@ export default function AdminDashboard() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-          <Button className="bg-primary hover:bg-primary/90">
+          <Button 
+            className="bg-primary hover:bg-primary/90"
+            onClick={() => window.location.href = "/admin/add-program"}
+          >
             <Plus className="mr-2 h-4 w-4" />
             Add New Program
           </Button>

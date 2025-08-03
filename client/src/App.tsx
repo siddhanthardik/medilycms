@@ -10,6 +10,7 @@ import Home from "@/pages/home";
 import AdminDashboard from "@/pages/admin-dashboard";
 import UserDashboard from "@/pages/user-dashboard";
 import ProgramDetail from "@/pages/program-detail";
+import AddProgram from "@/pages/add-program";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -22,6 +23,7 @@ function Router() {
         <>
           <Route path="/" component={Home} />
           <Route path="/admin" component={AdminDashboard} />
+          <Route path="/admin/add-program" component={AddProgram} />
           <Route path="/dashboard" component={UserDashboard} />
           <Route path="/program/:id" component={ProgramDetail} />
         </>
