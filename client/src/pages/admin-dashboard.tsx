@@ -68,6 +68,11 @@ export default function AdminDashboard() {
     retry: false,
   });
 
+  // Helper function to check permissions
+  const hasPermission = (permission: string) => {
+    return (user as any)?.permissions?.[permission] === true;
+  };
+
   if (!isAuthenticated || isLoading || !(user as any)?.isAdmin) {
     return <div>Loading...</div>;
   }
@@ -221,10 +226,15 @@ export default function AdminDashboard() {
           <CardHeader>
             <div className="flex justify-between items-center">
               <CardTitle>Program Management</CardTitle>
-              <Button className="bg-primary hover:bg-primary/90">
-                <Plus className="mr-2 h-4 w-4" />
-                Add New Program
-              </Button>
+              {hasPermission('create_programs') && (
+                <Button 
+                  onClick={() => window.location.href = '/admin/add-program'}
+                  className="bg-primary hover:bg-primary/90"
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add New Program
+                </Button>
+              )}
             </div>
           </CardHeader>
           <CardContent>

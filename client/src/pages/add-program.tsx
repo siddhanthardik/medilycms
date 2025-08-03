@@ -134,16 +134,16 @@ export default function AddProgram() {
     }
 
     const programData = {
-      title: formData.title,
+      title: formData.title.trim(),
       type: formData.type as 'observership' | 'hands_on' | 'fellowship' | 'clerkship',
       specialtyId: formData.specialtyId,
-      hospitalName: formData.hospitalName,
-      mentorName: formData.mentorName,
-      mentorTitle: formData.mentorTitle || null,
-      location: formData.location,
-      country: formData.country,
-      city: formData.city,
-      startDate: new Date(formData.startDate),
+      hospitalName: formData.hospitalName.trim(),
+      mentorName: formData.mentorName.trim(),
+      mentorTitle: formData.mentorTitle?.trim() || null,
+      location: formData.location.trim(),
+      country: formData.country.trim(),
+      city: formData.city.trim(),
+      startDate: formData.startDate, // Keep as string for backend parsing
       duration: parseInt(formData.duration),
       intakeMonths: formData.intakeMonths,
       availableSeats: parseInt(formData.availableSeats),
@@ -151,7 +151,7 @@ export default function AddProgram() {
       fee: formData.fee ? parseFloat(formData.fee) : null,
       currency: 'USD',
       isHandsOn: formData.type === 'hands_on',
-      description: formData.description || '',
+      description: formData.description?.trim() || '',
       requirements: formData.requirements,
       isActive: true,
       isFeatured: false,

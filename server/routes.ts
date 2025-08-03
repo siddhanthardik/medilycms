@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
+import { hasPermission, getUserPermissions } from "./adminPermissions";
 import { insertProgramSchema, insertApplicationSchema, insertFavoriteSchema, insertReviewSchema, insertContactQuerySchema, insertNewsletterSchema } from "@shared/schema";
 import { z } from "zod";
 
@@ -14,7 +15,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
-      res.json(user);
+      
+      // Add user permissions if admin
+      const userWithPermissions = user?.isAdmin ? {
+        ...user,
+        permissions: getUserPermissions(user)
+      } : user;
+      
+      res.json(userWithPermissions);
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
@@ -73,15 +81,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/programs', isAuthenticated, async (req: any, res) => {
     try {
       const user = await storage.getUser(req.user.claims.sub);
-      if (!user?.isAdmin) {
-        return res.status(403).json({ message: "Admin access required" });
+      if (!user?.isAdmin || !hasPermission(user, 'create_programs')) {
+        return res.status(403).json({ message: "Permission denied: Cannot create programs" });
       }
 
-      const validatedData = insertProgramSchema.parse(req.body);
+      // Transform the data to match schema expectations
+      const transformedData = {
+        ...req.body,
+        startDate: new Date(req.body.startDate),
+        fee: req.body.fee ? parseFloat(req.body.fee) : null,
+        duration: parseInt(req.body.duration),
+        availableSeats: parseInt(req.body.availableSeats),
+        totalSeats: parseInt(req.body.totalSeats),
+      };
+      
+      const validatedData = insertProgramSchema.parse(transformedData);
       const program = await storage.createProgram(validatedData);
       res.status(201).json(program);
     } catch (error) {
       if (error instanceof z.ZodError) {
+        console.error("Validation errors:", error.errors);
         return res.status(400).json({ message: "Invalid data", errors: error.errors });
       }
       console.error("Error creating program:", error);
@@ -94,6 +113,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = await storage.getUser(req.user.claims.sub);
       if (!user?.isAdmin) {
         return res.status(403).json({ message: "Admin access required" });
+      }
+
+      // Check if user has modify permission
+      if (!hasPermission(user, 'modify_programs')) {
+        return res.status(403).json({ message: "Permission denied: Cannot modify programs" });
       }
 
       const program = await storage.updateProgram(req.params.id, req.body);
@@ -109,6 +133,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = await storage.getUser(req.user.claims.sub);
       if (!user?.isAdmin) {
         return res.status(403).json({ message: "Admin access required" });
+      }
+
+      // Check if user has delete permission
+      if (!hasPermission(user, 'delete_programs')) {
+        return res.status(403).json({ message: "Permission denied: Cannot delete programs" });
       }
 
       await storage.deleteProgram(req.params.id);
@@ -148,6 +177,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/applications', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      // Prevent admins from applying to programs
+      if (user?.isAdmin) {
+        return res.status(403).json({ message: "Admin users cannot apply to programs" });
+      }
+      
       const validatedData = insertApplicationSchema.parse({
         ...req.body,
         userId,

@@ -38,8 +38,8 @@ export const users = pgTable("users", {
   specialtyOfInterest: varchar("specialty_of_interest"),
   phoneNumber: varchar("phone_number"),
   isAdmin: boolean("is_admin").default(false),
-  adminRole: varchar("admin_role"), // 'super_admin', 'sub_admin'
-  adminPermissions: jsonb("admin_permissions"), // array of permissions
+  adminRole: varchar("admin_role"), // 'super_admin', 'regular_admin'
+  adminPermissions: jsonb("admin_permissions").$type<string[]>(), // array of permissions
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
