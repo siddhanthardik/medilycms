@@ -22,6 +22,8 @@ import AdminLogin from "@/pages/admin-login";
 import UserManagement from "@/pages/user-management";
 import Favorites from "@/pages/favorites";
 import Reviews from "@/pages/reviews";
+import PreceptorLogin from "@/pages/preceptor-login";
+import PreceptorDashboard from "@/pages/preceptor-dashboard";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -36,10 +38,12 @@ function Router() {
       <Route path="/join" component={Join} />
       <Route path="/clinical-rotations" component={ClinicalRotations} />
       <Route path="/admin-login" component={AdminLogin} />
+      <Route path="/preceptor-login" component={PreceptorLogin} />
       
       {/* Admin routes - require admin authentication */}
       <Route path="/cms-dashboard" component={CMSDashboard} />
       <Route path="/user-management" component={UserManagement} />
+      <Route path="/preceptor-dashboard" component={PreceptorDashboard} />
       
       {isLoading || !isAuthenticated ? (
         <Route path="/" component={Landing} />

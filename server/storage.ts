@@ -49,6 +49,17 @@ export interface IStorage {
   deleteUser(id: string): Promise<void>;
   toggleUserStatus(id: string): Promise<User>;
   
+  // Admin operations
+  getAdminUser(id: string): Promise<User | undefined>;
+  
+  // Preceptor operations
+  getPreceptor(id: string): Promise<User | undefined>;
+  getPreceptorByEmail(email: string): Promise<User | undefined>;
+  createPreceptor(userData: any): Promise<User>;
+  getPreceptorPrograms(preceptorId: string): Promise<Program[]>;
+  getPreceptorApplications(preceptorId: string): Promise<Application[]>;
+  updateApplicationStatus(applicationId: string, status: string, reviewNotes?: string, reviewedBy?: string): Promise<Application>;
+  
   // Specialty operations
   getSpecialties(): Promise<Specialty[]>;
   createSpecialty(specialty: InsertSpecialty): Promise<Specialty>;
@@ -218,6 +229,122 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, id))
       .returning();
     return user;
+  }
+
+  // Admin operations
+  async getAdminUser(id: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(and(eq(users.id, id), eq(users.isAdmin, true)));
+    return user;
+  }
+
+  // Preceptor operations
+  async getPreceptor(id: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(and(eq(users.id, id), eq(users.isPreceptor, true)));
+    return user;
+  }
+
+  async getPreceptorByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(and(eq(users.email, email), eq(users.isPreceptor, true)));
+    return user;
+  }
+
+  async createPreceptor(userData: any): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values({
+        ...userData,
+        isPreceptor: true,
+        isActive: true,
+      })
+      .returning();
+    return user;
+  }
+
+  async getPreceptorPrograms(preceptorId: string): Promise<Program[]> {
+    return await db.select({
+      id: programs.id,
+      title: programs.title,
+      type: programs.type,
+      specialtyId: programs.specialtyId,
+      specialtyName: specialties.name,
+      hospitalName: programs.hospitalName,
+      mentorName: programs.mentorName,
+      mentorTitle: programs.mentorTitle,
+      location: programs.location,
+      country: programs.country,
+      city: programs.city,
+      startDate: programs.startDate,
+      duration: programs.duration,
+      intakeMonths: programs.intakeMonths,
+      availableSeats: programs.availableSeats,
+      totalSeats: programs.totalSeats,
+      fee: programs.fee,
+      currency: programs.currency,
+      isHandsOn: programs.isHandsOn,
+      description: programs.description,
+      requirements: programs.requirements,
+      isActive: programs.isActive,
+      isFeatured: programs.isFeatured,
+      preceptorId: programs.preceptorId,
+      createdAt: programs.createdAt,
+      updatedAt: programs.updatedAt,
+    })
+    .from(programs)
+    .leftJoin(specialties, eq(programs.specialtyId, specialties.id))
+    .where(eq(programs.preceptorId, preceptorId))
+    .orderBy(desc(programs.createdAt));
+  }
+
+  async getPreceptorApplications(preceptorId: string): Promise<Application[]> {
+    return await db.select({
+      id: applications.id,
+      userId: applications.userId,
+      programId: applications.programId,
+      status: applications.status,
+      applicationDate: applications.applicationDate,
+      coverLetter: applications.coverLetter,
+      cvUrl: applications.cvUrl,
+      additionalDocuments: applications.additionalDocuments,
+      reviewNotes: applications.reviewNotes,
+      reviewedAt: applications.reviewedAt,
+      reviewedBy: applications.reviewedBy,
+      visaStatus: applications.visaStatus,
+      joinDate: applications.joinDate,
+      actualJoinDate: applications.actualJoinDate,
+      createdAt: applications.createdAt,
+      updatedAt: applications.updatedAt,
+      user: {
+        id: users.id,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        email: users.email,
+      },
+      program: {
+        id: programs.id,
+        title: programs.title,
+        type: programs.type,
+      },
+    })
+    .from(applications)
+    .innerJoin(programs, eq(applications.programId, programs.id))
+    .innerJoin(users, eq(applications.userId, users.id))
+    .where(eq(programs.preceptorId, preceptorId))
+    .orderBy(desc(applications.applicationDate));
+  }
+
+  async updateApplicationStatus(applicationId: string, status: string, reviewNotes?: string, reviewedBy?: string): Promise<Application> {
+    const [application] = await db
+      .update(applications)
+      .set({
+        status: status as any,
+        reviewNotes,
+        reviewedBy,
+        reviewedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(applications.id, applicationId))
+      .returning();
+    return application;
   }
 
   // Specialty operations

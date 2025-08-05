@@ -41,6 +41,9 @@ export const users = pgTable("users", {
   isAdmin: boolean("is_admin").default(false),
   adminRole: varchar("admin_role"), // 'super_admin', 'regular_admin'
   adminPermissions: jsonb("admin_permissions").$type<string[]>(), // array of permissions
+  isPreceptor: boolean("is_preceptor").default(false),
+  hospitalAffiliation: varchar("hospital_affiliation"),
+  medicalLicenseNumber: varchar("medical_license_number"),
   lastLoginAt: timestamp("last_login_at"),
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
@@ -49,7 +52,7 @@ export const users = pgTable("users", {
 
 // Program types enum
 export const programTypeEnum = pgEnum('program_type', ['observership', 'hands_on', 'fellowship', 'clerkship']);
-export const applicationStatusEnum = pgEnum('application_status', ['pending', 'accepted', 'rejected', 'waitlisted']);
+export const applicationStatusEnum = pgEnum('application_status', ['pending', 'accepted', 'rejected', 'waitlisted', 'visa_pending', 'visa_confirmed', 'enrolled']);
 export const reviewStatusEnum = pgEnum('review_status', ['pending', 'approved', 'rejected']);
 
 // Specialties table
@@ -84,6 +87,7 @@ export const programs = pgTable("programs", {
   requirements: text("requirements").array(),
   isActive: boolean("is_active").default(true),
   isFeatured: boolean("is_featured").default(false),
+  preceptorId: varchar("preceptor_id").references(() => users.id), // Link to preceptor who created the program
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -101,6 +105,9 @@ export const applications = pgTable("applications", {
   reviewNotes: text("review_notes"),
   reviewedAt: timestamp("reviewed_at"),
   reviewedBy: varchar("reviewed_by").references(() => users.id),
+  visaStatus: varchar("visa_status"), // 'not_required', 'pending', 'approved', 'rejected'
+  joinDate: timestamp("join_date"), // Expected date of joining
+  actualJoinDate: timestamp("actual_join_date"), // Actual date when student joined
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

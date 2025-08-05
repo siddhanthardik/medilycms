@@ -955,6 +955,148 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(req.adminUser);
   });
 
+  // Preceptor Authentication Routes
+  app.post('/api/preceptor/register', async (req, res) => {
+    try {
+      const { email, password, firstName, lastName, hospitalAffiliation, medicalLicenseNumber, phoneNumber } = req.body;
+      
+      // Check if preceptor already exists
+      const existingPreceptor = await storage.getPreceptorByEmail(email);
+      if (existingPreceptor) {
+        return res.status(400).json({ message: "Preceptor with this email already exists" });
+      }
+
+      const bcrypt = await import('bcryptjs');
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      // Create preceptor
+      const preceptor = await storage.createPreceptor({
+        email,
+        password: hashedPassword,
+        firstName,
+        lastName,
+        hospitalAffiliation,
+        medicalLicenseNumber,
+        phoneNumber,
+        isPreceptor: true,
+      });
+
+      res.json({ success: true, preceptor: { id: preceptor.id, email: preceptor.email } });
+    } catch (error) {
+      console.error('Preceptor registration error:', error);
+      res.status(500).json({ message: 'Failed to create preceptor account' });
+    }
+  });
+
+  app.post('/api/preceptor/login', async (req, res) => {
+    try {
+      const { email, password } = req.body;
+
+      const preceptor = await storage.getPreceptorByEmail(email);
+      if (!preceptor || !preceptor.password) {
+        return res.status(401).json({ message: "Invalid email or password" });
+      }
+
+      const bcrypt = await import('bcryptjs');
+      const isValidPassword = await bcrypt.compare(password, preceptor.password);
+      if (!isValidPassword) {
+        return res.status(401).json({ message: "Invalid email or password" });
+      }
+
+      // Set session
+      (req.session as any).preceptorUser = {
+        id: preceptor.id,
+        email: preceptor.email,
+        firstName: preceptor.firstName,
+        lastName: preceptor.lastName,
+      };
+
+      res.json({ 
+        success: true, 
+        user: {
+          id: preceptor.id,
+          email: preceptor.email,
+          firstName: preceptor.firstName,
+          lastName: preceptor.lastName,
+        }
+      });
+    } catch (error) {
+      console.error('Preceptor login error:', error);
+      res.status(500).json({ message: 'Login failed' });
+    }
+  });
+
+  const requirePreceptorSession = (req: any, res: any, next: any) => {
+    if (!(req.session as any)?.preceptorUser) {
+      return res.status(401).json({ message: "Preceptor authentication required" });
+    }
+    req.preceptorUser = (req.session as any).preceptorUser;
+    next();
+  };
+
+  app.get('/api/preceptor/current-user', requirePreceptorSession, async (req: any, res) => {
+    try {
+      const preceptor = await storage.getPreceptor(req.preceptorUser.id);
+      if (!preceptor) {
+        return res.status(404).json({ message: "Preceptor not found" });
+      }
+      res.json(preceptor);
+    } catch (error) {
+      console.error('Error fetching preceptor:', error);
+      res.status(500).json({ message: 'Failed to fetch preceptor' });
+    }
+  });
+
+  app.get('/api/preceptor/logout', (req, res) => {
+    (req.session as any).preceptorUser = null;
+    res.redirect('/preceptor-login');
+  });
+
+  // Preceptor Program Management Routes
+  app.get('/api/preceptor/programs', requirePreceptorSession, async (req: any, res) => {
+    try {
+      const programs = await storage.getPreceptorPrograms(req.preceptorUser.id);
+      res.json(programs);
+    } catch (error) {
+      console.error('Error fetching preceptor programs:', error);
+      res.status(500).json({ message: 'Failed to fetch programs' });
+    }
+  });
+
+  app.post('/api/preceptor/programs', requirePreceptorSession, async (req: any, res) => {
+    try {
+      const programData = { ...req.body, preceptorId: req.preceptorUser.id };
+      const program = await storage.createProgram(programData);
+      res.json(program);
+    } catch (error) {
+      console.error('Error creating program:', error);
+      res.status(500).json({ message: 'Failed to create program' });
+    }
+  });
+
+  app.get('/api/preceptor/applications', requirePreceptorSession, async (req: any, res) => {
+    try {
+      const applications = await storage.getPreceptorApplications(req.preceptorUser.id);
+      res.json(applications);
+    } catch (error) {
+      console.error('Error fetching applications:', error);
+      res.status(500).json({ message: 'Failed to fetch applications' });
+    }
+  });
+
+  app.put('/api/preceptor/applications/:id', requirePreceptorSession, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const { status, reviewNotes } = req.body;
+      
+      const application = await storage.updateApplicationStatus(id, status, reviewNotes, req.preceptorUser.id);
+      res.json(application);
+    } catch (error) {
+      console.error('Error updating application:', error);
+      res.status(500).json({ message: 'Failed to update application' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
