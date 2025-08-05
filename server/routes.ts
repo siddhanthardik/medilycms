@@ -891,6 +891,157 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin authentication routes
+  app.post('/api/admin/login', async (req, res) => {
+    try {
+      const { email, password } = req.body;
+      
+      if (!email || !password) {
+        return res.status(400).json({ message: "Email and password are required" });
+      }
+
+      const user = await storage.getUserByEmail(email);
+      if (!user || !user.isAdmin || !user.password) {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+
+      const bcrypt = await import('bcryptjs');
+      const isValidPassword = await bcrypt.compare(password, user.password);
+      
+      if (!isValidPassword) {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+
+      if (!user.isActive) {
+        return res.status(401).json({ message: "Account is deactivated" });
+      }
+
+      // Update last login
+      await storage.updateUser(user.id, { lastLoginAt: new Date() });
+
+      // Set session - type assertion for session extension
+      (req.session as any).adminUser = {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        adminRole: user.adminRole,
+      };
+
+      res.json({ 
+        success: true, 
+        user: { 
+          id: user.id, 
+          email: user.email, 
+          firstName: user.firstName,
+          lastName: user.lastName,
+          adminRole: user.adminRole 
+        } 
+      });
+    } catch (error) {
+      console.error("Admin login error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post('/api/admin/logout', (req, res) => {
+    req.session.destroy((err) => {
+      if (err) {
+        return res.status(500).json({ message: "Logout failed" });
+      }
+      res.json({ success: true });
+    });
+  });
+
+  // Admin middleware for session-based authentication
+  const requireAdminSession = (req: any, res: any, next: any) => {
+    if (!(req.session as any)?.adminUser) {
+      return res.status(401).json({ message: "Admin authentication required" });
+    }
+    req.adminUser = (req.session as any).adminUser;
+    next();
+  };
+
+  // User management routes
+  app.get('/api/admin/users', requireAdminSession, async (req: any, res) => {
+    try {
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 20;
+      
+      const result = await storage.getAllUsers(page, limit);
+      res.json(result);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
+  app.post('/api/admin/users', requireAdminSession, async (req: any, res) => {
+    try {
+      const { email, password, firstName, lastName, adminRole } = req.body;
+      
+      if (!email || !password || !firstName || !lastName) {
+        return res.status(400).json({ message: "All fields are required" });
+      }
+
+      // Check if user already exists
+      const existingUser = await storage.getUserByEmail(email);
+      if (existingUser) {
+        return res.status(400).json({ message: "User with this email already exists" });
+      }
+
+      const user = await storage.createAdminUser({
+        email,
+        password,
+        firstName,
+        lastName,
+        adminRole: adminRole || 'regular_admin'
+      });
+
+      // Remove password from response
+      const { password: _, ...userResponse } = user;
+      res.status(201).json(userResponse);
+    } catch (error) {
+      console.error("Error creating user:", error);
+      res.status(500).json({ message: "Failed to create user" });
+    }
+  });
+
+  app.put('/api/admin/users/:id/toggle-status', requireAdminSession, async (req: any, res) => {
+    try {
+      const userId = req.params.id;
+      const updatedUser = await storage.toggleUserStatus(userId);
+      
+      // Remove password from response
+      const { password: _, ...userResponse } = updatedUser;
+      res.json(userResponse);
+    } catch (error) {
+      console.error("Error toggling user status:", error);
+      res.status(500).json({ message: "Failed to update user status" });
+    }
+  });
+
+  app.delete('/api/admin/users/:id', requireAdminSession, async (req: any, res) => {
+    try {
+      const userId = req.params.id;
+      
+      // Prevent deletion of self
+      if (userId === req.adminUser.id) {
+        return res.status(400).json({ message: "Cannot delete your own account" });
+      }
+
+      await storage.deleteUser(userId);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      res.status(500).json({ message: "Failed to delete user" });
+    }
+  });
+
+  app.get('/api/admin/current-user', requireAdminSession, (req: any, res) => {
+    res.json(req.adminUser);
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

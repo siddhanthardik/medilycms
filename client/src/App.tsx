@@ -18,6 +18,8 @@ import Blog from "@/pages/blog";
 import Join from "@/pages/join";
 import ClinicalRotations from "@/pages/clinical-rotations";
 import CMSDashboard from "@/pages/cms-dashboard";
+import AdminLogin from "@/pages/admin-login";
+import UserManagement from "@/pages/user-management";
 import Favorites from "@/pages/favorites";
 import Reviews from "@/pages/reviews";
 
@@ -33,6 +35,7 @@ function Router() {
       <Route path="/blog" component={Blog} />
       <Route path="/join" component={Join} />
       <Route path="/clinical-rotations" component={ClinicalRotations} />
+      <Route path="/admin-login" component={AdminLogin} />
       
       {isLoading || !isAuthenticated ? (
         <Route path="/" component={Landing} />
@@ -44,6 +47,7 @@ function Router() {
           <Route path="/dashboard" component={UserDashboard} />
           <Route path="/program/:id" component={ProgramDetail} />
           <Route path="/cms-dashboard" component={CMSDashboard} />
+          <Route path="/user-management" component={UserManagement} />
           <Route path="/favorites" component={Favorites} />
           <Route path="/reviews" component={Reviews} />
         </>

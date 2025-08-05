@@ -30,6 +30,7 @@ export const sessions = pgTable(
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   email: varchar("email").unique(),
+  password: varchar("password"), // for admin users with email/password authentication
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
@@ -40,6 +41,8 @@ export const users = pgTable("users", {
   isAdmin: boolean("is_admin").default(false),
   adminRole: varchar("admin_role"), // 'super_admin', 'regular_admin'
   adminPermissions: jsonb("admin_permissions").$type<string[]>(), // array of permissions
+  lastLoginAt: timestamp("last_login_at"),
+  isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

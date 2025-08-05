@@ -41,8 +41,13 @@ import { eq, and, desc, asc, ilike, sql, count, avg } from "drizzle-orm";
 export interface IStorage {
   // User operations
   getUser(id: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
   updateUser(id: string, updates: Partial<User>): Promise<User>;
+  createAdminUser(userData: { email: string; password: string; firstName: string; lastName: string; adminRole: string }): Promise<User>;
+  getAllUsers(page?: number, limit?: number): Promise<{ users: User[]; totalCount: number; currentPage: number; hasMore: boolean }>;
+  deleteUser(id: string): Promise<void>;
+  toggleUserStatus(id: string): Promise<User>;
   
   // Specialty operations
   getSpecialties(): Promise<Specialty[]>;
@@ -141,6 +146,69 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
     return user;
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
+  }
+
+  async createAdminUser(userData: { email: string; password: string; firstName: string; lastName: string; adminRole: string }): Promise<User> {
+    const bcrypt = await import('bcryptjs');
+    const hashedPassword = await bcrypt.hash(userData.password, 12);
+    
+    const [user] = await db
+      .insert(users)
+      .values({
+        email: userData.email,
+        password: hashedPassword,
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        isAdmin: true,
+        adminRole: userData.adminRole,
+        isActive: true,
+      })
+      .returning();
+    return user;
+  }
+
+  async getAllUsers(page = 1, limit = 20): Promise<{ users: User[]; totalCount: number; currentPage: number; hasMore: boolean }> {
+    const offset = (page - 1) * limit;
+    
+    const [usersList, totalCountResult] = await Promise.all([
+      db.select().from(users).orderBy(desc(users.createdAt)).limit(limit).offset(offset),
+      db.select({ count: count() }).from(users)
+    ]);
+
+    const totalCount = totalCountResult[0].count;
+    const hasMore = offset + limit < totalCount;
+
+    return {
+      users: usersList,
+      totalCount,
+      currentPage: page,
+      hasMore,
+    };
+  }
+
+  async deleteUser(id: string): Promise<void> {
+    await db.delete(users).where(eq(users.id, id));
+  }
+
+  async toggleUserStatus(id: string): Promise<User> {
+    const user = await this.getUser(id);
+    if (!user) throw new Error('User not found');
+    
+    const [updatedUser] = await db
+      .update(users)
+      .set({ 
+        isActive: !user.isActive,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, id))
+      .returning();
+    
+    return updatedUser;
   }
 
   async updateUser(id: string, updates: Partial<User>): Promise<User> {
