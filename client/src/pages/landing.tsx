@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Heart, MapPin, Clock, Calendar, Users, Search, Play, CheckCircle, BookOpen, Award, TrendingUp, Globe, Star } from "lucide-react";
 import { Footer } from "@/components/footer";
+import medilyLogoSrc from "@assets/medily-website-logo_1754424305557.jpg";
 
 export default function Landing() {
   const handleLogin = () => {
@@ -77,8 +78,11 @@ export default function Landing() {
           <div className="flex justify-between h-16">
             <div className="flex items-center">
               <div className="flex-shrink-0 flex items-center">
-                <Heart className="h-8 w-8 text-blue-600" />
-                <span className="ml-2 text-xl font-bold text-gray-900">Medily</span>
+                <img 
+                  src={medilyLogoSrc} 
+                  alt="Medily" 
+                  className="h-8 w-auto"
+                />
               </div>
             </div>
             <div className="flex items-center space-x-4">

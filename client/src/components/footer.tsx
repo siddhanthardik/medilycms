@@ -1,4 +1,5 @@
 import { Facebook, Twitter, Linkedin, Instagram } from "lucide-react";
+import medilyLogoSrc from "@assets/medily-website-logo_1754424305557.jpg";
 
 export function Footer() {
   return (
@@ -7,7 +8,13 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Company Info */}
           <div>
-            <h3 className="text-xl font-bold mb-4">Medily</h3>
+            <div className="flex items-center mb-4">
+              <img 
+                src={medilyLogoSrc} 
+                alt="Medily" 
+                className="h-8 w-auto brightness-0 invert"
+              />
+            </div>
             <p className="text-gray-400 mb-4">
               Excellence education and career development for healthcare
               professionals worldwide.
