@@ -37,7 +37,7 @@ function Router() {
       <Route path="/clinical-rotations" component={ClinicalRotations} />
       <Route path="/admin-login" component={AdminLogin} />
       
-      {/* Admin routes - accessible to all (admin auth handled within components) */}
+      {/* Admin routes - require admin authentication */}
       <Route path="/cms-dashboard" component={CMSDashboard} />
       <Route path="/user-management" component={UserManagement} />
       

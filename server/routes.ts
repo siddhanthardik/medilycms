@@ -3,6 +3,28 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { hasPermission, getUserPermissions } from "./adminPermissions";
+
+// Admin authentication middleware
+const isAdminAuthenticated = async (req: any, res: any, next: any) => {
+  try {
+    const adminId = req.session?.adminUser?.id;
+    
+    if (!adminId) {
+      return res.status(401).json({ message: "Admin authentication required" });
+    }
+
+    const admin = await storage.getAdminUser(adminId);
+    if (!admin) {
+      return res.status(401).json({ message: "Invalid admin session" });
+    }
+
+    req.adminUser = admin;
+    next();
+  } catch (error) {
+    console.error("Admin auth middleware error:", error);
+    res.status(500).json({ message: "Authentication error" });
+  }
+};
 import { insertProgramSchema, insertApplicationSchema, insertFavoriteSchema, insertReviewSchema, insertContactQuerySchema, insertNewsletterSchema } from "@shared/schema";
 import { z } from "zod";
 import multer from "multer";
@@ -377,16 +399,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // CMS Routes - Blog Posts
-  app.get('/api/cms/blog-posts', isAuthenticated, async (req, res) => {
-    try {
-      const userId = req.user?.claims?.sub;
-      const user = await storage.getUser(userId);
-      
-      if (!user?.isAdmin) {
-        return res.status(403).json({ message: "Admin access required" });
-      }
+  // Admin middleware for session-based authentication
+  const requireAdminSession = (req: any, res: any, next: any) => {
+    if (!(req.session as any)?.adminUser) {
+      return res.status(401).json({ message: "Admin authentication required" });
+    }
+    req.adminUser = (req.session as any).adminUser;
+    next();
+  };
 
+  // CMS Routes - Blog Posts
+  app.get('/api/cms/blog-posts', requireAdminSession, async (req: any, res) => {
+    try {
       const posts = await storage.getBlogPosts();
       res.json(posts);
     } catch (error) {
@@ -395,16 +419,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/cms/blog-posts', isAuthenticated, async (req, res) => {
+  app.post('/api/cms/blog-posts', requireAdminSession, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
-      const user = await storage.getUser(userId);
-      
-      if (!user?.isAdmin) {
-        return res.status(403).json({ message: "Admin access required" });
-      }
-
-      const postData = { ...req.body, createdBy: userId };
+      const postData = { ...req.body, createdBy: req.adminUser.id };
       const post = await storage.createBlogPost(postData);
       res.json(post);
     } catch (error) {
@@ -414,15 +431,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // CMS Routes - Courses
-  app.get('/api/cms/courses', isAuthenticated, async (req, res) => {
+  app.get('/api/cms/courses', requireAdminSession, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
-      const user = await storage.getUser(userId);
-      
-      if (!user?.isAdmin) {
-        return res.status(403).json({ message: "Admin access required" });
-      }
-
       const courses = await storage.getCourses();
       res.json(courses);
     } catch (error) {
@@ -431,16 +441,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/cms/courses', isAuthenticated, async (req, res) => {
+  app.post('/api/cms/courses', requireAdminSession, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
-      const user = await storage.getUser(userId);
-      
-      if (!user?.isAdmin) {
-        return res.status(403).json({ message: "Admin access required" });
-      }
-
-      const courseData = { ...req.body, createdBy: userId };
+      const courseData = { ...req.body, createdBy: req.adminUser.id };
       const course = await storage.createCourse(courseData);
       res.json(course);
     } catch (error) {
@@ -450,15 +453,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // CMS Routes - Content Pages
-  app.get('/api/cms/content-pages', isAuthenticated, async (req, res) => {
+  app.get('/api/cms/content-pages', requireAdminSession, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
-      const user = await storage.getUser(userId);
-      
-      if (!user?.isAdmin) {
-        return res.status(403).json({ message: "Admin access required" });
-      }
-
       const pages = await storage.getContentPages();
       res.json(pages);
     } catch (error) {
@@ -468,15 +464,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // CMS Routes - Media Assets
-  app.get('/api/cms/media-assets', isAuthenticated, async (req, res) => {
+  app.get('/api/cms/media-assets', requireAdminSession, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
-      const user = await storage.getUser(userId);
-      
-      if (!user?.isAdmin) {
-        return res.status(403).json({ message: "Admin access required" });
-      }
-
       const assets = await storage.getMediaAssets();
       res.json(assets);
     } catch (error) {
@@ -529,12 +518,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Image upload with automatic .webp conversion
-  app.post('/api/cms/upload-image', isAuthenticated, upload.single('image'), async (req: any, res) => {
+  app.post('/api/cms/upload-image', requireAdminSession, upload.single('image'), async (req: any, res) => {
     try {
-      const user = await storage.getUser(req.user.claims.sub);
-      if (!user?.isAdmin) {
-        return res.status(403).json({ message: "Admin access required" });
-      }
 
       if (!req.file) {
         return res.status(400).json({ message: "No image file provided" });
@@ -566,7 +551,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           fileSize: req.file.size,
           filePath: `/uploads/${webpFileName}`,
           altText: req.body.altText || '',
-          uploadedBy: user.id,
+          uploadedBy: req.adminUser.id,
         });
 
         res.json({
@@ -595,13 +580,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/uploads', express.static(uploadDir));
 
   // Blog Posts CMS
-  app.put('/api/cms/blog-posts/:id', isAuthenticated, async (req: any, res) => {
+  app.put('/api/cms/blog-posts/:id', requireAdminSession, async (req: any, res) => {
     try {
-      const user = await storage.getUser(req.user.claims.sub);
-      if (!user?.isAdmin) {
-        return res.status(403).json({ message: "Admin access required" });
-      }
-
       const post = await storage.updateBlogPost(req.params.id, req.body);
       res.json(post);
     } catch (error) {
@@ -610,12 +590,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/cms/blog-posts/:id', isAuthenticated, async (req: any, res) => {
+  app.delete('/api/cms/blog-posts/:id', requireAdminSession, async (req: any, res) => {
     try {
-      const user = await storage.getUser(req.user.claims.sub);
-      if (!user?.isAdmin) {
-        return res.status(403).json({ message: "Admin access required" });
-      }
 
       await storage.deleteBlogPost(req.params.id);
       res.status(204).send();
@@ -626,13 +602,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Courses CMS
-  app.put('/api/cms/courses/:id', isAuthenticated, async (req: any, res) => {
+  app.put('/api/cms/courses/:id', requireAdminSession, async (req: any, res) => {
     try {
-      const user = await storage.getUser(req.user.claims.sub);
-      if (!user?.isAdmin) {
-        return res.status(403).json({ message: "Admin access required" });
-      }
-
       const course = await storage.updateCourse(req.params.id, req.body);
       res.json(course);
     } catch (error) {
@@ -641,13 +612,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/cms/courses/:id', isAuthenticated, async (req: any, res) => {
+  app.delete('/api/cms/courses/:id', requireAdminSession, async (req: any, res) => {
     try {
-      const user = await storage.getUser(req.user.claims.sub);
-      if (!user?.isAdmin) {
-        return res.status(403).json({ message: "Admin access required" });
-      }
-
       await storage.deleteCourse(req.params.id);
       res.status(204).send();
     } catch (error) {
@@ -667,13 +633,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/cms/content-pages', isAuthenticated, async (req: any, res) => {
+  app.post('/api/cms/content-pages', requireAdminSession, async (req: any, res) => {
     try {
-      const user = await storage.getUser(req.user.claims.sub);
-      if (!user?.isAdmin) {
-        return res.status(403).json({ message: "Admin access required" });
-      }
-
       const page = await storage.createContentPage(req.body);
       res.status(201).json(page);
     } catch (error) {
@@ -682,13 +643,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/cms/content-pages/:id', isAuthenticated, async (req: any, res) => {
+  app.put('/api/cms/content-pages/:id', requireAdminSession, async (req: any, res) => {
     try {
-      const user = await storage.getUser(req.user.claims.sub);
-      if (!user?.isAdmin) {
-        return res.status(403).json({ message: "Admin access required" });
-      }
-
       const page = await storage.updateContentPage(req.params.id, req.body);
       res.json(page);
     } catch (error) {
@@ -708,13 +664,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/cms/team-members', isAuthenticated, async (req: any, res) => {
+  app.post('/api/cms/team-members', requireAdminSession, async (req: any, res) => {
     try {
-      const user = await storage.getUser(req.user.claims.sub);
-      if (!user?.isAdmin) {
-        return res.status(403).json({ message: "Admin access required" });
-      }
-
       const member = await storage.createTeamMember(req.body);
       res.status(201).json(member);
     } catch (error) {
@@ -723,13 +674,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/cms/team-members/:id', isAuthenticated, async (req: any, res) => {
+  app.put('/api/cms/team-members/:id', requireAdminSession, async (req: any, res) => {
     try {
-      const user = await storage.getUser(req.user.claims.sub);
-      if (!user?.isAdmin) {
-        return res.status(403).json({ message: "Admin access required" });
-      }
-
       const member = await storage.updateTeamMember(req.params.id, req.body);
       res.json(member);
     } catch (error) {
@@ -738,13 +684,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/cms/team-members/:id', isAuthenticated, async (req: any, res) => {
+  app.delete('/api/cms/team-members/:id', requireAdminSession, async (req: any, res) => {
     try {
-      const user = await storage.getUser(req.user.claims.sub);
-      if (!user?.isAdmin) {
-        return res.status(403).json({ message: "Admin access required" });
-      }
-
       await storage.deleteTeamMember(req.params.id);
       res.status(204).send();
     } catch (error) {
@@ -952,15 +893,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ success: true });
     });
   });
-
-  // Admin middleware for session-based authentication
-  const requireAdminSession = (req: any, res: any, next: any) => {
-    if (!(req.session as any)?.adminUser) {
-      return res.status(401).json({ message: "Admin authentication required" });
-    }
-    req.adminUser = (req.session as any).adminUser;
-    next();
-  };
 
   // User management routes
   app.get('/api/admin/users', requireAdminSession, async (req: any, res) => {
