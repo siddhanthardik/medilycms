@@ -27,19 +27,19 @@ export function Navbar() {
     { href: "/contact", label: "Contact us", active: location === "/contact" },
   ];
 
-  // Authenticated navigation items (when user is logged in and accessed clinical rotations)
-  const authenticatedNavItems = [
+  // Clinical rotation navigation items (when user is logged in)
+  const clinicalRotationNavItems = [
     { href: "/", label: "Browse Rotations", active: location === "/" },
     { href: "/dashboard", label: "My Applications", active: location === "/dashboard" },
+    { href: "/clinical-rotations", label: "All Programs", active: location === "/clinical-rotations" },
     { href: "/favorites", label: "Favorites", active: location === "/favorites" },
-    { href: "/reviews", label: "Reviews", active: location === "/reviews" },
+    { href: "/reviews", label: "My Reviews", active: location === "/reviews" },
     // Only show admin panel for authorized Medily representatives (users with adminRole)
     ...((user as any)?.isAdmin && (user as any)?.adminRole ? [{ href: "/admin", label: "Admin Panel", active: location === "/admin" }] : []),
   ];
 
-  // Use primary navigation for most pages, authenticated navigation only after clinical rotations login
-  const shouldShowAuthenticatedNav = isAuthenticated && (location.startsWith('/dashboard') || location.startsWith('/favorites') || location.startsWith('/reviews') || location.startsWith('/admin'));
-  const navItems = shouldShowAuthenticatedNav ? authenticatedNavItems : primaryNavItems;
+  // Show clinical rotation navigation for all logged-in users
+  const navItems = isAuthenticated ? clinicalRotationNavItems : primaryNavItems;
 
   return (
     <nav className="bg-white shadow-sm border-b sticky top-0 z-50">
@@ -96,7 +96,7 @@ export function Navbar() {
             )}
 
             {/* Notifications */}
-            {isAuthenticated && shouldShowAuthenticatedNav && (
+            {isAuthenticated && (
               <Button variant="ghost" size="sm" className="text-gray-500 hover:text-gray-700 hover:scale-105 transition-transform duration-200">
                 <Bell className="h-5 w-5" />
                 <span className="sr-only">Notifications</span>

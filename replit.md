@@ -27,6 +27,10 @@ Preferred communication style: Simple, everyday language.
 - Added performance optimizations: reduced auth polling, proper stale time settings, image lazy loading, and font display optimization
 - Target loading time reduced to under 1 second through query caching and request reduction
 - Updated MEDILY logo consistently across all pages including navbar, landing page, footer, and page title for cohesive branding
+- Implemented clinical rotation-focused navigation for logged-in users with dedicated sections: Browse Rotations, My Applications, All Programs, Favorites, and My Reviews
+- Created Favorites page for users to manage saved clinical rotation programs with empty state and program cards
+- Created Reviews page for users to view, edit, and delete their program reviews with star ratings and content management
+- Updated navigation system to automatically switch to clinical rotation-specific menu items when users are authenticated
 
 ## System Architecture
 

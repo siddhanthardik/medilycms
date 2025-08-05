@@ -18,6 +18,8 @@ import Blog from "@/pages/blog";
 import Join from "@/pages/join";
 import ClinicalRotations from "@/pages/clinical-rotations";
 import CMSDashboard from "@/pages/cms-dashboard";
+import Favorites from "@/pages/favorites";
+import Reviews from "@/pages/reviews";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -42,6 +44,8 @@ function Router() {
           <Route path="/dashboard" component={UserDashboard} />
           <Route path="/program/:id" component={ProgramDetail} />
           <Route path="/cms" component={CMSDashboard} />
+          <Route path="/favorites" component={Favorites} />
+          <Route path="/reviews" component={Reviews} />
         </>
       )}
       <Route component={NotFound} />
