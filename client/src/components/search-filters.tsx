@@ -47,8 +47,8 @@ export default function SearchFilters({ filters, onFilterChange, specialties }: 
         <div className="mb-6">
           <h4 className="font-medium text-gray-900 mb-3">Specialty</h4>
           <Select
-            value={filters.specialty || ""}
-            onValueChange={(value) => handleFilterChange("specialty", value)}
+            value={filters.specialty || "all"}
+            onValueChange={(value) => handleFilterChange("specialty", value === "all" ? "" : value)}
           >
             <SelectTrigger>
               <SelectValue placeholder="All Specialties" />
@@ -157,9 +157,9 @@ export default function SearchFilters({ filters, onFilterChange, specialties }: 
             <div>
               <label className="text-sm text-gray-600 mb-1 block">Minimum</label>
               <Select
-                value={filters.minDuration?.toString() || ""}
+                value={filters.minDuration?.toString() || "any"}
                 onValueChange={(value) => 
-                  handleFilterChange("minDuration", value ? parseInt(value) : undefined)
+                  handleFilterChange("minDuration", value === "any" ? undefined : parseInt(value))
                 }
               >
                 <SelectTrigger>
@@ -178,9 +178,9 @@ export default function SearchFilters({ filters, onFilterChange, specialties }: 
             <div>
               <label className="text-sm text-gray-600 mb-1 block">Maximum</label>
               <Select
-                value={filters.maxDuration?.toString() || ""}
+                value={filters.maxDuration?.toString() || "any"}
                 onValueChange={(value) => 
-                  handleFilterChange("maxDuration", value ? parseInt(value) : undefined)
+                  handleFilterChange("maxDuration", value === "any" ? undefined : parseInt(value))
                 }
               >
                 <SelectTrigger>

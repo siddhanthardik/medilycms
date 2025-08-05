@@ -72,9 +72,9 @@ function AuthRequired() {
 // Main Clinical Rotations Component for authenticated users
 function ClinicalRotationsContent() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedSpecialty, setSelectedSpecialty] = useState("");
-  const [selectedCountry, setSelectedCountry] = useState("");
-  const [selectedType, setSelectedType] = useState("");
+  const [selectedSpecialty, setSelectedSpecialty] = useState("all");
+  const [selectedCountry, setSelectedCountry] = useState("all");
+  const [selectedType, setSelectedType] = useState("all");
 
   const { data: programs, isLoading: programsLoading } = useQuery({
     queryKey: ["/api/programs", searchTerm, selectedSpecialty, selectedCountry, selectedType],
@@ -131,7 +131,7 @@ function ClinicalRotationsContent() {
                   <SelectValue placeholder="Specialty" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Specialties</SelectItem>
+                  <SelectItem value="all">All Specialties</SelectItem>
                   {(specialties as any)?.map((specialty: any) => (
                     <SelectItem key={specialty.id} value={specialty.id}>
                       {specialty.name}
@@ -144,7 +144,7 @@ function ClinicalRotationsContent() {
                   <SelectValue placeholder="Country" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Countries</SelectItem>
+                  <SelectItem value="all">All Countries</SelectItem>
                   <SelectItem value="United States">United States</SelectItem>
                   <SelectItem value="United Kingdom">United Kingdom</SelectItem>
                   <SelectItem value="Canada">Canada</SelectItem>
@@ -157,7 +157,7 @@ function ClinicalRotationsContent() {
                   <SelectValue placeholder="Type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Types</SelectItem>
+                  <SelectItem value="all">All Types</SelectItem>
                   <SelectItem value="observership">Observership</SelectItem>
                   <SelectItem value="hands_on">Hands-on</SelectItem>
                   <SelectItem value="fellowship">Fellowship</SelectItem>
