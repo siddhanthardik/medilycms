@@ -27,13 +27,8 @@ import {
   Trash, 
   Eye,
   Upload,
-  Calendar,
-  User,
-  TrendingUp,
-  Users,
-  DollarSign
+  User
 } from "lucide-react";
-import { Link } from "wouter";
 
 // Schema for forms
 const blogPostSchema = z.object({
@@ -64,56 +59,17 @@ const courseSchema = z.object({
 });
 
 export default function CMSDashboard() {
-  const { user, isAuthenticated } = useAuth();
-  const { toast } = useToast();
+  const { user, isLoading: authLoading } = useAuth();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
+  
   const [activeTab, setActiveTab] = useState("overview");
   const [blogDialogOpen, setBlogDialogOpen] = useState(false);
   const [courseDialogOpen, setCourseDialogOpen] = useState(false);
+  const [selectedBlogPost, setSelectedBlogPost] = useState<any>(null);
+  const [selectedCourse, setSelectedCourse] = useState<any>(null);
 
-  // Check admin access
-  if (!isAuthenticated || !(user as any)?.isAdmin) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Card className="w-96">
-          <CardHeader>
-            <CardTitle>Access Denied</CardTitle>
-            <CardDescription>
-              You need administrator privileges to access the Content Management System.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Link href="/">
-              <Button>Go Home</Button>
-            </Link>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  // Fetch CMS data
-  const { data: blogPosts = [], isLoading: blogLoading } = useQuery({
-    queryKey: ['/api/cms/blog-posts'],
-    staleTime: 2 * 60 * 1000,
-  });
-
-  const { data: courses = [], isLoading: coursesLoading } = useQuery({
-    queryKey: ['/api/cms/courses'],
-    staleTime: 2 * 60 * 1000,
-  });
-
-  const { data: contentPages = [], isLoading: pagesLoading } = useQuery({
-    queryKey: ['/api/cms/content-pages'],
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const { data: mediaAssets = [], isLoading: mediaLoading } = useQuery({
-    queryKey: ['/api/cms/media-assets'],
-    staleTime: 5 * 60 * 1000,
-  });
-
-  // Forms
+  // Form setup
   const blogForm = useForm<z.infer<typeof blogPostSchema>>({
     resolver: zodResolver(blogPostSchema),
     defaultValues: {
@@ -125,7 +81,29 @@ export default function CMSDashboard() {
     resolver: zodResolver(courseSchema),
     defaultValues: {
       status: "draft",
+      difficulty: "beginner",
     },
+  });
+
+  // Data queries
+  const { data: blogPosts = [], isLoading: blogLoading } = useQuery({
+    queryKey: ['/api/cms/blog-posts'],
+    retry: false,
+  });
+
+  const { data: courses = [], isLoading: coursesLoading } = useQuery({
+    queryKey: ['/api/cms/courses'],
+    retry: false,
+  });
+
+  const { data: contentPages = [], isLoading: pagesLoading } = useQuery({
+    queryKey: ['/api/cms/content-pages'],
+    retry: false,
+  });
+
+  const { data: mediaAssets = [], isLoading: mediaLoading } = useQuery({
+    queryKey: ['/api/cms/media-assets'],
+    retry: false,
   });
 
   // Mutations
@@ -179,6 +157,85 @@ export default function CMSDashboard() {
     },
   });
 
+  const updateBlogPost = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: z.infer<typeof blogPostSchema> }) => {
+      const tagsArray = data.tags ? data.tags.split(',').map(tag => tag.trim()) : [];
+      const payload = { ...data, tags: tagsArray };
+      return apiRequest("PUT", `/api/cms/blog-posts/${id}`, payload);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/cms/blog-posts'] });
+      setBlogDialogOpen(false);
+      setSelectedBlogPost(null);
+      blogForm.reset();
+      toast({ title: "Success", description: "Blog post updated successfully" });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => window.location.href = "/api/login", 500);
+        return;
+      }
+      toast({ title: "Error", description: "Failed to update blog post", variant: "destructive" });
+    },
+  });
+
+  const deleteBlogPost = useMutation({
+    mutationFn: async (id: string) => {
+      return apiRequest("DELETE", `/api/cms/blog-posts/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/cms/blog-posts'] });
+      toast({ title: "Success", description: "Blog post deleted successfully" });
+    },
+    onError: (error) => {
+      toast({ title: "Error", description: "Failed to delete blog post", variant: "destructive" });
+    },
+  });
+
+  const updateCourse = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: z.infer<typeof courseSchema> }) => {
+      return apiRequest("PUT", `/api/cms/courses/${id}`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/cms/courses'] });
+      setCourseDialogOpen(false);
+      setSelectedCourse(null);
+      courseForm.reset();
+      toast({ title: "Success", description: "Course updated successfully" });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => window.location.href = "/api/login", 500);
+        return;
+      }
+      toast({ title: "Error", description: "Failed to update course", variant: "destructive" });
+    },
+  });
+
+  const deleteCourse = useMutation({
+    mutationFn: async (id: string) => {
+      return apiRequest("DELETE", `/api/cms/courses/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/cms/courses'] });
+      toast({ title: "Success", description: "Course deleted successfully" });
+    },
+    onError: (error) => {
+      toast({ title: "Error", description: "Failed to delete course", variant: "destructive" });
+    },
+  });
+
+  // Helper functions
   const generateSlug = (title: string) => {
     return title
       .toLowerCase()
@@ -187,13 +244,80 @@ export default function CMSDashboard() {
       .trim();
   };
 
+  const handleEditBlogPost = (post: any) => {
+    setSelectedBlogPost(post);
+    blogForm.reset({
+      title: post.title,
+      slug: post.slug,
+      excerpt: post.excerpt || '',
+      content: post.content,
+      author: post.author,
+      category: post.category,
+      tags: Array.isArray(post.tags) ? post.tags.join(', ') : '',
+      featuredImage: post.featuredImage || '',
+      readTime: post.readTime || '',
+      status: post.status,
+    });
+    setBlogDialogOpen(true);
+  };
+
+  const handleEditCourse = (course: any) => {
+    setSelectedCourse(course);
+    courseForm.reset({
+      title: course.title,
+      slug: course.slug,
+      description: course.description || '',
+      fullDescription: course.fullDescription || '',
+      price: course.price || '',
+      category: course.category || '',
+      difficulty: course.difficulty || 'beginner',
+      duration: course.duration || '',
+      featuredImage: course.featuredImage || '',
+      instructor: course.instructor || '',
+      status: course.status,
+    });
+    setCourseDialogOpen(true);
+  };
+
   const handleBlogSubmit = (data: z.infer<typeof blogPostSchema>) => {
-    createBlogPost.mutate(data);
+    if (selectedBlogPost) {
+      updateBlogPost.mutate({ id: selectedBlogPost.id, data });
+    } else {
+      createBlogPost.mutate(data);
+    }
   };
 
   const handleCourseSubmit = (data: z.infer<typeof courseSchema>) => {
-    createCourse.mutate(data);
+    if (selectedCourse) {
+      updateCourse.mutate({ id: selectedCourse.id, data });
+    } else {
+      createCourse.mutate(data);
+    }
   };
+
+  const handleNewBlogPost = () => {
+    setSelectedBlogPost(null);
+    blogForm.reset({
+      status: "draft",
+    });
+    setBlogDialogOpen(true);
+  };
+
+  const handleNewCourse = () => {
+    setSelectedCourse(null);
+    courseForm.reset({
+      status: "draft",
+    });
+    setCourseDialogOpen(true);
+  };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -207,7 +331,7 @@ export default function CMSDashboard() {
           </div>
           <Badge variant="secondary" className="px-4 py-2">
             <User className="h-4 w-4 mr-2" />
-            {(user as any).firstName} {(user as any).lastName}
+            {(user as any)?.firstName} {(user as any)?.lastName}
           </Badge>
         </div>
 
@@ -321,53 +445,60 @@ export default function CMSDashboard() {
               <h2 className="text-2xl font-bold">Blog Posts</h2>
               <Dialog open={blogDialogOpen} onOpenChange={setBlogDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button>
+                  <Button onClick={handleNewBlogPost}>
                     <Plus className="h-4 w-4 mr-2" />
                     New Blog Post
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
                   <DialogHeader>
-                    <DialogTitle>Create New Blog Post</DialogTitle>
+                    <DialogTitle>
+                      {selectedBlogPost ? 'Edit Blog Post' : 'Create New Blog Post'}
+                    </DialogTitle>
                     <DialogDescription>
-                      Add a new blog post to your website
+                      {selectedBlogPost ? 'Update the blog post details below.' : 'Fill in the details to create a new blog post.'}
                     </DialogDescription>
                   </DialogHeader>
                   <Form {...blogForm}>
                     <form onSubmit={blogForm.handleSubmit(handleBlogSubmit)} className="space-y-4">
-                      <FormField
-                        control={blogForm.control}
-                        name="title"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Title</FormLabel>
-                            <FormControl>
-                              <Input 
-                                {...field} 
-                                onChange={(e) => {
-                                  field.onChange(e);
-                                  const slug = generateSlug(e.target.value);
-                                  blogForm.setValue('slug', slug);
-                                }}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={blogForm.control}
-                        name="slug"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Slug</FormLabel>
-                            <FormControl>
-                              <Input {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                          control={blogForm.control}
+                          name="title"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Title</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  {...field} 
+                                  placeholder="Enter blog post title"
+                                  onChange={(e) => {
+                                    field.onChange(e);
+                                    if (!selectedBlogPost) {
+                                      blogForm.setValue('slug', generateSlug(e.target.value));
+                                    }
+                                  }}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={blogForm.control}
+                          name="slug"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Slug</FormLabel>
+                              <FormControl>
+                                <Input {...field} placeholder="url-friendly-slug" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      
                       <FormField
                         control={blogForm.control}
                         name="excerpt"
@@ -375,12 +506,13 @@ export default function CMSDashboard() {
                           <FormItem>
                             <FormLabel>Excerpt</FormLabel>
                             <FormControl>
-                              <Textarea {...field} rows={3} />
+                              <Textarea {...field} placeholder="Brief description or excerpt" rows={3} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
+                      
                       <FormField
                         control={blogForm.control}
                         name="content"
@@ -388,13 +520,14 @@ export default function CMSDashboard() {
                           <FormItem>
                             <FormLabel>Content</FormLabel>
                             <FormControl>
-                              <Textarea {...field} rows={10} />
+                              <Textarea {...field} placeholder="Blog post content (HTML supported)" rows={12} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
-                      <div className="grid grid-cols-2 gap-4">
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <FormField
                           control={blogForm.control}
                           name="author"
@@ -402,7 +535,7 @@ export default function CMSDashboard() {
                             <FormItem>
                               <FormLabel>Author</FormLabel>
                               <FormControl>
-                                <Input {...field} />
+                                <Input {...field} placeholder="Author name" />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -415,32 +548,21 @@ export default function CMSDashboard() {
                             <FormItem>
                               <FormLabel>Category</FormLabel>
                               <FormControl>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select category" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="Medical Education">Medical Education</SelectItem>
-                                    <SelectItem value="Career Advice">Career Advice</SelectItem>
-                                    <SelectItem value="Exam Prep">Exam Prep</SelectItem>
-                                    <SelectItem value="Career Planning">Career Planning</SelectItem>
-                                    <SelectItem value="Technology">Technology</SelectItem>
-                                    <SelectItem value="Networking">Networking</SelectItem>
-                                  </SelectContent>
-                                </Select>
+                                <Input {...field} placeholder="Blog category" />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
                           )}
                         />
                       </div>
-                      <div className="grid grid-cols-2 gap-4">
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <FormField
                           control={blogForm.control}
                           name="tags"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Tags (comma-separated)</FormLabel>
+                              <FormLabel>Tags</FormLabel>
                               <FormControl>
                                 <Input {...field} placeholder="tag1, tag2, tag3" />
                               </FormControl>
@@ -462,6 +584,7 @@ export default function CMSDashboard() {
                           )}
                         />
                       </div>
+                      
                       <FormField
                         control={blogForm.control}
                         name="featuredImage"
@@ -469,40 +592,42 @@ export default function CMSDashboard() {
                           <FormItem>
                             <FormLabel>Featured Image URL</FormLabel>
                             <FormControl>
-                              <Input {...field} placeholder="https://..." />
+                              <Input {...field} placeholder="https://example.com/image.jpg" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
+                      
                       <FormField
                         control={blogForm.control}
                         name="status"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Status</FormLabel>
-                            <FormControl>
-                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
                                 <SelectTrigger>
-                                  <SelectValue />
+                                  <SelectValue placeholder="Select status" />
                                 </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="draft">Draft</SelectItem>
-                                  <SelectItem value="published">Published</SelectItem>
-                                  <SelectItem value="archived">Archived</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </FormControl>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="draft">Draft</SelectItem>
+                                <SelectItem value="published">Published</SelectItem>
+                                <SelectItem value="archived">Archived</SelectItem>
+                              </SelectContent>
+                            </Select>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
+                      
                       <div className="flex justify-end space-x-2">
                         <Button type="button" variant="outline" onClick={() => setBlogDialogOpen(false)}>
                           Cancel
                         </Button>
-                        <Button type="submit" disabled={createBlogPost.isPending}>
-                          {createBlogPost.isPending ? "Creating..." : "Create Post"}
+                        <Button type="submit" disabled={createBlogPost.isPending || updateBlogPost.isPending}>
+                          {createBlogPost.isPending || updateBlogPost.isPending ? 'Saving...' : selectedBlogPost ? 'Update' : 'Create'}
                         </Button>
                       </div>
                     </form>
@@ -510,50 +635,49 @@ export default function CMSDashboard() {
                 </DialogContent>
               </Dialog>
             </div>
-
-            {blogLoading ? (
-              <div className="text-center py-12">
-                <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto" />
-                <p className="mt-4 text-gray-600">Loading blog posts...</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 gap-6">
-                {blogPosts.map((post: any) => (
-                  <Card key={post.id}>
-                    <CardContent className="p-6">
-                      <div className="flex items-start justify-between">
+            
+            <Card>
+              <CardContent className="p-6">
+                {blogLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {blogPosts.map((post: any) => (
+                      <div key={post.id} className="flex items-center justify-between p-4 border rounded-lg">
                         <div className="flex-1">
-                          <div className="flex items-center space-x-2 mb-2">
-                            <h3 className="text-lg font-semibold">{post.title}</h3>
+                          <h3 className="font-medium">{post.title}</h3>
+                          <p className="text-sm text-muted-foreground">{post.excerpt}</p>
+                          <div className="flex items-center space-x-4 mt-2">
+                            <span className="text-xs text-muted-foreground">By {post.author}</span>
                             <Badge variant={post.status === 'published' ? 'default' : 'secondary'}>
                               {post.status}
                             </Badge>
-                          </div>
-                          <p className="text-gray-600 mb-2">{post.excerpt}</p>
-                          <div className="flex items-center space-x-4 text-sm text-gray-500">
-                            <span>By {post.author}</span>
-                            <span>{post.category}</span>
-                            <span>{post.readTime}</span>
-                            <span>{new Date(post.createdAt).toLocaleDateString()}</span>
+                            {post.category && (
+                              <Badge variant="outline">{post.category}</Badge>
+                            )}
                           </div>
                         </div>
-                        <div className="flex items-center space-x-2 ml-4">
-                          <Button variant="outline" size="sm">
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button variant="outline" size="sm">
+                        <div className="flex items-center space-x-2">
+                          <Button size="sm" variant="outline" onClick={() => handleEditBlogPost(post)}>
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button variant="outline" size="sm">
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            onClick={() => deleteBlogPost.mutate(post.id)}
+                            disabled={deleteBlogPost.isPending}
+                          >
                             <Trash className="h-4 w-4" />
                           </Button>
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="courses" className="space-y-6">
@@ -561,75 +685,40 @@ export default function CMSDashboard() {
               <h2 className="text-2xl font-bold">Courses</h2>
               <Dialog open={courseDialogOpen} onOpenChange={setCourseDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button>
+                  <Button onClick={handleNewCourse}>
                     <Plus className="h-4 w-4 mr-2" />
                     New Course
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
                   <DialogHeader>
-                    <DialogTitle>Create New Course</DialogTitle>
+                    <DialogTitle>
+                      {selectedCourse ? 'Edit Course' : 'Create New Course'}
+                    </DialogTitle>
                     <DialogDescription>
-                      Add a new course to your platform
+                      {selectedCourse ? 'Update the course details below.' : 'Fill in the details to create a new course.'}
                     </DialogDescription>
                   </DialogHeader>
                   <Form {...courseForm}>
                     <form onSubmit={courseForm.handleSubmit(handleCourseSubmit)} className="space-y-4">
-                      <FormField
-                        control={courseForm.control}
-                        name="title"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Title</FormLabel>
-                            <FormControl>
-                              <Input 
-                                {...field} 
-                                onChange={(e) => {
-                                  field.onChange(e);
-                                  const slug = generateSlug(e.target.value);
-                                  courseForm.setValue('slug', slug);
-                                }}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={courseForm.control}
-                        name="slug"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Slug</FormLabel>
-                            <FormControl>
-                              <Input {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={courseForm.control}
-                        name="description"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Description</FormLabel>
-                            <FormControl>
-                              <Textarea {...field} rows={3} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <FormField
                           control={courseForm.control}
-                          name="price"
+                          name="title"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Price</FormLabel>
+                              <FormLabel>Title</FormLabel>
                               <FormControl>
-                                <Input {...field} placeholder="299.99" />
+                                <Input 
+                                  {...field} 
+                                  placeholder="Enter course title"
+                                  onChange={(e) => {
+                                    field.onChange(e);
+                                    if (!selectedCourse) {
+                                      courseForm.setValue('slug', generateSlug(e.target.value));
+                                    }
+                                  }}
+                                />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -637,28 +726,61 @@ export default function CMSDashboard() {
                         />
                         <FormField
                           control={courseForm.control}
-                          name="difficulty"
+                          name="slug"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Difficulty</FormLabel>
+                              <FormLabel>Slug</FormLabel>
                               <FormControl>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select difficulty" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="beginner">Beginner</SelectItem>
-                                    <SelectItem value="intermediate">Intermediate</SelectItem>
-                                    <SelectItem value="advanced">Advanced</SelectItem>
-                                  </SelectContent>
-                                </Select>
+                                <Input {...field} placeholder="url-friendly-slug" />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
                           )}
                         />
                       </div>
-                      <div className="grid grid-cols-2 gap-4">
+                      
+                      <FormField
+                        control={courseForm.control}
+                        name="description"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Short Description</FormLabel>
+                            <FormControl>
+                              <Textarea {...field} placeholder="Brief course description" rows={3} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={courseForm.control}
+                        name="fullDescription"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Full Description</FormLabel>
+                            <FormControl>
+                              <Textarea {...field} placeholder="Detailed course description (HTML supported)" rows={8} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                          control={courseForm.control}
+                          name="instructor"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Instructor</FormLabel>
+                              <FormControl>
+                                <Input {...field} placeholder="Instructor name" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
                         <FormField
                           control={courseForm.control}
                           name="category"
@@ -666,7 +788,23 @@ export default function CMSDashboard() {
                             <FormItem>
                               <FormLabel>Category</FormLabel>
                               <FormControl>
-                                <Input {...field} />
+                                <Input {...field} placeholder="Course category" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <FormField
+                          control={courseForm.control}
+                          name="price"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Price</FormLabel>
+                              <FormControl>
+                                <Input {...field} placeholder="$99.00" />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -679,26 +817,36 @@ export default function CMSDashboard() {
                             <FormItem>
                               <FormLabel>Duration</FormLabel>
                               <FormControl>
-                                <Input {...field} placeholder="6 weeks" />
+                                <Input {...field} placeholder="4 weeks" />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
                           )}
                         />
+                        <FormField
+                          control={courseForm.control}
+                          name="difficulty"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Difficulty</FormLabel>
+                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select difficulty" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="beginner">Beginner</SelectItem>
+                                  <SelectItem value="intermediate">Intermediate</SelectItem>
+                                  <SelectItem value="advanced">Advanced</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
                       </div>
-                      <FormField
-                        control={courseForm.control}
-                        name="instructor"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Instructor</FormLabel>
-                            <FormControl>
-                              <Input {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                      
                       <FormField
                         control={courseForm.control}
                         name="featuredImage"
@@ -706,40 +854,42 @@ export default function CMSDashboard() {
                           <FormItem>
                             <FormLabel>Featured Image URL</FormLabel>
                             <FormControl>
-                              <Input {...field} placeholder="https://..." />
+                              <Input {...field} placeholder="https://example.com/course-image.jpg" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
+                      
                       <FormField
                         control={courseForm.control}
                         name="status"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Status</FormLabel>
-                            <FormControl>
-                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
                                 <SelectTrigger>
-                                  <SelectValue />
+                                  <SelectValue placeholder="Select status" />
                                 </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="draft">Draft</SelectItem>
-                                  <SelectItem value="published">Published</SelectItem>
-                                  <SelectItem value="archived">Archived</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </FormControl>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="draft">Draft</SelectItem>
+                                <SelectItem value="published">Published</SelectItem>
+                                <SelectItem value="archived">Archived</SelectItem>
+                              </SelectContent>
+                            </Select>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
+                      
                       <div className="flex justify-end space-x-2">
                         <Button type="button" variant="outline" onClick={() => setCourseDialogOpen(false)}>
                           Cancel
                         </Button>
-                        <Button type="submit" disabled={createCourse.isPending}>
-                          {createCourse.isPending ? "Creating..." : "Create Course"}
+                        <Button type="submit" disabled={createCourse.isPending || updateCourse.isPending}>
+                          {createCourse.isPending || updateCourse.isPending ? 'Saving...' : selectedCourse ? 'Update' : 'Create'}
                         </Button>
                       </div>
                     </form>
@@ -747,44 +897,52 @@ export default function CMSDashboard() {
                 </DialogContent>
               </Dialog>
             </div>
-
-            {coursesLoading ? (
-              <div className="text-center py-12">
-                <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto" />
-                <p className="mt-4 text-gray-600">Loading courses...</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {courses.map((course: any) => (
-                  <Card key={course.id}>
-                    <CardContent className="p-6">
-                      <div className="flex items-start justify-between mb-4">
-                        <Badge variant={course.status === 'published' ? 'default' : 'secondary'}>
-                          {course.status}
-                        </Badge>
-                        <div className="flex items-center space-x-1">
-                          <Button variant="outline" size="sm">
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button variant="outline" size="sm">
+            
+            <Card>
+              <CardContent className="p-6">
+                {coursesLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {courses.map((course: any) => (
+                      <div key={course.id} className="flex items-center justify-between p-4 border rounded-lg">
+                        <div className="flex-1">
+                          <h3 className="font-medium">{course.title}</h3>
+                          <p className="text-sm text-muted-foreground">{course.description}</p>
+                          <div className="flex items-center space-x-4 mt-2">
+                            <span className="text-xs text-muted-foreground">By {course.instructor}</span>
+                            <Badge variant={course.status === 'published' ? 'default' : 'secondary'}>
+                              {course.status}
+                            </Badge>
+                            {course.difficulty && (
+                              <Badge variant="outline">{course.difficulty}</Badge>
+                            )}
+                            {course.price && (
+                              <Badge variant="outline">{course.price}</Badge>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Button size="sm" variant="outline" onClick={() => handleEditCourse(course)}>
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button variant="outline" size="sm">
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            onClick={() => deleteCourse.mutate(course.id)}
+                            disabled={deleteCourse.isPending}
+                          >
                             <Trash className="h-4 w-4" />
                           </Button>
                         </div>
                       </div>
-                      <h3 className="text-lg font-semibold mb-2">{course.title}</h3>
-                      <p className="text-gray-600 text-sm mb-4">{course.description}</p>
-                      <div className="flex items-center justify-between text-sm text-gray-500">
-                        <span>{course.instructor}</span>
-                        <span>{course.price ? `$${course.price}` : 'Free'}</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="pages" className="space-y-6">
@@ -795,40 +953,41 @@ export default function CMSDashboard() {
                 New Page
               </Button>
             </div>
-
-            {pagesLoading ? (
-              <div className="text-center py-12">
-                <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto" />
-                <p className="mt-4 text-gray-600">Loading pages...</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 gap-6">
-                {contentPages.map((page: any) => (
-                  <Card key={page.id}>
-                    <CardContent className="p-6">
-                      <div className="flex items-start justify-between">
+            
+            <Card>
+              <CardContent className="p-6">
+                {pagesLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {contentPages.map((page: any) => (
+                      <div key={page.id} className="flex items-center justify-between p-4 border rounded-lg">
                         <div className="flex-1">
-                          <h3 className="text-lg font-semibold mb-2">{page.title || page.pageName}</h3>
-                          <p className="text-gray-600 mb-2">{page.seoDescription}</p>
-                          <div className="flex items-center space-x-4 text-sm text-gray-500">
-                            <span>Page: {page.pageName}</span>
-                            <span>Updated: {new Date(page.updatedAt).toLocaleDateString()}</span>
+                          <h3 className="font-medium">{page.pageName}</h3>
+                          <p className="text-sm text-muted-foreground">{page.title}</p>
+                          <div className="flex items-center space-x-4 mt-2">
+                            <span className="text-xs text-muted-foreground">
+                              Updated {new Date(page.updatedAt).toLocaleDateString()}
+                            </span>
+                            <Badge variant="outline">{page.pageType}</Badge>
                           </div>
                         </div>
-                        <div className="flex items-center space-x-2 ml-4">
-                          <Button variant="outline" size="sm">
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button variant="outline" size="sm">
+                        <div className="flex items-center space-x-2">
+                          <Button size="sm" variant="outline">
                             <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button size="sm" variant="outline">
+                            <Eye className="h-4 w-4" />
                           </Button>
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="media" className="space-y-6">
@@ -839,35 +998,46 @@ export default function CMSDashboard() {
                 Upload Media
               </Button>
             </div>
-
-            {mediaLoading ? (
-              <div className="text-center py-12">
-                <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto" />
-                <p className="mt-4 text-gray-600">Loading media...</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
-                {mediaAssets.map((asset: any) => (
-                  <Card key={asset.id} className="overflow-hidden">
-                    <div className="aspect-square bg-gray-100 flex items-center justify-center">
-                      {asset.mimeType?.startsWith('image/') ? (
-                        <img 
-                          src={asset.filePath} 
-                          alt={asset.altText} 
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <FileText className="h-8 w-8 text-gray-400" />
-                      )}
-                    </div>
-                    <CardContent className="p-3">
-                      <p className="text-xs font-medium truncate">{asset.originalName}</p>
-                      <p className="text-xs text-gray-500">{(asset.fileSize / 1024).toFixed(1)} KB</p>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
+            
+            <Card>
+              <CardContent className="p-6">
+                {mediaLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    {mediaAssets.map((asset: any) => (
+                      <div key={asset.id} className="border rounded-lg p-4">
+                        <div className="aspect-square bg-gray-100 rounded-lg mb-3 flex items-center justify-center overflow-hidden">
+                          {asset.mimeType?.startsWith('image/') ? (
+                            <img 
+                              src={asset.filePath} 
+                              alt={asset.altText || asset.fileName}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <Image className="h-8 w-8 text-gray-400" />
+                          )}
+                        </div>
+                        <h4 className="font-medium text-sm truncate">{asset.fileName}</h4>
+                        <p className="text-xs text-muted-foreground">
+                          {(asset.fileSize / 1024).toFixed(1)} KB
+                        </p>
+                        <div className="flex items-center justify-between mt-3">
+                          <Badge variant="outline" className="text-xs">
+                            {asset.mimeType?.split('/')[1]?.toUpperCase()}
+                          </Badge>
+                          <Button size="sm" variant="outline">
+                            <Trash className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>

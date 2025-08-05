@@ -5,6 +5,14 @@ import { setupAuth, isAuthenticated } from "./replitAuth";
 import { hasPermission, getUserPermissions } from "./adminPermissions";
 import { insertProgramSchema, insertApplicationSchema, insertFavoriteSchema, insertReviewSchema, insertContactQuerySchema, insertNewsletterSchema } from "@shared/schema";
 import { z } from "zod";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
+import express from "express";
+import { exec } from "child_process";
+import { promisify } from "util";
+
+const execPromise = promisify(exec);
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
@@ -485,6 +493,400 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching published blog posts:", error);
       res.status(500).json({ message: "Failed to fetch blog posts" });
+    }
+  });
+
+  // Enhanced CMS Routes for Comprehensive Content Management
+
+  // Configure multer for image uploads
+  const uploadDir = path.join(process.cwd(), 'uploads');
+  if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+  }
+
+  const storage_multer = multer.diskStorage({
+    destination: (req, file, cb) => {
+      cb(null, uploadDir);
+    },
+    filename: (req, file, cb) => {
+      const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1E9)}${path.extname(file.originalname)}`;
+      cb(null, uniqueName);
+    }
+  });
+
+  const upload = multer({
+    storage: storage_multer,
+    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+    fileFilter: (req, file, cb) => {
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+      if (allowedTypes.includes(file.mimetype)) {
+        cb(null, true);
+      } else {
+        cb(new Error('Only JPEG, PNG, and WebP images are allowed'));
+      }
+    }
+  });
+
+  // Image upload with automatic .webp conversion
+  app.post('/api/cms/upload-image', isAuthenticated, upload.single('image'), async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      if (!req.file) {
+        return res.status(400).json({ message: "No image file provided" });
+      }
+
+      const originalPath = req.file.path;
+      const webpFileName = `${path.parse(req.file.filename).name}.webp`;
+      const webpPath = path.join(uploadDir, webpFileName);
+
+      try {
+        // Convert to WebP using sharp or ffmpeg (fallback)
+        try {
+          await execPromise(`ffmpeg -i "${originalPath}" -c:v libwebp -quality 80 "${webpPath}"`);
+        } catch (ffmpegError) {
+          // If ffmpeg is not available, just copy the file for now
+          fs.copyFileSync(originalPath, webpPath);
+        }
+
+        // Clean up original file if conversion was successful
+        if (fs.existsSync(webpPath)) {
+          fs.unlinkSync(originalPath);
+        }
+
+        // Save to database
+        const mediaAsset = await storage.createMediaAsset({
+          fileName: webpFileName,
+          originalName: req.file.originalname,
+          mimeType: 'image/webp',
+          fileSize: req.file.size,
+          filePath: `/uploads/${webpFileName}`,
+          altText: req.body.altText || '',
+          uploadedBy: user.id,
+        });
+
+        res.json({
+          success: true,
+          asset: mediaAsset,
+          url: `/uploads/${webpFileName}`,
+        });
+      } catch (conversionError) {
+        console.error('Error converting image:', conversionError);
+        // Clean up files
+        if (fs.existsSync(originalPath)) fs.unlinkSync(originalPath);
+        if (fs.existsSync(webpPath)) fs.unlinkSync(webpPath);
+        res.status(500).json({ message: "Error processing image" });
+      }
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      res.status(500).json({ message: "Failed to upload image" });
+    }
+  });
+
+  // Serve uploaded images
+  app.use('/uploads', (req, res, next) => {
+    res.setHeader('Cache-Control', 'public, max-age=31536000'); // 1 year cache
+    next();
+  });
+  app.use('/uploads', express.static(uploadDir));
+
+  // Blog Posts CMS
+  app.put('/api/cms/blog-posts/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const post = await storage.updateBlogPost(req.params.id, req.body);
+      res.json(post);
+    } catch (error) {
+      console.error("Error updating blog post:", error);
+      res.status(500).json({ message: "Failed to update blog post" });
+    }
+  });
+
+  app.delete('/api/cms/blog-posts/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      await storage.deleteBlogPost(req.params.id);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting blog post:", error);
+      res.status(500).json({ message: "Failed to delete blog post" });
+    }
+  });
+
+  // Courses CMS
+  app.put('/api/cms/courses/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const course = await storage.updateCourse(req.params.id, req.body);
+      res.json(course);
+    } catch (error) {
+      console.error("Error updating course:", error);
+      res.status(500).json({ message: "Failed to update course" });
+    }
+  });
+
+  app.delete('/api/cms/courses/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      await storage.deleteCourse(req.params.id);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting course:", error);
+      res.status(500).json({ message: "Failed to delete course" });
+    }
+  });
+
+  // Content Pages CMS
+  app.get('/api/cms/content-pages/:pageName', async (req, res) => {
+    try {
+      const page = await storage.getContentPageByName(req.params.pageName);
+      res.json(page);
+    } catch (error) {
+      console.error("Error fetching content page:", error);
+      res.status(500).json({ message: "Failed to fetch content page" });
+    }
+  });
+
+  app.post('/api/cms/content-pages', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const page = await storage.createContentPage(req.body);
+      res.status(201).json(page);
+    } catch (error) {
+      console.error("Error creating content page:", error);
+      res.status(500).json({ message: "Failed to create content page" });
+    }
+  });
+
+  app.put('/api/cms/content-pages/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const page = await storage.updateContentPage(req.params.id, req.body);
+      res.json(page);
+    } catch (error) {
+      console.error("Error updating content page:", error);
+      res.status(500).json({ message: "Failed to update content page" });
+    }
+  });
+
+  // Team Members CMS
+  app.get('/api/cms/team-members', async (req, res) => {
+    try {
+      const members = await storage.getTeamMembers();
+      res.json(members);
+    } catch (error) {
+      console.error("Error fetching team members:", error);
+      res.status(500).json({ message: "Failed to fetch team members" });
+    }
+  });
+
+  app.post('/api/cms/team-members', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const member = await storage.createTeamMember(req.body);
+      res.status(201).json(member);
+    } catch (error) {
+      console.error("Error creating team member:", error);
+      res.status(500).json({ message: "Failed to create team member" });
+    }
+  });
+
+  app.put('/api/cms/team-members/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const member = await storage.updateTeamMember(req.params.id, req.body);
+      res.json(member);
+    } catch (error) {
+      console.error("Error updating team member:", error);
+      res.status(500).json({ message: "Failed to update team member" });
+    }
+  });
+
+  app.delete('/api/cms/team-members/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      await storage.deleteTeamMember(req.params.id);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting team member:", error);
+      res.status(500).json({ message: "Failed to delete team member" });
+    }
+  });
+
+  // Page Sections CMS
+  app.get('/api/cms/page-sections/:pageId', async (req, res) => {
+    try {
+      const sections = await storage.getPageSections(req.params.pageId);
+      res.json(sections);
+    } catch (error) {
+      console.error("Error fetching page sections:", error);
+      res.status(500).json({ message: "Failed to fetch page sections" });
+    }
+  });
+
+  app.post('/api/cms/page-sections', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const section = await storage.createPageSection(req.body);
+      res.status(201).json(section);
+    } catch (error) {
+      console.error("Error creating page section:", error);
+      res.status(500).json({ message: "Failed to create page section" });
+    }
+  });
+
+  app.put('/api/cms/page-sections/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const section = await storage.updatePageSection(req.params.id, req.body);
+      res.json(section);
+    } catch (error) {
+      console.error("Error updating page section:", error);
+      res.status(500).json({ message: "Failed to update page section" });
+    }
+  });
+
+  app.delete('/api/cms/page-sections/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      await storage.deletePageSection(req.params.id);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting page section:", error);
+      res.status(500).json({ message: "Failed to delete page section" });
+    }
+  });
+
+  // Menu Items CMS
+  app.get('/api/cms/menu-items', async (req, res) => {
+    try {
+      const items = await storage.getMenuItems();
+      res.json(items);
+    } catch (error) {
+      console.error("Error fetching menu items:", error);
+      res.status(500).json({ message: "Failed to fetch menu items" });
+    }
+  });
+
+  app.post('/api/cms/menu-items', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const item = await storage.createMenuItem(req.body);
+      res.status(201).json(item);
+    } catch (error) {
+      console.error("Error creating menu item:", error);
+      res.status(500).json({ message: "Failed to create menu item" });
+    }
+  });
+
+  app.put('/api/cms/menu-items/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const item = await storage.updateMenuItem(req.params.id, req.body);
+      res.json(item);
+    } catch (error) {
+      console.error("Error updating menu item:", error);
+      res.status(500).json({ message: "Failed to update menu item" });
+    }
+  });
+
+  app.delete('/api/cms/menu-items/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      await storage.deleteMenuItem(req.params.id);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting menu item:", error);
+      res.status(500).json({ message: "Failed to delete menu item" });
+    }
+  });
+
+  // Contact Info CMS
+  app.get('/api/cms/contact-info', async (req, res) => {
+    try {
+      const info = await storage.getContactInfo();
+      res.json(info);
+    } catch (error) {
+      console.error("Error fetching contact info:", error);
+      res.status(500).json({ message: "Failed to fetch contact info" });
+    }
+  });
+
+  app.put('/api/cms/contact-info', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const info = await storage.upsertContactInfo(req.body);
+      res.json(info);
+    } catch (error) {
+      console.error("Error updating contact info:", error);
+      res.status(500).json({ message: "Failed to update contact info" });
     }
   });
 

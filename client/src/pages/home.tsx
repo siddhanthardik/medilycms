@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import Navbar from "@/components/navbar";
+import { Navbar } from "@/components/navbar";
 import HeroSection from "@/components/hero-section";
 import SearchFilters from "@/components/search-filters";
 import ProgramCard from "@/components/program-card";

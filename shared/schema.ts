@@ -403,6 +403,88 @@ export const insertMediaAssetSchema = createInsertSchema(mediaAssets).omit({
   createdAt: true,
 });
 
+// CMS Team Members for About Us page
+export const teamMembers = pgTable("team_members", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name").notNull(),
+  position: varchar("position").notNull(),
+  bio: text("bio"),
+  image: varchar("image"),
+  linkedinUrl: varchar("linkedin_url"),
+  twitterUrl: varchar("twitter_url"),
+  email: varchar("email"),
+  displayOrder: integer("display_order").default(0),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// CMS Page Sections for flexible content blocks
+export const pageSections = pgTable("page_sections", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  pageId: varchar("page_id").notNull(), // relates to page name like "home", "about"
+  sectionType: varchar("section_type").notNull(), // "hero", "features", "carousel", "text", "image"
+  title: varchar("title"),
+  subtitle: varchar("subtitle"),
+  content: text("content"),
+  backgroundImage: varchar("background_image"),
+  ctaText: varchar("cta_text"),
+  ctaLink: varchar("cta_link"),
+  displayOrder: integer("display_order").default(0),
+  isActive: boolean("is_active").default(true),
+  settings: jsonb("settings"), // JSON for additional settings
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// CMS Menu Items for navigation management
+export const menuItems = pgTable("menu_items", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  label: varchar("label").notNull(),
+  url: varchar("url").notNull(),
+  parentId: varchar("parent_id"), // for sub-menus
+  displayOrder: integer("display_order").default(0),
+  isActive: boolean("is_active").default(true),
+  openInNewTab: boolean("open_in_new_tab").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// CMS Contact Info
+export const contactInfo = pgTable("contact_info", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  phone: varchar("phone"),
+  email: varchar("email"),
+  address: text("address"),
+  workingHours: varchar("working_hours"),
+  socialLinks: jsonb("social_links"), // JSON object
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Additional CMS Zod schemas
+export const insertTeamMemberSchema = createInsertSchema(teamMembers).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertPageSectionSchema = createInsertSchema(pageSections).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertMenuItemSchema = createInsertSchema(menuItems).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertContactInfoSchema = createInsertSchema(contactInfo).omit({
+  id: true,
+  updatedAt: true,
+});
+
 // Export CMS types
 export type BlogPost = typeof blogPosts.$inferSelect;
 export type InsertBlogPost = z.infer<typeof insertBlogPostSchema>;
@@ -412,3 +494,11 @@ export type ContentPage = typeof contentPages.$inferSelect;
 export type InsertContentPage = z.infer<typeof insertContentPageSchema>;
 export type MediaAsset = typeof mediaAssets.$inferSelect;
 export type InsertMediaAsset = z.infer<typeof insertMediaAssetSchema>;
+export type TeamMember = typeof teamMembers.$inferSelect;
+export type InsertTeamMember = z.infer<typeof insertTeamMemberSchema>;
+export type PageSection = typeof pageSections.$inferSelect;
+export type InsertPageSection = z.infer<typeof insertPageSectionSchema>;
+export type MenuItem = typeof menuItems.$inferSelect;
+export type InsertMenuItem = z.infer<typeof insertMenuItemSchema>;
+export type ContactInfo = typeof contactInfo.$inferSelect;
+export type InsertContactInfo = z.infer<typeof insertContactInfoSchema>;
