@@ -2,6 +2,38 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Carousel Styles */
+.carousel-container {
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+}
+
+.carousel-track {
+  display: flex;
+  width: calc(320px * 12); /* 6 items × 2 sets × 320px width */
+  animation: scroll-right-to-left 30s linear infinite;
+}
+
+.carousel-item {
+  flex: 0 0 300px;
+  margin-right: 20px;
+}
+
+@keyframes scroll-right-to-left {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(calc(-320px * 6)); /* Move by the width of 6 items */
+  }
+}
+
+/* Pause animation on hover */
+.carousel-container:hover .carousel-track {
+  animation-play-state: paused;
+}
+
 :root {
   --background: hsl(0, 0%, 100%);
   --foreground: hsl(20, 14.3%, 4.1%);
