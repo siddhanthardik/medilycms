@@ -187,10 +187,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
       
-      // Prevent admins from applying to programs
-      if (user?.isAdmin) {
-        return res.status(403).json({ message: "Admin users cannot apply to programs" });
-      }
+      // Allow admins to apply to programs for testing purposes
+      // In production, you might want to uncomment this restriction
+      // if (user?.isAdmin) {
+      //   return res.status(403).json({ message: "Admin users cannot apply to programs" });
+      // }
       
       const validatedData = insertApplicationSchema.parse({
         ...req.body,

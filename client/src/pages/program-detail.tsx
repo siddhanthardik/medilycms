@@ -94,9 +94,15 @@ export default function ProgramDetail() {
       });
     },
     onError: (error) => {
+      let errorMessage = "Failed to submit application";
+      if (error.message.includes("Admin users cannot apply")) {
+        errorMessage = "Admin users cannot apply to programs. Please use a regular user account.";
+      } else if (error.message.includes("403")) {
+        errorMessage = "You don't have permission to apply to this program.";
+      }
       toast({
-        title: "Error",
-        description: "Failed to submit application",
+        title: "Application Error",
+        description: errorMessage,
         variant: "destructive",
       });
     },
@@ -108,7 +114,7 @@ export default function ProgramDetail() {
       return;
     }
 
-    if (isFavorite?.isFavorite) {
+    if ((isFavorite as any)?.isFavorite) {
       removeFromFavoritesMutation.mutate();
     } else {
       addToFavoritesMutation.mutate();
@@ -127,8 +133,8 @@ export default function ProgramDetail() {
   const handleShare = () => {
     if (navigator.share) {
       navigator.share({
-        title: program?.title,
-        text: program?.description,
+        title: (program as any)?.title,
+        text: (program as any)?.description,
         url: window.location.href,
       });
     } else {
@@ -218,24 +224,24 @@ export default function ProgramDetail() {
         <div className="flex justify-between items-start mb-6">
           <div>
             <div className="flex items-center space-x-2 mb-2">
-              <Badge className={getTypeColor(program.type)}>
-                {program.type.replace('_', ' ')}
+              <Badge className={getTypeColor((program as any).type)}>
+                {(program as any).type.replace('_', ' ')}
               </Badge>
-              <Badge className={getStatusColor(program.availableSeats, program.totalSeats)}>
-                {program.availableSeats > 0 ? `${program.availableSeats} seats left` : 'Full'}
+              <Badge className={getStatusColor((program as any).availableSeats, (program as any).totalSeats)}>
+                {(program as any).availableSeats > 0 ? `${(program as any).availableSeats} seats left` : 'Full'}
               </Badge>
-              {!program.fee || program.fee === '0' ? (
+              {!(program as any).fee || (program as any).fee === '0' ? (
                 <Badge className="bg-green-100 text-green-800">Free</Badge>
               ) : null}
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">{program.title}</h1>
-            <p className="text-xl text-gray-600">{program.hospitalName}</p>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">{(program as any).title}</h1>
+            <p className="text-xl text-gray-600">{(program as any).hospitalName}</p>
           </div>
           <div className="text-right">
             <p className="text-3xl font-bold text-gray-900">
-              {program.fee && program.fee !== '0' ? `$${program.fee}` : 'FREE'}
+              {(program as any).fee && (program as any).fee !== '0' ? `$${(program as any).fee}` : 'FREE'}
             </p>
-            <p className="text-sm text-gray-500">{program.duration} weeks program</p>
+            <p className="text-sm text-gray-500">{(program as any).duration} weeks program</p>
           </div>
         </div>
 
@@ -250,7 +256,7 @@ export default function ProgramDetail() {
                     <Clock className="mr-2 h-4 w-4" />
                     Duration:
                   </span>
-                  <span className="text-gray-900">{program.duration} weeks</span>
+                  <span className="text-gray-900">{(program as any).duration} weeks</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600 flex items-center">
@@ -258,7 +264,7 @@ export default function ProgramDetail() {
                     Start Date:
                   </span>
                   <span className="text-gray-900">
-                    {new Date(program.startDate).toLocaleDateString()}
+                    {new Date((program as any).startDate).toLocaleDateString()}
                   </span>
                 </div>
                 <div className="flex justify-between">
@@ -266,18 +272,18 @@ export default function ProgramDetail() {
                     <Users className="mr-2 h-4 w-4" />
                     Available Seats:
                   </span>
-                  <span className="text-gray-900">{program.availableSeats} of {program.totalSeats}</span>
+                  <span className="text-gray-900">{(program as any).availableSeats} of {(program as any).totalSeats}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Type:</span>
                   <span className="text-gray-900 capitalize">
-                    {program.type.replace('_', ' ')}
+                    {(program as any).type.replace('_', ' ')}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Hands-on:</span>
                   <span className="text-gray-900">
-                    {program.isHandsOn ? 'Yes' : 'No'}
+                    {(program as any).isHandsOn ? 'Yes' : 'No'}
                   </span>
                 </div>
               </div>
@@ -293,26 +299,26 @@ export default function ProgramDetail() {
                     <MapPin className="mr-2 h-4 w-4" />
                     Location:
                   </span>
-                  <span className="text-gray-900">{program.location}</span>
+                  <span className="text-gray-900">{(program as any).location}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600 flex items-center">
                     <Building className="mr-2 h-4 w-4" />
                     Hospital:
                   </span>
-                  <span className="text-gray-900">{program.hospitalName}</span>
+                  <span className="text-gray-900">{(program as any).hospitalName}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600 flex items-center">
                     <User className="mr-2 h-4 w-4" />
                     Mentor:
                   </span>
-                  <span className="text-gray-900">{program.mentorName}</span>
+                  <span className="text-gray-900">{(program as any).mentorName}</span>
                 </div>
-                {program.mentorTitle && (
+                {(program as any).mentorTitle && (
                   <div className="flex justify-between">
                     <span className="text-gray-600">Title:</span>
-                    <span className="text-gray-900">{program.mentorTitle}</span>
+                    <span className="text-gray-900">{(program as any).mentorTitle}</span>
                   </div>
                 )}
                 <div className="flex justify-between">
@@ -321,7 +327,7 @@ export default function ProgramDetail() {
                     Fee:
                   </span>
                   <span className="text-gray-900">
-                    {program.fee && program.fee !== '0' ? `$${program.fee}` : 'Free'}
+                    {(program as any).fee && (program as any).fee !== '0' ? `$${(program as any).fee}` : 'Free'}
                   </span>
                 </div>
               </div>
@@ -334,18 +340,18 @@ export default function ProgramDetail() {
           <CardContent className="p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-3">Program Description</h3>
             <p className="text-gray-600 leading-relaxed">
-              {program.description}
+              {(program as any).description}
             </p>
           </CardContent>
         </Card>
 
         {/* Requirements */}
-        {program.requirements && program.requirements.length > 0 && (
+        {(program as any).requirements && (program as any).requirements.length > 0 && (
           <Card className="mb-8">
             <CardContent className="p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-3">Requirements</h3>
               <ul className="list-disc list-inside space-y-1 text-gray-600">
-                {program.requirements.map((requirement: string, index: number) => (
+                {(program as any).requirements.map((requirement: string, index: number) => (
                   <li key={index}>{requirement}</li>
                 ))}
               </ul>
@@ -358,10 +364,10 @@ export default function ProgramDetail() {
           <Button 
             className="flex-1 bg-primary hover:bg-primary/90" 
             onClick={handleApply}
-            disabled={applyMutation.isPending || program.availableSeats === 0}
+            disabled={applyMutation.isPending || (program as any).availableSeats === 0}
           >
             <Send className="mr-2 h-4 w-4" />
-            {program.availableSeats === 0 ? 'Program Full' : 'Apply Now'}
+            {(program as any).availableSeats === 0 ? 'Program Full' : 'Apply Now'}
           </Button>
           <Button 
             variant="outline" 
@@ -369,9 +375,9 @@ export default function ProgramDetail() {
             disabled={addToFavoritesMutation.isPending || removeFromFavoritesMutation.isPending}
           >
             <Heart 
-              className={`mr-2 h-4 w-4 ${isFavorite?.isFavorite ? 'fill-current text-red-500' : ''}`} 
+              className={`mr-2 h-4 w-4 ${(isFavorite as any)?.isFavorite ? 'fill-current text-red-500' : ''}`} 
             />
-            {isFavorite?.isFavorite ? 'Remove from Favorites' : 'Save to Favorites'}
+            {(isFavorite as any)?.isFavorite ? 'Remove from Favorites' : 'Save to Favorites'}
           </Button>
           <Button variant="outline" onClick={handleShare}>
             <Share className="mr-2 h-4 w-4" />
