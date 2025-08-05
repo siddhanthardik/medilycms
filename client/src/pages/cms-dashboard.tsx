@@ -62,6 +62,26 @@ export default function CMSDashboard() {
   const { user, isLoading: authLoading } = useAuth();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+
+  // Check if user is admin
+  if (authLoading) {
+    return (
+      <div className="h-screen flex items-center justify-center">
+        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" aria-label="Loading"/>
+      </div>
+    );
+  }
+
+  if (!user || !(user as any)?.isAdmin || !(user as any)?.adminRole) {
+    return (
+      <div className="h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">Access Denied</h1>
+          <p className="text-gray-600">You do not have permission to access the CMS Dashboard.</p>
+        </div>
+      </div>
+    );
+  }
   
   const [activeTab, setActiveTab] = useState("overview");
   const [blogDialogOpen, setBlogDialogOpen] = useState(false);
@@ -86,22 +106,22 @@ export default function CMSDashboard() {
   });
 
   // Data queries
-  const { data: blogPosts = [], isLoading: blogLoading } = useQuery({
+  const { data: blogPosts = [], isLoading: blogLoading } = useQuery<any[]>({
     queryKey: ['/api/cms/blog-posts'],
     retry: false,
   });
 
-  const { data: courses = [], isLoading: coursesLoading } = useQuery({
+  const { data: courses = [], isLoading: coursesLoading } = useQuery<any[]>({
     queryKey: ['/api/cms/courses'],
     retry: false,
   });
 
-  const { data: contentPages = [], isLoading: pagesLoading } = useQuery({
+  const { data: contentPages = [], isLoading: pagesLoading } = useQuery<any[]>({
     queryKey: ['/api/cms/content-pages'],
     retry: false,
   });
 
-  const { data: mediaAssets = [], isLoading: mediaLoading } = useQuery({
+  const { data: mediaAssets = [], isLoading: mediaLoading } = useQuery<any[]>({
     queryKey: ['/api/cms/media-assets'],
     retry: false,
   });
@@ -311,13 +331,7 @@ export default function CMSDashboard() {
     setCourseDialogOpen(true);
   };
 
-  if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
-      </div>
-    );
-  }
+
 
   return (
     <div className="min-h-screen bg-gray-50">

@@ -43,7 +43,7 @@ function Router() {
           <Route path="/admin/add-program" component={AddProgram} />
           <Route path="/dashboard" component={UserDashboard} />
           <Route path="/program/:id" component={ProgramDetail} />
-          <Route path="/cms" component={CMSDashboard} />
+          <Route path="/cms-dashboard" component={CMSDashboard} />
           <Route path="/favorites" component={Favorites} />
           <Route path="/reviews" component={Reviews} />
         </>

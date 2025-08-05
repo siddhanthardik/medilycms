@@ -35,7 +35,10 @@ export function Navbar() {
     { href: "/favorites", label: "Favorites", active: location === "/favorites" },
     { href: "/reviews", label: "My Reviews", active: location === "/reviews" },
     // Only show admin panel for authorized Medily representatives (users with adminRole)
-    ...((user as any)?.isAdmin && (user as any)?.adminRole ? [{ href: "/admin", label: "Admin Panel", active: location === "/admin" }] : []),
+    ...((user as any)?.isAdmin && (user as any)?.adminRole ? [
+      { href: "/admin", label: "Admin Panel", active: location === "/admin" },
+      { href: "/cms-dashboard", label: "CMS Dashboard", active: location === "/cms-dashboard" }
+    ] : []),
   ];
 
   // Show clinical rotation navigation for all logged-in users
