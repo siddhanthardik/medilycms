@@ -90,11 +90,7 @@ export default function Landing() {
                 <a href="/join" className="text-gray-500 hover:text-gray-900">Jobs</a>
                 <a href="/blog" className="text-gray-500 hover:text-gray-900">Blog</a>
                 <a href="/contact" className="text-gray-500 hover:text-gray-900">Contact us</a>
-                <Button variant="outline" onClick={handleLogin}>Log In</Button>
               </div>
-              <Button onClick={handleGetStarted} className="bg-blue-600 hover:bg-blue-700">
-                Get Started
-              </Button>
             </div>
           </div>
         </div>
@@ -236,12 +232,6 @@ export default function Landing() {
             Medily
           </p>
           <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
-            <Button 
-              onClick={handleGetStarted}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg"
-            >
-              Start Learning Today
-            </Button>
             <Button 
               variant="outline"
               className="border-blue-600 text-blue-600 hover:bg-blue-50 px-8 py-3 text-lg"

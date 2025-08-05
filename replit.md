@@ -22,6 +22,7 @@ Preferred communication style: Simple, everyday language.
 - Implemented CSS animations for carousel with 30-second loop, pause on hover functionality, and seamless infinite scroll
 - Carousel features Emergency Medicine, IVF Training, Ultrasound Training, Radiology Training, Surgery Training, and Cardiology Training programs
 - Carousel only displays to authenticated users on home page, hidden from non-authenticated users on landing page
+- Removed "Get Started" and "Log In" buttons from navigation menu for cleaner interface
 
 ## System Architecture
 

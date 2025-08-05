@@ -62,7 +62,7 @@ export function Navbar() {
             )}
 
             {/* User Menu */}
-            {isAuthenticated && user ? (
+            {isAuthenticated && user && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="flex items-center space-x-2 text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-primary">
@@ -109,10 +109,6 @@ export function Navbar() {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-            ) : (
-              <Button onClick={() => window.location.href = "/api/login"}>
-                Sign In
-              </Button>
             )}
 
             {/* Mobile menu button */}
