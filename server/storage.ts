@@ -261,6 +261,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getPreceptorPrograms(preceptorId: string): Promise<Program[]> {
+    // Ensure preceptor can only see their own programs
     return await db.select({
       id: programs.id,
       title: programs.title,
@@ -291,11 +292,15 @@ export class DatabaseStorage implements IStorage {
     })
     .from(programs)
     .leftJoin(specialties, eq(programs.specialtyId, specialties.id))
-    .where(eq(programs.preceptorId, preceptorId))
+    .where(and(
+      eq(programs.preceptorId, preceptorId),
+      eq(programs.isActive, true) // Only show active programs
+    ))
     .orderBy(desc(programs.createdAt));
   }
 
   async getPreceptorApplications(preceptorId: string): Promise<Application[]> {
+    // Ensure preceptor can only see applications for their own programs
     return await db.select({
       id: applications.id,
       userId: applications.userId,
@@ -323,12 +328,17 @@ export class DatabaseStorage implements IStorage {
         id: programs.id,
         title: programs.title,
         type: programs.type,
+        fee: programs.fee,
+        currency: programs.currency,
       },
     })
     .from(applications)
     .innerJoin(programs, eq(applications.programId, programs.id))
     .innerJoin(users, eq(applications.userId, users.id))
-    .where(eq(programs.preceptorId, preceptorId))
+    .where(and(
+      eq(programs.preceptorId, preceptorId),
+      eq(programs.isActive, true) // Only applications for active programs
+    ))
     .orderBy(desc(applications.applicationDate));
   }
 

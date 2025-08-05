@@ -1055,6 +1055,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Preceptor Program Management Routes
   app.get('/api/preceptor/programs', requirePreceptorSession, async (req: any, res) => {
     try {
+      // Only return programs belonging to the authenticated preceptor
       const programs = await storage.getPreceptorPrograms(req.preceptorUser.id);
       res.json(programs);
     } catch (error) {
@@ -1065,7 +1066,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/preceptor/programs', requirePreceptorSession, async (req: any, res) => {
     try {
-      const programData = { ...req.body, preceptorId: req.preceptorUser.id };
+      // Ensure preceptorId is set correctly and cannot be overridden
+      const programData = {
+        ...req.body,
+        preceptorId: req.preceptorUser.id, // Always use authenticated preceptor's ID
+        isActive: true, // New programs are active by default
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      
+      // Remove any potential security-sensitive fields that shouldn't be set by preceptor
+      delete programData.isFeatured;
+      
       const program = await storage.createProgram(programData);
       res.json(program);
     } catch (error) {
@@ -1076,6 +1088,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/preceptor/applications', requirePreceptorSession, async (req: any, res) => {
     try {
+      // Only return applications for programs belonging to the authenticated preceptor
       const applications = await storage.getPreceptorApplications(req.preceptorUser.id);
       res.json(applications);
     } catch (error) {
@@ -1089,8 +1102,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { id } = req.params;
       const { status, reviewNotes } = req.body;
       
-      const application = await storage.updateApplicationStatus(id, status, reviewNotes, req.preceptorUser.id);
-      res.json(application);
+      // First verify that this application belongs to the preceptor's program
+      const application = await storage.getApplication(id);
+      if (!application) {
+        return res.status(404).json({ message: 'Application not found' });
+      }
+      
+      const program = await storage.getProgram(application.programId);
+      if (!program || program.preceptorId !== req.preceptorUser.id) {
+        return res.status(403).json({ message: 'Access denied: Application does not belong to your program' });
+      }
+      
+      const updatedApplication = await storage.updateApplicationStatus(id, status, reviewNotes, req.preceptorUser.id);
+      res.json(updatedApplication);
     } catch (error) {
       console.error('Error updating application:', error);
       res.status(500).json({ message: 'Failed to update application' });
