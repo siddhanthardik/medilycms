@@ -87,7 +87,7 @@ export default function Landing() {
                 <a href="/about" className="text-gray-500 hover:text-gray-900">About us</a>
                 <a href="/courses" className="text-gray-500 hover:text-gray-900">Courses</a>
                 <a href="/clinical-rotations" className="text-gray-500 hover:text-gray-900">Clinical Rotations</a>
-                <a href="/join" className="text-gray-500 hover:text-gray-900">Join</a>
+                <a href="/join" className="text-gray-500 hover:text-gray-900">Jobs</a>
                 <a href="/blog" className="text-gray-500 hover:text-gray-900">Blog</a>
                 <a href="/contact" className="text-gray-500 hover:text-gray-900">Contact us</a>
                 <Button variant="outline" onClick={handleLogin}>Log In</Button>

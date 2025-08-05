@@ -8,6 +8,17 @@ MEDILY is a full-stack web application that serves as a clinical rotation market
 
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes
+
+### August 5, 2025
+- Updated navigation menu: Changed "Join" to "Jobs" in landing page navigation
+- Created completely new About Us page with authentic content from skillwithmedily.com
+- Enhanced About Us page features authentic team information (Mr. Siddhant Hardik - Founder, Dr Jitendra Singh - Growth Mentor, Dr Rajeev Ranjan - Program Mentor)
+- Added authentic vision and mission statements from Skill With Medily
+- Included "Why Skill With Medily" section with key features: simple content, expert-made courses, real skills focus, affordable pricing
+- Enhanced admin dashboard with comprehensive analytics including real-time metrics, charts, and role-based access control
+- Fixed TypeScript errors and improved server-side analytics functionality
+
 ## System Architecture
 
 ### Frontend Architecture
