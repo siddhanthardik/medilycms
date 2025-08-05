@@ -288,13 +288,22 @@ export default function AdminDashboard() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-          <Button 
-            className="bg-primary hover:bg-primary/90"
-            onClick={() => window.location.href = "/admin/add-program"}
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Add New Program
-          </Button>
+          <div className="flex items-center space-x-3">
+            <Button 
+              variant="outline"
+              onClick={() => window.location.href = "/cms"}
+            >
+              <FileText className="mr-2 h-4 w-4" />
+              Content Management
+            </Button>
+            <Button 
+              className="bg-primary hover:bg-primary/90"
+              onClick={() => window.location.href = "/admin/add-program"}
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Add New Program
+            </Button>
+          </div>
         </div>
 
         {/* Analytics Stats */}

@@ -301,3 +301,114 @@ export type InsertReview = z.infer<typeof insertReviewSchema>;
 export type InsertWaitlist = z.infer<typeof insertWaitlistSchema>;
 export type InsertNewsletterSubscription = z.infer<typeof insertNewsletterSchema>;
 export type InsertContactQuery = z.infer<typeof insertContactQuerySchema>;
+
+// Blog Posts table for CMS
+export const blogPosts = pgTable("blog_posts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: varchar("title").notNull(),
+  slug: varchar("slug").notNull().unique(),
+  excerpt: text("excerpt"),
+  content: text("content").notNull(),
+  author: varchar("author").notNull(),
+  category: varchar("category").notNull(),
+  tags: text("tags").array(),
+  featuredImage: varchar("featured_image"),
+  readTime: varchar("read_time"),
+  status: varchar("status").notNull().default("draft"), // draft, published, archived
+  publishedAt: timestamp("published_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  createdBy: varchar("created_by").references(() => users.id),
+});
+
+// Courses table for CMS
+export const courses = pgTable("courses", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: varchar("title").notNull(),
+  slug: varchar("slug").notNull().unique(),
+  description: text("description"),
+  fullDescription: text("full_description"),
+  price: decimal("price", { precision: 10, scale: 2 }),
+  currency: varchar("currency").default("USD"),
+  category: varchar("category"),
+  difficulty: varchar("difficulty"), // beginner, intermediate, advanced
+  duration: varchar("duration"), // e.g., "6 weeks", "3 months"
+  featuredImage: varchar("featured_image"),
+  videoUrl: varchar("video_url"),
+  syllabus: jsonb("syllabus"),
+  prerequisites: text("prerequisites").array(),
+  learningOutcomes: text("learning_outcomes").array(),
+  instructor: varchar("instructor"),
+  instructorBio: text("instructor_bio"),
+  instructorImage: varchar("instructor_image"),
+  status: varchar("status").notNull().default("draft"), // draft, published, archived
+  enrollmentCount: integer("enrollment_count").default(0),
+  rating: decimal("rating", { precision: 3, scale: 2 }),
+  reviewCount: integer("review_count").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  createdBy: varchar("created_by").references(() => users.id),
+});
+
+// Content Pages table for CMS (for managing static pages like About, Contact, etc.)
+export const contentPages = pgTable("content_pages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  pageName: varchar("page_name").notNull().unique(), // about, contact, home-hero, etc.
+  title: varchar("title"),
+  content: jsonb("content"), // flexible content structure
+  seoTitle: varchar("seo_title"),
+  seoDescription: text("seo_description"),
+  status: varchar("status").notNull().default("published"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  updatedBy: varchar("updated_by").references(() => users.id),
+});
+
+// Media/Assets table for CMS
+export const mediaAssets = pgTable("media_assets", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  fileName: varchar("file_name").notNull(),
+  originalName: varchar("original_name").notNull(),
+  mimeType: varchar("mime_type"),
+  fileSize: integer("file_size"),
+  filePath: varchar("file_path").notNull(),
+  altText: varchar("alt_text"),
+  caption: text("caption"),
+  tags: text("tags").array(),
+  createdAt: timestamp("created_at").defaultNow(),
+  uploadedBy: varchar("uploaded_by").references(() => users.id),
+});
+
+// CMS Zod schemas
+export const insertBlogPostSchema = createInsertSchema(blogPosts).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertCourseSchema = createInsertSchema(courses).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertContentPageSchema = createInsertSchema(contentPages).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertMediaAssetSchema = createInsertSchema(mediaAssets).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Export CMS types
+export type BlogPost = typeof blogPosts.$inferSelect;
+export type InsertBlogPost = z.infer<typeof insertBlogPostSchema>;
+export type Course = typeof courses.$inferSelect;
+export type InsertCourse = z.infer<typeof insertCourseSchema>;
+export type ContentPage = typeof contentPages.$inferSelect;
+export type InsertContentPage = z.infer<typeof insertContentPageSchema>;
+export type MediaAsset = typeof mediaAssets.$inferSelect;
+export type InsertMediaAsset = z.infer<typeof insertMediaAssetSchema>;

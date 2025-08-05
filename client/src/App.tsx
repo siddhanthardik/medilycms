@@ -17,6 +17,7 @@ import Courses from "@/pages/courses";
 import Blog from "@/pages/blog";
 import Join from "@/pages/join";
 import ClinicalRotations from "@/pages/clinical-rotations";
+import CMSDashboard from "@/pages/cms-dashboard";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -40,6 +41,7 @@ function Router() {
           <Route path="/admin/add-program" component={AddProgram} />
           <Route path="/dashboard" component={UserDashboard} />
           <Route path="/program/:id" component={ProgramDetail} />
+          <Route path="/cms" component={CMSDashboard} />
         </>
       )}
       <Route component={NotFound} />

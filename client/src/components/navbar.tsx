@@ -4,7 +4,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Bell, ChevronDown, Stethoscope, Menu, X } from "lucide-react";
+import { Bell, ChevronDown, Menu, X, User as UserIcon } from "lucide-react";
+import medilyLogoSrc from "@assets/medily-website-logo_1754424305557.jpg";
 
 export function Navbar() {
   const [location] = useLocation();
@@ -15,7 +16,19 @@ export function Navbar() {
     window.location.href = "/api/logout";
   };
 
-  const navItems = [
+  // Primary navigation items that appear on all pages except when user accesses clinical rotations and authenticates
+  const primaryNavItems = [
+    { href: "/", label: "Home", active: location === "/" },
+    { href: "/about", label: "About us", active: location === "/about" },
+    { href: "/courses", label: "Courses", active: location === "/courses" },
+    { href: "/clinical-rotations", label: "Clinical Rotations", active: location === "/clinical-rotations" },
+    { href: "/join", label: "Jobs", active: location === "/join" },
+    { href: "/blog", label: "Blog", active: location === "/blog" },
+    { href: "/contact", label: "Contact us", active: location === "/contact" },
+  ];
+
+  // Authenticated navigation items (when user is logged in and accessed clinical rotations)
+  const authenticatedNavItems = [
     { href: "/", label: "Browse Rotations", active: location === "/" },
     { href: "/dashboard", label: "My Applications", active: location === "/dashboard" },
     { href: "/favorites", label: "Favorites", active: location === "/favorites" },
@@ -24,26 +37,33 @@ export function Navbar() {
     ...((user as any)?.isAdmin && (user as any)?.adminRole ? [{ href: "/admin", label: "Admin Panel", active: location === "/admin" }] : []),
   ];
 
+  // Use primary navigation for most pages, authenticated navigation only after clinical rotations login
+  const shouldShowAuthenticatedNav = isAuthenticated && (location.startsWith('/dashboard') || location.startsWith('/favorites') || location.startsWith('/reviews') || location.startsWith('/admin'));
+  const navItems = shouldShowAuthenticatedNav ? authenticatedNavItems : primaryNavItems;
+
   return (
     <nav className="bg-white shadow-sm border-b sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex items-center">
-            <Link href="/" className="flex-shrink-0 flex items-center">
-              <Stethoscope className="text-primary text-2xl mr-2" />
-              <span className="text-xl font-bold text-gray-900">MEDILY</span>
+            <Link href="/" className="flex-shrink-0 flex items-center hover:opacity-80 transition-opacity">
+              <img 
+                src={medilyLogoSrc} 
+                alt="Medily" 
+                className="h-8 w-auto mr-2"
+              />
             </Link>
             
             {/* Desktop Navigation */}
-            <div className="hidden md:ml-10 md:flex md:space-x-8">
+            <div className="hidden md:ml-10 md:flex md:space-x-2">
               {navItems.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`px-1 pt-1 pb-4 text-sm font-medium border-b-2 transition-colors ${
+                  className={`px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 transform hover:scale-105 hover:shadow-md border-2 ${
                     item.active
-                      ? "text-primary border-primary"
-                      : "text-gray-500 hover:text-gray-700 border-transparent hover:border-gray-300"
+                      ? "text-primary border-primary bg-blue-50"
+                      : "text-gray-700 border-transparent hover:text-primary hover:border-primary hover:bg-blue-50"
                   }`}
                 >
                   {item.label}
@@ -53,9 +73,31 @@ export function Navbar() {
           </div>
 
           <div className="flex items-center space-x-4">
+            {/* Auth Buttons for Non-Authenticated Users */}
+            {!isAuthenticated && (
+              <div className="hidden md:flex items-center space-x-2">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => window.location.href = "/api/login"}
+                  className="hover:scale-105 transition-transform duration-200"
+                >
+                  <UserIcon className="h-4 w-4 mr-2" />
+                  Sign In
+                </Button>
+                <Button 
+                  size="sm"
+                  onClick={() => window.location.href = "/api/login"}
+                  className="hover:scale-105 transition-transform duration-200"
+                >
+                  Get Started
+                </Button>
+              </div>
+            )}
+
             {/* Notifications */}
-            {isAuthenticated && (
-              <Button variant="ghost" size="sm" className="text-gray-500 hover:text-gray-700">
+            {isAuthenticated && shouldShowAuthenticatedNav && (
+              <Button variant="ghost" size="sm" className="text-gray-500 hover:text-gray-700 hover:scale-105 transition-transform duration-200">
                 <Bell className="h-5 w-5" />
                 <span className="sr-only">Notifications</span>
               </Button>
@@ -65,7 +107,7 @@ export function Navbar() {
             {isAuthenticated && user && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="flex items-center space-x-2 text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-primary">
+                  <Button variant="ghost" className="flex items-center space-x-2 text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-primary hover:scale-105 transition-transform duration-200">
                     <Avatar className="h-8 w-8">
                       <AvatarImage 
                         src={(user as any).profileImageUrl} 
@@ -101,6 +143,11 @@ export function Navbar() {
                           Admin Dashboard
                         </Link>
                       </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href="/cms" className="w-full">
+                          Content Management
+                        </Link>
+                      </DropdownMenuItem>
                     </>
                   )}
                   <DropdownMenuSeparator />
@@ -132,10 +179,10 @@ export function Navbar() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                  className={`block px-3 py-2 rounded-md text-base font-medium transition-all duration-200 border-2 ${
                     item.active
-                      ? "text-primary bg-blue-50"
-                      : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                      ? "text-primary bg-blue-50 border-primary"
+                      : "text-gray-500 hover:text-gray-700 hover:bg-gray-50 border-transparent hover:border-gray-300"
                   }`}
                   onClick={() => setMobileMenuOpen(false)}
                 >

@@ -368,6 +368,126 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // CMS Routes - Blog Posts
+  app.get('/api/cms/blog-posts', isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const posts = await storage.getBlogPosts();
+      res.json(posts);
+    } catch (error) {
+      console.error("Error fetching blog posts:", error);
+      res.status(500).json({ message: "Failed to fetch blog posts" });
+    }
+  });
+
+  app.post('/api/cms/blog-posts', isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const postData = { ...req.body, createdBy: userId };
+      const post = await storage.createBlogPost(postData);
+      res.json(post);
+    } catch (error) {
+      console.error("Error creating blog post:", error);
+      res.status(500).json({ message: "Failed to create blog post" });
+    }
+  });
+
+  // CMS Routes - Courses
+  app.get('/api/cms/courses', isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const courses = await storage.getCourses();
+      res.json(courses);
+    } catch (error) {
+      console.error("Error fetching courses:", error);
+      res.status(500).json({ message: "Failed to fetch courses" });
+    }
+  });
+
+  app.post('/api/cms/courses', isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const courseData = { ...req.body, createdBy: userId };
+      const course = await storage.createCourse(courseData);
+      res.json(course);
+    } catch (error) {
+      console.error("Error creating course:", error);
+      res.status(500).json({ message: "Failed to create course" });
+    }
+  });
+
+  // CMS Routes - Content Pages
+  app.get('/api/cms/content-pages', isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const pages = await storage.getContentPages();
+      res.json(pages);
+    } catch (error) {
+      console.error("Error fetching content pages:", error);
+      res.status(500).json({ message: "Failed to fetch content pages" });
+    }
+  });
+
+  // CMS Routes - Media Assets
+  app.get('/api/cms/media-assets', isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const assets = await storage.getMediaAssets();
+      res.json(assets);
+    } catch (error) {
+      console.error("Error fetching media assets:", error);
+      res.status(500).json({ message: "Failed to fetch media assets" });
+    }
+  });
+
+  // Public Blog Posts API (for blog page)
+  app.get('/api/blog-posts', async (req, res) => {
+    try {
+      const { category } = req.query;
+      const posts = await storage.getPublishedBlogPosts(category as string);
+      res.json(posts);
+    } catch (error) {
+      console.error("Error fetching published blog posts:", error);
+      res.status(500).json({ message: "Failed to fetch blog posts" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

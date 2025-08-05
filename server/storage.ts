@@ -8,6 +8,10 @@ import {
   waitlist,
   newsletterSubscriptions,
   contactQueries,
+  blogPosts,
+  courses,
+  contentPages,
+  mediaAssets,
   type User,
   type UpsertUser,
   type Specialty,
@@ -102,6 +106,15 @@ export interface IStorage {
     popularSpecialties: Array<{ name: string; count: number }>;
     applicationTrends: Array<{ month: string; count: number }>;
   }>;
+
+  // CMS operations
+  getBlogPosts(): Promise<any[]>;
+  createBlogPost(blogPost: any): Promise<any>;
+  getPublishedBlogPosts(category?: string): Promise<any[]>;
+  getCourses(): Promise<any[]>;
+  createCourse(course: any): Promise<any>;
+  getContentPages(): Promise<any[]>;
+  getMediaAssets(): Promise<any[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -491,6 +504,48 @@ export class DatabaseStorage implements IStorage {
       })),
       applicationTrends,
     };
+  }
+
+  // CMS operations
+  async getBlogPosts(): Promise<any[]> {
+    return await db.select().from(blogPosts).orderBy(desc(blogPosts.createdAt));
+  }
+
+  async createBlogPost(blogPost: any): Promise<any> {
+    const [post] = await db.insert(blogPosts).values({
+      ...blogPost,
+      publishedAt: blogPost.status === 'published' ? new Date() : null,
+    }).returning();
+    return post;
+  }
+
+  async getPublishedBlogPosts(category?: string): Promise<any[]> {
+    let query = db.select().from(blogPosts)
+      .where(eq(blogPosts.status, 'published'))
+      .orderBy(desc(blogPosts.publishedAt));
+    
+    if (category && category !== 'All') {
+      query = query.where(eq(blogPosts.category, category));
+    }
+    
+    return await query;
+  }
+
+  async getCourses(): Promise<any[]> {
+    return await db.select().from(courses).orderBy(desc(courses.createdAt));
+  }
+
+  async createCourse(course: any): Promise<any> {
+    const [newCourse] = await db.insert(courses).values(course).returning();
+    return newCourse;
+  }
+
+  async getContentPages(): Promise<any[]> {
+    return await db.select().from(contentPages).orderBy(asc(contentPages.pageName));
+  }
+
+  async getMediaAssets(): Promise<any[]> {
+    return await db.select().from(mediaAssets).orderBy(desc(mediaAssets.createdAt));
   }
 }
 

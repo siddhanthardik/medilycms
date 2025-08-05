@@ -1,12 +1,27 @@
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, User, ArrowRight } from "lucide-react";
+import { Link } from "wouter";
 
 export default function Blog() {
-  const blogPosts = [
+  const [selectedCategory, setSelectedCategory] = useState("All");
+  
+  // Fetch blog posts from backend
+  const { data: blogPosts = [], isLoading } = useQuery({
+    queryKey: ['/api/blog-posts', selectedCategory],
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+    refetchOnWindowFocus: false,
+    enabled: true, // Enable CMS backend
+  });
+
+  // Default blog posts for demo purposes (will be replaced by backend data)
+  const defaultBlogPosts = [
     {
       id: "1",
       title: "The Future of Medical Education: Digital Transformation in Healthcare Training",
@@ -70,6 +85,12 @@ export default function Blog() {
   ];
 
   const categories = ["All", "Medical Education", "Career Advice", "Exam Prep", "Career Planning", "Technology", "Networking"];
+  
+  // Use backend data if available, otherwise use default posts
+  const displayPosts = blogPosts.length > 0 ? blogPosts : defaultBlogPosts;
+  const filteredPosts = selectedCategory === "All" 
+    ? displayPosts 
+    : displayPosts.filter((post: any) => post.category === selectedCategory);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -78,7 +99,6 @@ export default function Blog() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         {/* Hero Section */}
         <div className="text-center mb-16">
-          <h1 className="text-4xl font-bold text-gray-900 mb-6">Medical Education Blog</h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
             Stay updated with the latest insights, tips, and trends in medical education 
             and clinical training from our expert contributors.
@@ -90,8 +110,9 @@ export default function Blog() {
           {categories.map((category) => (
             <Button
               key={category}
-              variant={category === "All" ? "default" : "outline"}
-              className={category === "All" ? "bg-blue-600 hover:bg-blue-700" : ""}
+              variant={category === selectedCategory ? "default" : "outline"}
+              className={category === selectedCategory ? "bg-blue-600 hover:bg-blue-700" : "hover:scale-105 transition-transform duration-200"}
+              onClick={() => setSelectedCategory(category)}
             >
               {category}
             </Button>
@@ -99,74 +120,87 @@ export default function Blog() {
         </div>
 
         {/* Featured Post */}
-        <Card className="mb-12 overflow-hidden">
-          <div className="grid grid-cols-1 lg:grid-cols-2">
-            <div className="aspect-w-16 aspect-h-9 lg:aspect-none">
-              <img 
-                src={blogPosts[0].image} 
-                alt={blogPosts[0].title}
-                className="w-full h-64 lg:h-full object-cover"
-              />
-            </div>
-            <CardContent className="p-8">
-              <Badge className="mb-4">{blogPosts[0].category}</Badge>
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">{blogPosts[0].title}</h2>
-              <p className="text-gray-600 mb-6">{blogPosts[0].excerpt}</p>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4 text-sm text-gray-500">
-                  <div className="flex items-center">
-                    <User className="h-4 w-4 mr-1" />
-                    {blogPosts[0].author}
-                  </div>
-                  <div className="flex items-center">
-                    <Calendar className="h-4 w-4 mr-1" />
-                    {blogPosts[0].date}
-                  </div>
-                  <span>{blogPosts[0].readTime}</span>
-                </div>
-                <Button>
-                  Read More
-                  <ArrowRight className="h-4 w-4 ml-2" />
-                </Button>
-              </div>
-            </CardContent>
-          </div>
-        </Card>
-
-        {/* Blog Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {blogPosts.slice(1).map((post) => (
-            <Card key={post.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-              <div className="aspect-w-16 aspect-h-9">
+        {filteredPosts.length > 0 && (
+          <Card className="mb-12 overflow-hidden hover:shadow-lg transition-shadow duration-300">
+            <div className="grid grid-cols-1 lg:grid-cols-2">
+              <div className="aspect-w-16 aspect-h-9 lg:aspect-none">
                 <img 
-                  src={post.image} 
-                  alt={post.title}
-                  className="w-full h-48 object-cover"
+                  src={filteredPosts[0].image} 
+                  alt={filteredPosts[0].title}
+                  className="w-full h-64 lg:h-full object-cover"
                 />
               </div>
-              <CardContent className="p-6">
-                <Badge className="mb-3">{post.category}</Badge>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">{post.title}</h3>
-                <p className="text-gray-600 mb-4 text-sm">{post.excerpt}</p>
-                
-                <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
-                  <div className="flex items-center">
-                    <User className="h-4 w-4 mr-1" />
-                    {post.author}
-                  </div>
-                  <span>{post.readTime}</span>
-                </div>
-                
+              <CardContent className="p-8">
+                <Badge className="mb-4">{filteredPosts[0].category}</Badge>
+                <h2 className="text-2xl font-bold text-gray-900 mb-4">{filteredPosts[0].title}</h2>
+                <p className="text-gray-600 mb-6">{filteredPosts[0].excerpt}</p>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-500">{post.date}</span>
-                  <Button variant="outline" size="sm">
-                    Read More
-                  </Button>
+                  <div className="flex items-center space-x-4 text-sm text-gray-500">
+                    <div className="flex items-center">
+                      <User className="h-4 w-4 mr-1" />
+                      {filteredPosts[0].author}
+                    </div>
+                    <div className="flex items-center">
+                      <Calendar className="h-4 w-4 mr-1" />
+                      {filteredPosts[0].date}
+                    </div>
+                    <span>{filteredPosts[0].readTime}</span>
+                  </div>
+                  <Link href={`/blog/${filteredPosts[0].id}`}>
+                    <Button className="hover:scale-105 transition-transform duration-200">
+                      Read More
+                      <ArrowRight className="h-4 w-4 ml-2" />
+                    </Button>
+                  </Link>
                 </div>
               </CardContent>
-            </Card>
-          ))}
-        </div>
+            </div>
+          </Card>
+        )}
+
+        {/* Blog Grid */}
+        {isLoading ? (
+          <div className="text-center py-12">
+            <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto" />
+            <p className="mt-4 text-gray-600">Loading articles...</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {filteredPosts.slice(1).map((post: any) => (
+              <Card key={post.id} className="overflow-hidden hover:shadow-lg transition-all duration-300 hover:scale-105">
+                <div className="aspect-w-16 aspect-h-9">
+                  <img 
+                    src={post.image} 
+                    alt={post.title}
+                    className="w-full h-48 object-cover"
+                  />
+                </div>
+                <CardContent className="p-6">
+                  <Badge className="mb-3">{post.category}</Badge>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">{post.title}</h3>
+                  <p className="text-gray-600 mb-4 text-sm">{post.excerpt}</p>
+                  
+                  <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
+                    <div className="flex items-center">
+                      <User className="h-4 w-4 mr-1" />
+                      {post.author}
+                    </div>
+                    <span>{post.readTime}</span>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-500">{post.date}</span>
+                    <Link href={`/blog/${post.id}`}>
+                      <Button variant="outline" size="sm" className="hover:scale-105 transition-transform duration-200">
+                        Read More
+                      </Button>
+                    </Link>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
 
         {/* Newsletter Signup */}
         <div className="text-center mt-16 bg-blue-50 rounded-lg p-12">
@@ -183,7 +217,7 @@ export default function Blog() {
               placeholder="Enter your email"
               className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-            <Button className="bg-blue-600 hover:bg-blue-700">
+            <Button className="bg-blue-600 hover:bg-blue-700 hover:scale-105 transition-transform duration-200">
               Subscribe
             </Button>
           </div>
