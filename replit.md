@@ -18,10 +18,10 @@ Preferred communication style: Simple, everyday language.
 - Included "Why Skill With Medily" section with key features: simple content, expert-made courses, real skills focus, affordable pricing
 - Enhanced admin dashboard with comprehensive analytics including real-time metrics, charts, and role-based access control
 - Fixed TypeScript errors and improved server-side analytics functionality
-- Added smooth horizontal carousel on landing page (non-authenticated users only) showcasing medical department programs with continuous right-to-left scrolling effect
+- Added smooth horizontal carousel on home page (authenticated users only) showcasing medical department programs with continuous right-to-left scrolling effect
 - Implemented CSS animations for carousel with 30-second loop, pause on hover functionality, and seamless infinite scroll
 - Carousel features Emergency Medicine, IVF Training, Ultrasound Training, Radiology Training, Surgery Training, and Cardiology Training programs
-- Carousel only displays to non-authenticated users on landing page, hidden from authenticated users on home page
+- Carousel only displays to authenticated users on home page, hidden from non-authenticated users on landing page
 
 ## System Architecture
 

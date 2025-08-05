@@ -72,6 +72,214 @@ export default function Home() {
       <Navbar />
       <HeroSection onSearch={handleSearch} specialties={specialties as any[]} />
       
+      {/* Medical Department Programs Carousel - Only on Home Page for Authenticated Users */}
+      <div className="py-16 bg-white overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 sm:text-4xl">
+              Medical Department Programs
+            </h2>
+            <p className="mt-4 text-xl text-gray-600">
+              Specialized training programs across various medical departments
+            </p>
+          </div>
+
+          {/* Continuous Scrolling Carousel */}
+          <div className="relative">
+            <div className="carousel-container">
+              <div className="carousel-track">
+                {/* First set of programs */}
+                <div className="carousel-item">
+                  <div className="relative h-64 rounded-xl overflow-hidden shadow-lg">
+                    <img 
+                      src="https://images.unsplash.com/photo-1551601651-2a8555f1a136?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300" 
+                      alt="Emergency Medicine"
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+                    <div className="absolute bottom-6 left-6 text-white">
+                      <h3 className="text-xl font-bold">Emergency Medicine Training</h3>
+                      <p className="text-sm opacity-90">Critical care and emergency procedures</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="carousel-item">
+                  <div className="relative h-64 rounded-xl overflow-hidden shadow-lg">
+                    <img 
+                      src="https://images.unsplash.com/photo-1559757175-0eb30cd8c063?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300" 
+                      alt="IVF Training"
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+                    <div className="absolute bottom-6 left-6 text-white">
+                      <h3 className="text-xl font-bold">IVF Training</h3>
+                      <p className="text-sm opacity-90">Reproductive medicine and fertility treatments</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="carousel-item">
+                  <div className="relative h-64 rounded-xl overflow-hidden shadow-lg">
+                    <img 
+                      src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1f?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300" 
+                      alt="Ultrasound Training"
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+                    <div className="absolute bottom-6 left-6 text-white">
+                      <h3 className="text-xl font-bold">Ultrasound Training</h3>
+                      <p className="text-sm opacity-90">Diagnostic imaging and sonography</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="carousel-item">
+                  <div className="relative h-64 rounded-xl overflow-hidden shadow-lg">
+                    <img 
+                      src="https://images.unsplash.com/photo-1559757148-5c350d0d3c56?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300" 
+                      alt="Radiology Training"
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+                    <div className="absolute bottom-6 left-6 text-white">
+                      <h3 className="text-xl font-bold">Radiology Training</h3>
+                      <p className="text-sm opacity-90">Medical imaging and diagnostic radiology</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="carousel-item">
+                  <div className="relative h-64 rounded-xl overflow-hidden shadow-lg">
+                    <img 
+                      src="https://images.unsplash.com/photo-1551190822-a9333d879b1f?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300" 
+                      alt="Surgery Training"
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+                    <div className="absolute bottom-6 left-6 text-white">
+                      <h3 className="text-xl font-bold">Surgery Training</h3>
+                      <p className="text-sm opacity-90">Surgical techniques and procedures</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="carousel-item">
+                  <div className="relative h-64 rounded-xl overflow-hidden shadow-lg">
+                    <img 
+                      src="https://images.unsplash.com/photo-1582560475093-ba0103b2ec64?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300" 
+                      alt="Cardiology Training"
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+                    <div className="absolute bottom-6 left-6 text-white">
+                      <h3 className="text-xl font-bold">Cardiology Training</h3>
+                      <p className="text-sm opacity-90">Heart and cardiovascular medicine</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Duplicate set for seamless loop */}
+                <div className="carousel-item">
+                  <div className="relative h-64 rounded-xl overflow-hidden shadow-lg">
+                    <img 
+                      src="https://images.unsplash.com/photo-1551601651-2a8555f1a136?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300" 
+                      alt="Emergency Medicine"
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+                    <div className="absolute bottom-6 left-6 text-white">
+                      <h3 className="text-xl font-bold">Emergency Medicine Training</h3>
+                      <p className="text-sm opacity-90">Critical care and emergency procedures</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="carousel-item">
+                  <div className="relative h-64 rounded-xl overflow-hidden shadow-lg">
+                    <img 
+                      src="https://images.unsplash.com/photo-1559757175-0eb30cd8c063?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300" 
+                      alt="IVF Training"
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+                    <div className="absolute bottom-6 left-6 text-white">
+                      <h3 className="text-xl font-bold">IVF Training</h3>
+                      <p className="text-sm opacity-90">Reproductive medicine and fertility treatments</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="carousel-item">
+                  <div className="relative h-64 rounded-xl overflow-hidden shadow-lg">
+                    <img 
+                      src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1f?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300" 
+                      alt="Ultrasound Training"
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+                    <div className="absolute bottom-6 left-6 text-white">
+                      <h3 className="text-xl font-bold">Ultrasound Training</h3>
+                      <p className="text-sm opacity-90">Diagnostic imaging and sonography</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="carousel-item">
+                  <div className="relative h-64 rounded-xl overflow-hidden shadow-lg">
+                    <img 
+                      src="https://images.unsplash.com/photo-1559757148-5c350d0d3c56?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300" 
+                      alt="Radiology Training"
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+                    <div className="absolute bottom-6 left-6 text-white">
+                      <h3 className="text-xl font-bold">Radiology Training</h3>
+                      <p className="text-sm opacity-90">Medical imaging and diagnostic radiology</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="carousel-item">
+                  <div className="relative h-64 rounded-xl overflow-hidden shadow-lg">
+                    <img 
+                      src="https://images.unsplash.com/photo-1551190822-a9333d879b1f?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300" 
+                      alt="Surgery Training"
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+                    <div className="absolute bottom-6 left-6 text-white">
+                      <h3 className="text-xl font-bold">Surgery Training</h3>
+                      <p className="text-sm opacity-90">Surgical techniques and procedures</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="carousel-item">
+                  <div className="relative h-64 rounded-xl overflow-hidden shadow-lg">
+                    <img 
+                      src="https://images.unsplash.com/photo-1582560475093-ba0103b2ec64?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300" 
+                      alt="Cardiology Training"
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+                    <div className="absolute bottom-6 left-6 text-white">
+                      <h3 className="text-xl font-bold">Cardiology Training</h3>
+                      <p className="text-sm opacity-90">Heart and cardiovascular medicine</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="text-center mt-12">
+            <Button variant="outline" className="border-blue-600 text-blue-600 hover:bg-blue-50">
+              View All Programs
+            </Button>
+          </div>
+        </div>
+      </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col lg:flex-row gap-8">
