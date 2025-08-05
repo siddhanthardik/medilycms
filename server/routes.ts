@@ -1071,12 +1071,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...req.body,
         preceptorId: req.preceptorUser.id, // Always use authenticated preceptor's ID
         isActive: true, // New programs are active by default
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        // Don't set createdAt and updatedAt here - let the database handle defaults
       };
+      
+      // Convert startDate to proper Date object if it's a string
+      if (programData.startDate && typeof programData.startDate === 'string') {
+        programData.startDate = new Date(programData.startDate);
+      }
       
       // Remove any potential security-sensitive fields that shouldn't be set by preceptor
       delete programData.isFeatured;
+      delete programData.createdAt;
+      delete programData.updatedAt;
       
       const program = await storage.createProgram(programData);
       res.json(program);

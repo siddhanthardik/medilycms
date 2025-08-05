@@ -114,7 +114,7 @@ export default function PreceptorDashboard() {
         totalSeats: parseInt(data.totalSeats),
         fee: data.fee ? parseFloat(data.fee) : null,
         requirements: data.requirements ? data.requirements.split('\n').filter(req => req.trim()) : [],
-        startDate: new Date(data.startDate).toISOString(),
+        startDate: data.startDate, // Send as string, backend will handle conversion
       };
       return apiRequest("POST", "/api/preceptor/programs", payload);
     },
@@ -231,7 +231,7 @@ export default function PreceptorDashboard() {
               <GraduationCap className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{programs.length}</div>
+              <div className="text-2xl font-bold">{(programs as any[]).length}</div>
             </CardContent>
           </Card>
           
@@ -241,7 +241,7 @@ export default function PreceptorDashboard() {
               <FileText className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{applications.length}</div>
+              <div className="text-2xl font-bold">{(applications as any[]).length}</div>
             </CardContent>
           </Card>
           
@@ -252,7 +252,7 @@ export default function PreceptorDashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {applications.filter((app: any) => app.status === 'pending').length}
+                {(applications as any[]).filter((app: any) => app.status === 'pending').length}
               </div>
             </CardContent>
           </Card>
@@ -264,7 +264,7 @@ export default function PreceptorDashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {applications.filter((app: any) => app.status === 'enrolled').length}
+                {(applications as any[]).filter((app: any) => app.status === 'enrolled').length}
               </div>
             </CardContent>
           </Card>
@@ -350,7 +350,7 @@ export default function PreceptorDashboard() {
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                  {specialties.map((specialty: any) => (
+                                  {(specialties as any[]).map((specialty: any) => (
                                     <SelectItem key={specialty.id} value={specialty.id}>
                                       {specialty.name}
                                     </SelectItem>
@@ -579,7 +579,7 @@ export default function PreceptorDashboard() {
             <div className="grid gap-6">
               {programsLoading ? (
                 <div className="text-center py-8">Loading programs...</div>
-              ) : programs.length === 0 ? (
+              ) : (programs as any[]).length === 0 ? (
                 <Card>
                   <CardContent className="text-center py-8">
                     <GraduationCap className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -592,7 +592,7 @@ export default function PreceptorDashboard() {
                   </CardContent>
                 </Card>
               ) : (
-                programs.map((program: any) => (
+                (programs as any[]).map((program: any) => (
                   <Card key={program.id}>
                     <CardHeader>
                       <div className="flex justify-between items-start">
@@ -646,7 +646,7 @@ export default function PreceptorDashboard() {
 
             {applicationsLoading ? (
               <div className="text-center py-8">Loading applications...</div>
-            ) : applications.length === 0 ? (
+            ) : (applications as any[]).length === 0 ? (
               <Card>
                 <CardContent className="text-center py-8">
                   <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -669,7 +669,7 @@ export default function PreceptorDashboard() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {applications.map((application: any) => (
+                    {(applications as any[]).map((application: any) => (
                       <TableRow key={application.id}>
                         <TableCell>
                           <div>
