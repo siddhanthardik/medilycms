@@ -31,6 +31,9 @@ export default function Home() {
 
   const { data: programs = [], isLoading } = useQuery({
     queryKey: ['/api/programs', filters, page],
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    gcTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: false,
     queryFn: async () => {
       const searchParams = new URLSearchParams();
       Object.entries(filters).forEach(([key, value]) => {
@@ -40,7 +43,9 @@ export default function Home() {
       });
       searchParams.append('page', page.toString());
       searchParams.append('limit', '10');
-      const response = await fetch(`/api/programs?${searchParams}`);
+      const response = await fetch(`/api/programs?${searchParams}`, {
+        credentials: "include",
+      });
       if (!response.ok) throw new Error('Failed to fetch programs');
       const data = await response.json();
       
@@ -57,6 +62,9 @@ export default function Home() {
 
   const { data: specialties = [] } = useQuery({
     queryKey: ['/api/specialties'],
+    staleTime: 10 * 60 * 1000, // 10 minutes - specialties don't change often
+    gcTime: 30 * 60 * 1000, // 30 minutes
+    refetchOnWindowFocus: false,
   });
 
   const handleSearch = (searchFilters: any) => {

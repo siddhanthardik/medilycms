@@ -23,6 +23,9 @@ Preferred communication style: Simple, everyday language.
 - Carousel features Emergency Medicine, IVF Training, Ultrasound Training, Radiology Training, Surgery Training, and Cardiology Training programs
 - Carousel only displays to authenticated users on home page, hidden from non-authenticated users on landing page
 - Removed "Get Started" and "Log In" buttons from navigation menu for cleaner interface
+- Optimized page loading performance with proper authentication caching, reduced unnecessary API requests, and improved query configurations
+- Added performance optimizations: reduced auth polling, proper stale time settings, image lazy loading, and font display optimization
+- Target loading time reduced to under 1 second through query caching and request reduction
 
 ## System Architecture
 

@@ -2,6 +2,22 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Performance optimizations */
+html {
+  font-display: swap;
+}
+
+/* Optimize image loading */
+img {
+  loading: lazy;
+}
+
+/* Reduce layout shift */
+img[src*="unsplash.com"] {
+  aspect-ratio: 16/9;
+  object-fit: cover;
+}
+
 /* Carousel Styles */
 .carousel-container {
   width: 100%;
