@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Bell, ChevronDown, Stethoscope, Menu, X } from "lucide-react";
 
-export default function Navbar() {
+export function Navbar() {
   const [location] = useLocation();
   const { user, isAuthenticated } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -152,3 +152,5 @@ export default function Navbar() {
     </nav>
   );
 }
+
+export default Navbar;

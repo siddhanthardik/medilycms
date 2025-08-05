@@ -11,12 +11,26 @@ import AdminDashboard from "@/pages/admin-dashboard";
 import UserDashboard from "@/pages/user-dashboard";
 import ProgramDetail from "@/pages/program-detail";
 import AddProgram from "@/pages/add-program";
+import About from "@/pages/about";
+import Contact from "@/pages/contact";
+import Courses from "@/pages/courses";
+import Blog from "@/pages/blog";
+import Join from "@/pages/join";
+import ClinicalRotations from "@/pages/clinical-rotations";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
 
   return (
     <Switch>
+      {/* Public routes accessible without authentication */}
+      <Route path="/about" component={About} />
+      <Route path="/contact" component={Contact} />
+      <Route path="/courses" component={Courses} />
+      <Route path="/blog" component={Blog} />
+      <Route path="/join" component={Join} />
+      <Route path="/clinical-rotations" component={ClinicalRotations} />
+      
       {isLoading || !isAuthenticated ? (
         <Route path="/" component={Landing} />
       ) : (
