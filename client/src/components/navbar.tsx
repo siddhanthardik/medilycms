@@ -30,6 +30,7 @@ export function Navbar() {
   // Clinical rotation navigation items (when user is logged in)
   const clinicalRotationNavItems = [
     { href: "/", label: "Browse Rotations", active: location === "/" },
+    { href: "/about", label: "About us", active: location === "/about" },
     { href: "/dashboard", label: "My Applications", active: location === "/dashboard" },
     { href: "/clinical-rotations", label: "All Programs", active: location === "/clinical-rotations" },
     { href: "/favorites", label: "Favorites", active: location === "/favorites" },
