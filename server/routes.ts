@@ -5,26 +5,7 @@ import { setupAuth, isAuthenticated } from "./replitAuth";
 import { hasPermission, getUserPermissions } from "./adminPermissions";
 
 // Admin authentication middleware
-const isAdminAuthenticated = async (req: any, res: any, next: any) => {
-  try {
-    const adminId = req.session?.adminUser?.id;
-    
-    if (!adminId) {
-      return res.status(401).json({ message: "Admin authentication required" });
-    }
 
-    const admin = await storage.getAdminUser(adminId);
-    if (!admin) {
-      return res.status(401).json({ message: "Invalid admin session" });
-    }
-
-    req.adminUser = admin;
-    next();
-  } catch (error) {
-    console.error("Admin auth middleware error:", error);
-    res.status(500).json({ message: "Authentication error" });
-  }
-};
 import { insertProgramSchema, insertApplicationSchema, insertFavoriteSchema, insertReviewSchema, insertContactQuerySchema, insertNewsletterSchema } from "@shared/schema";
 import { z } from "zod";
 import multer from "multer";
