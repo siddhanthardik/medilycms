@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useAuth } from "@/hooks/useAuth";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { Navbar } from "@/components/navbar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -43,7 +43,7 @@ const createUserSchema = z.object({
 type CreateUserFormData = z.infer<typeof createUserSchema>;
 
 export default function UserManagement() {
-  const { user, isLoading: authLoading } = useAuth();
+  const { adminUser, isLoading: authLoading, isAuthenticated } = useAdminAuth();
   const queryClient = useQueryClient();
   const { toast } = useToast();
   
@@ -71,7 +71,7 @@ export default function UserManagement() {
     );
   }
 
-  if (!user || !(user as any)?.isAdmin || !(user as any)?.adminRole) {
+  if (!isAuthenticated || !adminUser) {
     return (
       <div className="h-screen flex items-center justify-center">
         <div className="text-center">

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useAuth } from "@/hooks/useAuth";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { Navbar } from "@/components/navbar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -59,7 +59,7 @@ const courseSchema = z.object({
 });
 
 export default function CMSDashboard() {
-  const { user, isLoading: authLoading } = useAuth();
+  const { adminUser, isLoading: authLoading, isAuthenticated } = useAdminAuth();
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -72,7 +72,7 @@ export default function CMSDashboard() {
     );
   }
 
-  if (!user || !(user as any)?.isAdmin || !(user as any)?.adminRole) {
+  if (!isAuthenticated || !adminUser) {
     return (
       <div className="h-screen flex items-center justify-center">
         <div className="text-center">
@@ -345,7 +345,7 @@ export default function CMSDashboard() {
           </div>
           <Badge variant="secondary" className="px-4 py-2">
             <User className="h-4 w-4 mr-2" />
-            {(user as any)?.firstName} {(user as any)?.lastName}
+            {adminUser?.firstName} {adminUser?.lastName}
           </Badge>
         </div>
 
