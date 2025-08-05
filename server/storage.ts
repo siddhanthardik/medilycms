@@ -383,24 +383,48 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Analytics operations
-  async getAnalytics(): Promise<{
-    totalPrograms: number;
-    totalUsers: number;
-    totalApplications: number;
-    pendingApplications: number;
-    monthlyRevenue: number;
-    popularSpecialties: Array<{ name: string; count: number }>;
-    applicationTrends: Array<{ month: string; count: number }>;
-  }> {
+  async getAnalytics(): Promise<any> {
     const [totalPrograms] = await db.select({ count: count() }).from(programs);
     const [totalUsers] = await db.select({ count: count() }).from(users);
     const [totalApplications] = await db.select({ count: count() }).from(applications);
     const [pendingApplications] = await db.select({ count: count() })
       .from(applications)
       .where(eq(applications.status, 'pending'));
+    const [acceptedApplications] = await db.select({ count: count() })
+      .from(applications)
+      .where(eq(applications.status, 'accepted'));
+    const [rejectedApplications] = await db.select({ count: count() })
+      .from(applications)
+      .where(eq(applications.status, 'rejected'));
+    const [waitlistedApplications] = await db.select({ count: count() })
+      .from(applications)
+      .where(eq(applications.status, 'waitlisted'));
 
-    // Calculate monthly revenue (mock for now)
-    const monthlyRevenue = 124000;
+    // Program type distribution
+    const programTypeStats = await db
+      .select({
+        type: programs.type,
+        count: count(),
+      })
+      .from(programs)
+      .groupBy(programs.type);
+
+    // Monthly active users (users who applied in the last 30 days)
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    const [activeUsers] = await db.select({ count: sql<number>`count(distinct ${applications.userId})` })
+      .from(applications)
+      .where(sql`${applications.createdAt} >= ${thirtyDaysAgo}`);
+
+    // New users this month
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+    
+    const [newUsersThisMonth] = await db.select({ count: count() })
+      .from(users)
+      .where(sql`${users.createdAt} >= ${startOfMonth}`);
 
     // Get popular specialties
     const popularSpecialties = await db
@@ -413,6 +437,20 @@ export class DatabaseStorage implements IStorage {
       .groupBy(specialties.id, specialties.name)
       .orderBy(desc(count(programs.id)))
       .limit(5);
+
+    // Active countries
+    const [activeCountries] = await db.select({ count: sql<number>`count(distinct ${programs.country})` }).from(programs);
+
+    // Calculate success rate
+    const successRate = totalApplications.count > 0 
+      ? Math.round((acceptedApplications.count / totalApplications.count) * 100) 
+      : 0;
+
+    // Financial analytics (using realistic mock data for demo)
+    const totalRevenue = 245000;
+    const monthlyRevenue = 45000;
+    const avgTransactionValue = 2500;
+    const pendingPayments = 8;
 
     // Get application trends (mock data for now)
     const applicationTrends = [
@@ -429,8 +467,28 @@ export class DatabaseStorage implements IStorage {
       totalUsers: totalUsers.count,
       totalApplications: totalApplications.count,
       pendingApplications: pendingApplications.count,
+      activeUsers: activeUsers.count,
+      newUsersThisMonth: newUsersThisMonth.count,
+      applicationSuccessRate: successRate,
+      activeCountries: activeCountries.count,
+      totalRevenue,
       monthlyRevenue,
-      popularSpecialties,
+      avgTransactionValue,
+      pendingPayments,
+      applicationStats: {
+        pending: pendingApplications.count,
+        accepted: acceptedApplications.count,
+        rejected: rejectedApplications.count,
+        waitlisted: waitlistedApplications.count,
+      },
+      programStats: programTypeStats.reduce((acc, stat) => {
+        acc[stat.type] = stat.count;
+        return acc;
+      }, {} as Record<string, number>),
+      popularSpecialties: popularSpecialties.map(s => ({
+        name: s.name,
+        count: s.count
+      })),
       applicationTrends,
     };
   }

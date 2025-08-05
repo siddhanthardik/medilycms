@@ -20,7 +20,8 @@ export function Navbar() {
     { href: "/dashboard", label: "My Applications", active: location === "/dashboard" },
     { href: "/favorites", label: "Favorites", active: location === "/favorites" },
     { href: "/reviews", label: "Reviews", active: location === "/reviews" },
-    ...((user as any)?.isAdmin ? [{ href: "/admin", label: "Admin Panel", active: location === "/admin" }] : []),
+    // Only show admin panel for authorized Medily representatives (users with adminRole)
+    ...((user as any)?.isAdmin && (user as any)?.adminRole ? [{ href: "/admin", label: "Admin Panel", active: location === "/admin" }] : []),
   ];
 
   return (
@@ -92,7 +93,7 @@ export function Navbar() {
                       Profile Settings
                     </Link>
                   </DropdownMenuItem>
-                  {(user as any).isAdmin && (
+                  {(user as any).isAdmin && (user as any).adminRole && (
                     <>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem asChild>
