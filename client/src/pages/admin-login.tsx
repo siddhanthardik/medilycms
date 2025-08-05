@@ -43,7 +43,7 @@ export default function AdminLogin() {
           title: "Login Successful",
           description: "Welcome to the admin dashboard",
         });
-        setLocation("/admin");
+        setLocation("/cms-dashboard");
       } else {
         throw new Error(result.message || "Login failed");
       }

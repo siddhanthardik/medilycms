@@ -37,6 +37,10 @@ function Router() {
       <Route path="/clinical-rotations" component={ClinicalRotations} />
       <Route path="/admin-login" component={AdminLogin} />
       
+      {/* Admin routes - accessible to all (admin auth handled within components) */}
+      <Route path="/cms-dashboard" component={CMSDashboard} />
+      <Route path="/user-management" component={UserManagement} />
+      
       {isLoading || !isAuthenticated ? (
         <Route path="/" component={Landing} />
       ) : (
@@ -46,8 +50,6 @@ function Router() {
           <Route path="/admin/add-program" component={AddProgram} />
           <Route path="/dashboard" component={UserDashboard} />
           <Route path="/program/:id" component={ProgramDetail} />
-          <Route path="/cms-dashboard" component={CMSDashboard} />
-          <Route path="/user-management" component={UserManagement} />
           <Route path="/favorites" component={Favorites} />
           <Route path="/reviews" component={Reviews} />
         </>
