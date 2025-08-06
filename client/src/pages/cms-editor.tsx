@@ -83,14 +83,10 @@ export default function CmsEditor() {
   });
 
   useEffect(() => {
-    console.log('Page sections from API:', pageSections);
     if (pageSections && Array.isArray(pageSections)) {
-      console.log('Setting sections:', pageSections);
       setSections(pageSections);
     }
   }, [pageSections]);
-
-  console.log('Current sections state:', sections);
 
   // Update section mutation
   const updateSectionMutation = useMutation({
@@ -243,18 +239,23 @@ export default function CmsEditor() {
     
     return (
       <div 
-        className="relative group cursor-pointer border-2 border-transparent hover:border-blue-300 rounded-lg p-2 -m-2 transition-all min-h-[2rem]"
+        className="relative group cursor-pointer border-2 border-dashed border-gray-300 hover:border-blue-500 bg-white hover:bg-blue-50 rounded-lg p-4 transition-all duration-200 min-h-[2rem] mb-4"
         onClick={() => handleEditSection(section)}
       >
         <div 
-          className="prose max-w-none"
-          dangerouslySetInnerHTML={{ __html: section.content || 'Click to edit this text...' }}
+          className="prose max-w-none [&_*]:pointer-events-none"
+          dangerouslySetInnerHTML={{ __html: section.content || '<p class="text-gray-500">Click to add content...</p>' }}
         />
         <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-          <Button size="sm" variant="secondary" className="text-xs">
+          <Button size="sm" className="text-xs bg-blue-600 text-white hover:bg-blue-700 shadow-lg">
             <Type className="h-3 w-3 mr-1" />
-            Edit Text
+            Click to Edit
           </Button>
+        </div>
+        <div className="absolute bottom-2 left-2 opacity-60 group-hover:opacity-100 transition-opacity">
+          <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
+            {section.sectionTitle} ({section.contentType})
+          </span>
         </div>
       </div>
     );
@@ -373,12 +374,22 @@ export default function CmsEditor() {
 
       <div className="max-w-4xl mx-auto px-4 py-8">
         {!previewMode && (
-          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <h3 className="font-medium text-blue-900 mb-2">WordPress-Style Editing</h3>
+          <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg shadow-sm">
+            <h3 className="font-medium text-blue-900 mb-2 flex items-center">
+              <Edit className="h-4 w-4 mr-2" />
+              WordPress-Style Editing Active
+            </h3>
             <p className="text-sm text-blue-800">
-              Click on any text or image to edit it directly. Hover over elements to see edit buttons.
-              Use the "Add Text" and "Add Image" buttons to create new content sections.
+              ✏️ <strong>Click on any text or image</strong> to edit it directly<br/>
+              👀 <strong>Hover over content</strong> to see edit buttons<br/>
+              ➕ <strong>Use "Add Text/Image"</strong> buttons to create new sections<br/>
+              👁️ <strong>Toggle Preview</strong> to see how it looks to visitors
             </p>
+            <div className="mt-3 flex items-center text-xs text-blue-600">
+              <span className="bg-blue-100 px-2 py-1 rounded mr-2">
+                {sections.length} content section{sections.length !== 1 ? 's' : ''} loaded
+              </span>
+            </div>
           </div>
         )}
 
