@@ -274,17 +274,8 @@ export default function AdminDashboard() {
     applicationQueryParams.set('search', applicationFilters.search);
   }
 
-  const { data: applications, isLoading: applicationsLoading } = useQuery({
-    queryKey: ['/api/applications', applicationFilters],
-    queryFn: async () => {
-      const params = applicationQueryParams.toString();
-      const url = params ? `/api/applications?${params}` : '/api/applications';
-      const response = await fetch(url, { credentials: 'include' });
-      if (!response.ok) {
-        throw new Error('Failed to fetch applications');
-      }
-      return response.json();
-    },
+  const { data: applications, isLoading: applicationsLoading } = useQuery<any[]>({
+    queryKey: [`/api/applications?${applicationQueryParams.toString()}`],
     enabled: isAuthenticated,
     retry: false,
   });
@@ -516,9 +507,9 @@ export default function AdminDashboard() {
                   </CardTitle>
                   <div className="flex items-center space-x-3">
                     <Badge variant="outline" className="bg-blue-50 text-blue-700">
-                      {applications?.length || 0} Total Applications
+                      {Array.isArray(applications) ? applications.length : 0} Total Applications
                     </Badge>
-                    {applications && applications.filter((app: any) => app.status === 'pending').length > 0 && (
+                    {Array.isArray(applications) && applications.filter((app: any) => app.status === 'pending').length > 0 && (
                       <Badge variant="destructive">
                         {applications.filter((app: any) => app.status === 'pending').length} Pending Review
                       </Badge>
@@ -612,7 +603,7 @@ export default function AdminDashboard() {
                       </div>
                     ))}
                   </div>
-                ) : applications && applications?.length > 0 ? (
+                ) : Array.isArray(applications) && applications.length > 0 ? (
                   <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200">
                       <thead className="bg-gray-50">
@@ -635,7 +626,7 @@ export default function AdminDashboard() {
                         </tr>
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
-                        {applications?.map((application: any) => (
+                        {applications.map((application: any) => (
                           <tr key={application.id} className="hover:bg-gray-50">
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="flex items-center">
@@ -824,7 +815,7 @@ export default function AdminDashboard() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-yellow-600">
-                    {applications?.filter((app: any) => app.status === 'pending').length || 0}
+                    {Array.isArray(applications) ? applications.filter((app: any) => app.status === 'pending').length : 0}
                   </div>
                   <p className="text-xs text-gray-500 mt-1">Awaiting review</p>
                 </CardContent>
@@ -836,7 +827,7 @@ export default function AdminDashboard() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-green-600">
-                    {applications?.filter((app: any) => app.status === 'approved').length || 0}
+                    {Array.isArray(applications) ? applications.filter((app: any) => app.status === 'approved').length : 0}
                   </div>
                   <p className="text-xs text-gray-500 mt-1">Successfully approved</p>
                 </CardContent>
@@ -848,7 +839,7 @@ export default function AdminDashboard() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-blue-600">
-                    {applications?.length > 0 
+                    {Array.isArray(applications) && applications.length > 0 
                       ? Math.round((applications.filter((app: any) => app.status === 'approved').length / applications.length) * 100)
                       : 0}%
                   </div>
