@@ -122,6 +122,15 @@ app.use((req, res, next) => {
   } catch (error) {
     console.error('Failed to start server:', error);
     log(`Server startup failed: ${error instanceof Error ? error.message : String(error)}`);
+    
+    // Add specific database connection error handling
+    if (error instanceof Error && error.message.includes('database')) {
+      console.error('Database connection failed. Please check:');
+      console.error('1. DATABASE_URL environment variable is set correctly');
+      console.error('2. Database is accessible and running');
+      console.error('3. Network connectivity to the database');
+    }
+    
     process.exit(1);
   }
 })();
