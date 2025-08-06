@@ -173,10 +173,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const filters: any = {};
       
-      // Admins can filter by userId, programId, or status
+      // Admins can filter by userId, programId, status, search, and dateRange
       if (req.query.userId) filters.userId = req.query.userId as string;
       if (req.query.programId) filters.programId = req.query.programId as string;
       if (req.query.status) filters.status = req.query.status as string;
+      if (req.query.search) filters.search = req.query.search as string;
+      if (req.query.dateRange) filters.dateRange = req.query.dateRange as string;
       
       const applications = await storage.getApplications(filters);
       res.json(applications);
@@ -843,6 +845,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         lastName: user.lastName,
         adminRole: user.adminRole,
       };
+
+      // Save session explicitly
+      req.session.save((err: any) => {
+        if (err) {
+          console.error('Session save error:', err);
+        }
+      });
 
       res.json({ 
         success: true, 

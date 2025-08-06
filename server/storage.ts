@@ -468,7 +468,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Application operations with joins
-  async getApplications(filters?: { userId?: string; programId?: string; status?: string }): Promise<any[]> {
+  async getApplications(filters?: { userId?: string; programId?: string; status?: string; search?: string; dateRange?: string }): Promise<any[]> {
     const conditions = [];
     
     if (filters?.userId) {
@@ -481,6 +481,25 @@ export class DatabaseStorage implements IStorage {
     
     if (filters?.status) {
       conditions.push(eq(applications.status, filters.status as any));
+    }
+
+    // Add search functionality
+    if (filters?.search) {
+      conditions.push(
+        sql`(${users.firstName} ILIKE ${'%' + filters.search + '%'} OR 
+             ${users.lastName} ILIKE ${'%' + filters.search + '%'} OR 
+             ${users.email} ILIKE ${'%' + filters.search + '%'} OR 
+             ${programs.title} ILIKE ${'%' + filters.search + '%'} OR 
+             ${programs.hospitalName} ILIKE ${'%' + filters.search + '%'})`
+      );
+    }
+
+    // Add date range filtering
+    if (filters?.dateRange && filters.dateRange !== 'all') {
+      const days = parseInt(filters.dateRange);
+      const dateThreshold = new Date();
+      dateThreshold.setDate(dateThreshold.getDate() - days);
+      conditions.push(sql`${applications.applicationDate} >= ${dateThreshold}`);
     }
     
     const query = db.select({

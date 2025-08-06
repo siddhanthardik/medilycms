@@ -1,6 +1,6 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useAuth } from "@/hooks/useAuth";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useToast } from "@/hooks/use-toast";
 import { Navbar } from "@/components/navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,6 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { 
   ClipboardList, 
   Users, 
@@ -29,7 +31,9 @@ import {
   Star,
   FileText,
   Building,
-  Globe
+  Globe,
+  Filter,
+  Search
 } from "lucide-react";
 // Note: Permission checking will be handled server-side
 
@@ -227,57 +231,67 @@ function AnalyticsCharts({ analytics, isLoading }: { analytics: any; isLoading: 
 
 export default function AdminDashboard() {
   const { toast } = useToast();
-  const { isAuthenticated, isLoading, user } = useAuth();
+  const { adminUser, isLoading, isAuthenticated } = useAdminAuth();
+  const [applicationFilters, setApplicationFilters] = useState({
+    status: 'all',
+    dateRange: '30',
+    search: ''
+  });
 
-  // Redirect if not authenticated or not authorized admin
+  // Redirect if not authenticated
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       toast({
         title: "Unauthorized",
-        description: "You are logged out. Logging in again...",
+        description: "Please login as admin to access this dashboard.",
         variant: "destructive",
       });
       setTimeout(() => {
-        window.location.href = "/api/login";
-      }, 500);
+        window.location.href = "/admin-login";
+      }, 1000);
       return;
     }
-    
-    // Check if user is admin AND has adminRole (only Medily representatives)
-    if (!isLoading && isAuthenticated && (!(user as any)?.isAdmin || !(user as any)?.adminRole)) {
-      toast({
-        title: "Access Denied",
-        description: "You don't have authorization to access the admin panel. This panel is restricted to authorized Medily representatives only.",
-        variant: "destructive",
-      });
-      setTimeout(() => {
-        window.location.href = "/";
-      }, 500);
-      return;
-    }
-  }, [isAuthenticated, isLoading, user, toast]);
+  }, [isAuthenticated, isLoading, toast]);
 
   const { data: analytics, isLoading: analyticsLoading } = useQuery({
     queryKey: ['/api/analytics'],
-    enabled: isAuthenticated && (user as any)?.isAdmin && (user as any)?.adminRole,
+    enabled: isAuthenticated,
     retry: false,
   });
 
   const { data: programs, isLoading: programsLoading } = useQuery({
     queryKey: ['/api/programs'],
-    enabled: isAuthenticated && (user as any)?.isAdmin && (user as any)?.adminRole,
+    enabled: isAuthenticated,
     retry: false,
   });
+
+  // Build query parameters for applications
+  const applicationQueryParams = new URLSearchParams();
+  if (applicationFilters.status !== 'all') {
+    applicationQueryParams.set('status', applicationFilters.status);
+  }
+  if (applicationFilters.search) {
+    applicationQueryParams.set('search', applicationFilters.search);
+  }
 
   const { data: applications, isLoading: applicationsLoading } = useQuery({
-    queryKey: ['/api/applications'],
-    enabled: isAuthenticated && (user as any)?.isAdmin && (user as any)?.adminRole,
+    queryKey: ['/api/applications', applicationFilters],
+    queryFn: async () => {
+      const params = applicationQueryParams.toString();
+      const url = params ? `/api/applications?${params}` : '/api/applications';
+      const response = await fetch(url, { credentials: 'include' });
+      if (!response.ok) {
+        throw new Error('Failed to fetch applications');
+      }
+      return response.json();
+    },
+    enabled: isAuthenticated,
     retry: false,
   });
 
-  const isSuperAdmin = (user as any)?.adminRole === 'super_admin';
+  const isSuperAdmin = adminUser?.adminRole === 'super_admin';
 
-  if (!isAuthenticated || isLoading || !(user as any)?.isAdmin) {
+  if (!isAuthenticated || isLoading) {
     return <div>Loading...</div>;
   }
 
@@ -495,7 +509,7 @@ export default function AdminDashboard() {
           <TabsContent value="applications" className="space-y-6">
             <Card>
               <CardHeader>
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center mb-4">
                   <CardTitle className="flex items-center">
                     <FileText className="h-5 w-5 mr-2" />
                     Application Management
@@ -504,6 +518,78 @@ export default function AdminDashboard() {
                     <Badge variant="outline" className="bg-blue-50 text-blue-700">
                       {applications?.length || 0} Total Applications
                     </Badge>
+                    {applications && applications.filter((app: any) => app.status === 'pending').length > 0 && (
+                      <Badge variant="destructive">
+                        {applications.filter((app: any) => app.status === 'pending').length} Pending Review
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Filters */}
+                <div className="flex flex-col sm:flex-row gap-4 p-4 bg-gray-50 rounded-lg">
+                  <div className="flex items-center space-x-2">
+                    <Filter className="h-4 w-4 text-gray-500" />
+                    <span className="text-sm font-medium text-gray-700">Filter by:</span>
+                  </div>
+                  
+                  <div className="flex flex-wrap gap-3">
+                    <Select
+                      value={applicationFilters.status}
+                      onValueChange={(value) => 
+                        setApplicationFilters(prev => ({ ...prev, status: value }))
+                      }
+                    >
+                      <SelectTrigger className="w-40">
+                        <SelectValue placeholder="Status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Status</SelectItem>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="accepted">Accepted</SelectItem>
+                        <SelectItem value="rejected">Rejected</SelectItem>
+                        <SelectItem value="waitlisted">Waitlisted</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    
+                    <Select
+                      value={applicationFilters.dateRange}
+                      onValueChange={(value) => 
+                        setApplicationFilters(prev => ({ ...prev, dateRange: value }))
+                      }
+                    >
+                      <SelectTrigger className="w-40">
+                        <SelectValue placeholder="Date Range" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="7">Last 7 days</SelectItem>
+                        <SelectItem value="30">Last 30 days</SelectItem>
+                        <SelectItem value="90">Last 3 months</SelectItem>
+                        <SelectItem value="all">All time</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    
+                    <div className="relative flex-1 min-w-64">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <Input
+                        placeholder="Search by name, email, or program..."
+                        value={applicationFilters.search}
+                        onChange={(e) => 
+                          setApplicationFilters(prev => ({ ...prev, search: e.target.value }))
+                        }
+                        className="pl-10"
+                      />
+                    </div>
+                    
+                    {(applicationFilters.status !== 'all' || applicationFilters.search || applicationFilters.dateRange !== '30') && (
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => setApplicationFilters({ status: 'all', dateRange: '30', search: '' })}
+                      >
+                        Clear Filters
+                      </Button>
+                    )}
                   </div>
                 </div>
               </CardHeader>
