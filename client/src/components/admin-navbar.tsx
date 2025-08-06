@@ -52,6 +52,19 @@ export function AdminNavbar() {
             </Link>
           </div>
 
+          {/* Navigation Links */}
+          <div className="flex items-center space-x-6">
+            <Link href="/admin-dashboard">
+              <Button variant="ghost" className="text-sm font-medium">Dashboard</Button>
+            </Link>
+            <Link href="/cms-dashboard">
+              <Button variant="ghost" className="text-sm font-medium">CMS</Button>
+            </Link>
+            <Link href="/user-management">
+              <Button variant="ghost" className="text-sm font-medium">Users</Button>
+            </Link>
+          </div>
+
           {/* Admin User Info */}
           <div className="flex items-center space-x-4">
             <span className="text-sm text-gray-600 hidden sm:block">

@@ -8,14 +8,9 @@ import {
   waitlist,
   newsletterSubscriptions,
   contactQueries,
-  blogPosts,
-  courses,
-  contentPages,
-  mediaAssets,
-  teamMembers,
-  pageSections,
-  menuItems,
-  contactInfo,
+  cmsPages,
+  cmsContentSections,
+  cmsMediaAssets,
   type User,
   type UpsertUser,
   type Specialty,
@@ -26,6 +21,9 @@ import {
   type Waitlist,
   type NewsletterSubscription,
   type ContactQuery,
+  type CmsPage,
+  type CmsContentSection,
+  type CmsMediaAsset,
   type InsertSpecialty,
   type InsertProgram,
   type InsertApplication,
@@ -34,6 +32,9 @@ import {
   type InsertWaitlist,
   type InsertNewsletterSubscription,
   type InsertContactQuery,
+  type InsertCmsPage,
+  type InsertCmsContentSection,
+  type InsertCmsMediaAsset,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, asc, ilike, sql, count, avg } from "drizzle-orm";
@@ -128,13 +129,19 @@ export interface IStorage {
   }>;
 
   // CMS operations
-  getBlogPosts(): Promise<any[]>;
-  createBlogPost(blogPost: any): Promise<any>;
-  getPublishedBlogPosts(category?: string): Promise<any[]>;
-  getCourses(): Promise<any[]>;
-  createCourse(course: any): Promise<any>;
-  getContentPages(): Promise<any[]>;
-  getMediaAssets(): Promise<any[]>;
+  getCmsPages(): Promise<CmsPage[]>;
+  createCmsPage(page: InsertCmsPage): Promise<CmsPage>;
+  updateCmsPage(id: string, updates: Partial<CmsPage>): Promise<CmsPage>;
+  getCmsPageBySlug(slug: string): Promise<CmsPage | undefined>;
+  
+  getCmsContentSections(pageId: string): Promise<CmsContentSection[]>;
+  createCmsContentSection(section: InsertCmsContentSection): Promise<CmsContentSection>;
+  updateCmsContentSection(id: string, updates: Partial<CmsContentSection>): Promise<CmsContentSection>;
+  deleteCmsContentSection(id: string): Promise<void>;
+  
+  getCmsMediaAssets(): Promise<CmsMediaAsset[]>;
+  createCmsMediaAsset(asset: InsertCmsMediaAsset): Promise<CmsMediaAsset>;
+  deleteCmsMediaAsset(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -775,194 +782,72 @@ export class DatabaseStorage implements IStorage {
   }
 
   // CMS operations
-  async getBlogPosts(): Promise<any[]> {
-    return await db.select().from(blogPosts).orderBy(desc(blogPosts.createdAt));
+  async getCmsPages(): Promise<CmsPage[]> {
+    return await db.select().from(cmsPages).orderBy(asc(cmsPages.displayName));
   }
 
-  async createBlogPost(blogPost: any): Promise<any> {
-    const [post] = await db.insert(blogPosts).values({
-      ...blogPost,
-      publishedAt: blogPost.status === 'published' ? new Date() : null,
-    }).returning();
-    return post;
+  async createCmsPage(page: InsertCmsPage): Promise<CmsPage> {
+    const [newPage] = await db.insert(cmsPages).values(page).returning();
+    return newPage;
   }
 
-  async getPublishedBlogPosts(category?: string): Promise<any[]> {
-    const conditions = [eq(blogPosts.status, 'published')];
-    if (category && category !== 'All') {
-      conditions.push(eq(blogPosts.category, category));
-    }
-    
-    return await db.select().from(blogPosts)
-      .where(and(...conditions))
-      .orderBy(desc(blogPosts.publishedAt));
+  async updateCmsPage(id: string, updates: Partial<CmsPage>): Promise<CmsPage> {
+    const [updatedPage] = await db
+      .update(cmsPages)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(cmsPages.id, id))
+      .returning();
+    return updatedPage;
   }
 
-  async getCourses(): Promise<any[]> {
-    return await db.select().from(courses).orderBy(desc(courses.createdAt));
-  }
-
-  async createCourse(course: any): Promise<any> {
-    const [newCourse] = await db.insert(courses).values(course).returning();
-    return newCourse;
-  }
-
-  async getContentPages(): Promise<any[]> {
-    return await db.select().from(contentPages).orderBy(asc(contentPages.pageName));
-  }
-
-  async getMediaAssets(): Promise<any[]> {
-    return await db.select().from(mediaAssets).orderBy(desc(mediaAssets.createdAt));
-  }
-
-  // Enhanced CMS operations for comprehensive content management
-  async updateBlogPost(id: string, data: any): Promise<any> {
-    const [post] = await db.update(blogPosts).set({
-      ...data,
-      publishedAt: data.status === 'published' ? new Date() : null,
-      updatedAt: new Date(),
-    }).where(eq(blogPosts.id, id)).returning();
-    return post;
-  }
-
-  async deleteBlogPost(id: string): Promise<void> {
-    await db.delete(blogPosts).where(eq(blogPosts.id, id));
-  }
-
-  async updateCourse(id: string, data: any): Promise<any> {
-    const [course] = await db.update(courses).set({
-      ...data,
-      updatedAt: new Date(),
-    }).where(eq(courses.id, id)).returning();
-    return course;
-  }
-
-  async deleteCourse(id: string): Promise<void> {
-    await db.delete(courses).where(eq(courses.id, id));
-  }
-
-  async getContentPageByName(pageName: string): Promise<any | null> {
-    const [page] = await db.select().from(contentPages).where(eq(contentPages.pageName, pageName));
-    return page || null;
-  }
-
-  async createContentPage(data: any): Promise<any> {
-    const [page] = await db.insert(contentPages).values(data).returning();
+  async getCmsPageBySlug(slug: string): Promise<CmsPage | undefined> {
+    const [page] = await db.select().from(cmsPages).where(eq(cmsPages.slug, slug));
     return page;
   }
 
-  async updateContentPage(id: string, data: any): Promise<any> {
-    const [page] = await db.update(contentPages).set({
-      ...data,
-      updatedAt: new Date(),
-    }).where(eq(contentPages.id, id)).returning();
-    return page;
+  async getCmsContentSections(pageId: string): Promise<CmsContentSection[]> {
+    return await db.select()
+      .from(cmsContentSections)
+      .where(and(eq(cmsContentSections.pageId, pageId), eq(cmsContentSections.isActive, true)))
+      .orderBy(asc(cmsContentSections.sortOrder));
   }
 
-  async deleteContentPage(id: string): Promise<void> {
-    await db.delete(contentPages).where(eq(contentPages.id, id));
+  async createCmsContentSection(section: InsertCmsContentSection): Promise<CmsContentSection> {
+    const [newSection] = await db.insert(cmsContentSections).values(section).returning();
+    return newSection;
   }
 
-  async createMediaAsset(data: any): Promise<any> {
-    const [asset] = await db.insert(mediaAssets).values(data).returning();
-    return asset;
+  async updateCmsContentSection(id: string, updates: Partial<CmsContentSection>): Promise<CmsContentSection> {
+    const [updatedSection] = await db
+      .update(cmsContentSections)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(cmsContentSections.id, id))
+      .returning();
+    return updatedSection;
   }
 
-  async deleteMediaAsset(id: string): Promise<void> {
-    await db.delete(mediaAssets).where(eq(mediaAssets.id, id));
+  async deleteCmsContentSection(id: string): Promise<void> {
+    await db.update(cmsContentSections)
+      .set({ isActive: false })
+      .where(eq(cmsContentSections.id, id));
   }
 
-  // Team Members operations
-  async getTeamMembers(): Promise<any[]> {
-    return await db.select().from(teamMembers)
-      .where(eq(teamMembers.isActive, true))
-      .orderBy(teamMembers.displayOrder, teamMembers.createdAt);
+  async getCmsMediaAssets(): Promise<CmsMediaAsset[]> {
+    return await db.select().from(cmsMediaAssets).orderBy(desc(cmsMediaAssets.createdAt));
   }
 
-  async createTeamMember(data: any): Promise<any> {
-    const [member] = await db.insert(teamMembers).values(data).returning();
-    return member;
+  async createCmsMediaAsset(asset: InsertCmsMediaAsset): Promise<CmsMediaAsset> {
+    const [newAsset] = await db.insert(cmsMediaAssets).values(asset).returning();
+    return newAsset;
   }
 
-  async updateTeamMember(id: string, data: any): Promise<any> {
-    const [member] = await db.update(teamMembers).set({
-      ...data,
-      updatedAt: new Date(),
-    }).where(eq(teamMembers.id, id)).returning();
-    return member;
+  async deleteCmsMediaAsset(id: string): Promise<void> {
+    await db.delete(cmsMediaAssets).where(eq(cmsMediaAssets.id, id));
   }
 
-  async deleteTeamMember(id: string): Promise<void> {
-    await db.update(teamMembers).set({ isActive: false }).where(eq(teamMembers.id, id));
-  }
 
-  // Page Sections operations
-  async getPageSections(pageId: string): Promise<any[]> {
-    return await db.select().from(pageSections)
-      .where(and(eq(pageSections.pageId, pageId), eq(pageSections.isActive, true)))
-      .orderBy(pageSections.displayOrder, pageSections.createdAt);
-  }
 
-  async createPageSection(data: any): Promise<any> {
-    const [section] = await db.insert(pageSections).values(data).returning();
-    return section;
-  }
 
-  async updatePageSection(id: string, data: any): Promise<any> {
-    const [section] = await db.update(pageSections).set({
-      ...data,
-      updatedAt: new Date(),
-    }).where(eq(pageSections.id, id)).returning();
-    return section;
-  }
-
-  async deletePageSection(id: string): Promise<void> {
-    await db.update(pageSections).set({ isActive: false }).where(eq(pageSections.id, id));
-  }
-
-  // Menu Items operations
-  async getMenuItems(): Promise<any[]> {
-    return await db.select().from(menuItems)
-      .where(eq(menuItems.isActive, true))
-      .orderBy(menuItems.displayOrder, menuItems.createdAt);
-  }
-
-  async createMenuItem(data: any): Promise<any> {
-    const [item] = await db.insert(menuItems).values(data).returning();
-    return item;
-  }
-
-  async updateMenuItem(id: string, data: any): Promise<any> {
-    const [item] = await db.update(menuItems).set({
-      ...data,
-      updatedAt: new Date(),
-    }).where(eq(menuItems.id, id)).returning();
-    return item;
-  }
-
-  async deleteMenuItem(id: string): Promise<void> {
-    await db.update(menuItems).set({ isActive: false }).where(eq(menuItems.id, id));
-  }
-
-  // Contact Info operations
-  async getContactInfo(): Promise<any | null> {
-    const [info] = await db.select().from(contactInfo).limit(1);
-    return info || null;
-  }
-
-  async upsertContactInfo(data: any): Promise<any> {
-    const existing = await this.getContactInfo();
-    if (existing) {
-      const [updated] = await db.update(contactInfo).set({
-        ...data,
-        updatedAt: new Date(),
-      }).where(eq(contactInfo.id, existing.id)).returning();
-      return updated;
-    } else {
-      const [created] = await db.insert(contactInfo).values(data).returning();
-      return created;
-    }
-  }
 }
 
 export const storage = new DatabaseStorage();

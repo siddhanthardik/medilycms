@@ -403,65 +403,90 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Admin middleware functions defined above
 
-  // CMS Routes - Blog Posts
-  app.get('/api/cms/blog-posts', requireAdminSession, async (req: any, res) => {
+  // CMS Routes - Pages Management
+  app.get('/api/cms/pages', requireAdminSession, async (req: any, res) => {
     try {
-      const posts = await storage.getBlogPosts();
-      res.json(posts);
-    } catch (error) {
-      console.error("Error fetching blog posts:", error);
-      res.status(500).json({ message: "Failed to fetch blog posts" });
-    }
-  });
-
-  app.post('/api/cms/blog-posts', requireAdminSession, async (req: any, res) => {
-    try {
-      const postData = { ...req.body, createdBy: req.adminUser.id };
-      const post = await storage.createBlogPost(postData);
-      res.json(post);
-    } catch (error) {
-      console.error("Error creating blog post:", error);
-      res.status(500).json({ message: "Failed to create blog post" });
-    }
-  });
-
-  // CMS Routes - Courses
-  app.get('/api/cms/courses', requireAdminSession, async (req: any, res) => {
-    try {
-      const courses = await storage.getCourses();
-      res.json(courses);
-    } catch (error) {
-      console.error("Error fetching courses:", error);
-      res.status(500).json({ message: "Failed to fetch courses" });
-    }
-  });
-
-  app.post('/api/cms/courses', requireAdminSession, async (req: any, res) => {
-    try {
-      const courseData = { ...req.body, createdBy: req.adminUser.id };
-      const course = await storage.createCourse(courseData);
-      res.json(course);
-    } catch (error) {
-      console.error("Error creating course:", error);
-      res.status(500).json({ message: "Failed to create course" });
-    }
-  });
-
-  // CMS Routes - Content Pages
-  app.get('/api/cms/content-pages', requireAdminSession, async (req: any, res) => {
-    try {
-      const pages = await storage.getContentPages();
+      const pages = await storage.getCmsPages();
       res.json(pages);
     } catch (error) {
-      console.error("Error fetching content pages:", error);
-      res.status(500).json({ message: "Failed to fetch content pages" });
+      console.error("Error fetching CMS pages:", error);
+      res.status(500).json({ message: "Failed to fetch CMS pages" });
     }
   });
 
-  // CMS Routes - Media Assets
+  app.post('/api/cms/pages', requireAdminSession, async (req: any, res) => {
+    try {
+      const pageData = req.body;
+      const page = await storage.createCmsPage(pageData);
+      res.json(page);
+    } catch (error) {
+      console.error("Error creating CMS page:", error);
+      res.status(500).json({ message: "Failed to create CMS page" });
+    }
+  });
+
+  app.put('/api/cms/pages/:id', requireAdminSession, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const updates = req.body;
+      const page = await storage.updateCmsPage(id, updates);
+      res.json(page);
+    } catch (error) {
+      console.error("Error updating CMS page:", error);
+      res.status(500).json({ message: "Failed to update CMS page" });
+    }
+  });
+
+  // CMS Routes - Content Sections Management
+  app.get('/api/cms/pages/:pageId/sections', requireAdminSession, async (req: any, res) => {
+    try {
+      const { pageId } = req.params;
+      const sections = await storage.getCmsContentSections(pageId);
+      res.json(sections);
+    } catch (error) {
+      console.error("Error fetching content sections:", error);
+      res.status(500).json({ message: "Failed to fetch content sections" });
+    }
+  });
+
+  app.post('/api/cms/content-sections', requireAdminSession, async (req: any, res) => {
+    try {
+      const sectionData = req.body;
+      const section = await storage.createCmsContentSection(sectionData);
+      res.json(section);
+    } catch (error) {
+      console.error("Error creating content section:", error);
+      res.status(500).json({ message: "Failed to create content section" });
+    }
+  });
+
+  app.put('/api/cms/content-sections/:id', requireAdminSession, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const updates = req.body;
+      const section = await storage.updateCmsContentSection(id, updates);
+      res.json(section);
+    } catch (error) {
+      console.error("Error updating content section:", error);
+      res.status(500).json({ message: "Failed to update content section" });
+    }
+  });
+
+  app.delete('/api/cms/content-sections/:id', requireAdminSession, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteCmsContentSection(id);
+      res.json({ message: "Content section deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting content section:", error);
+      res.status(500).json({ message: "Failed to delete content section" });
+    }
+  });
+
+  // CMS Routes - Media Assets Management
   app.get('/api/cms/media-assets', requireAdminSession, async (req: any, res) => {
     try {
-      const assets = await storage.getMediaAssets();
+      const assets = await storage.getCmsMediaAssets();
       res.json(assets);
     } catch (error) {
       console.error("Error fetching media assets:", error);
@@ -469,19 +494,82 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Public Blog Posts API (for blog page)
-  app.get('/api/blog-posts', async (req, res) => {
+  // Initialize CMS with default pages
+  async function initializeCmsPages() {
     try {
-      const { category } = req.query;
-      const posts = await storage.getPublishedBlogPosts(category as string);
-      res.json(posts);
-    } catch (error) {
-      console.error("Error fetching published blog posts:", error);
-      res.status(500).json({ message: "Failed to fetch blog posts" });
-    }
-  });
+      const existingPages = await storage.getCmsPages();
+      if (existingPages.length === 0) {
+        const defaultPages = [
+          {
+            pageName: 'home' as const,
+            displayName: 'Home Page',
+            slug: 'home',
+            title: 'MEDILY - Medical Rotation Marketplace',
+            metaDescription: 'Find and apply to medical rotations, observerships, and clinical training programs worldwide.'
+          },
+          {
+            pageName: 'about' as const,
+            displayName: 'About Us',
+            slug: 'about',
+            title: 'About Us - MEDILY',
+            metaDescription: 'Learn about MEDILY\'s mission to connect medical professionals with quality clinical rotation opportunities.'
+          },
+          {
+            pageName: 'courses' as const,
+            displayName: 'Courses & Programs',
+            slug: 'courses',
+            title: 'Medical Courses & Programs - MEDILY',
+            metaDescription: 'Explore our comprehensive medical training courses and rotation programs.'
+          },
+          {
+            pageName: 'contact' as const,
+            displayName: 'Contact Us',
+            slug: 'contact',
+            title: 'Contact Us - MEDILY',
+            metaDescription: 'Get in touch with MEDILY for questions about medical rotations and programs.'
+          },
+          {
+            pageName: 'join' as const,
+            displayName: 'Join Our Platform',
+            slug: 'join',
+            title: 'Join MEDILY - Medical Professionals',
+            metaDescription: 'Join MEDILY as a medical student or healthcare professional to access exclusive rotation opportunities.'
+          },
+          {
+            pageName: 'terms' as const,
+            displayName: 'Terms & Conditions',
+            slug: 'terms-conditions',
+            title: 'Terms & Conditions - MEDILY',
+            metaDescription: 'Review MEDILY\'s terms and conditions for using our medical rotation platform.'
+          },
+          {
+            pageName: 'disclaimer' as const,
+            displayName: 'Medical Disclaimer',
+            slug: 'disclaimer',
+            title: 'Medical Disclaimer - MEDILY',
+            metaDescription: 'Important medical disclaimer and liability information for MEDILY users.'
+          },
+          {
+            pageName: 'refund' as const,
+            displayName: 'Refund Policy',
+            slug: 'refund-policy',
+            title: 'Refund Policy - MEDILY',
+            metaDescription: 'Learn about MEDILY\'s refund policy for medical rotation programs and services.'
+          }
+        ];
 
-  // Enhanced CMS Routes for Comprehensive Content Management
+        for (const pageData of defaultPages) {
+          await storage.createCmsPage(pageData);
+        }
+        console.log('CMS pages initialized successfully');
+      }
+    } catch (error) {
+      console.error('Error initializing CMS pages:', error);
+    }
+  }
+
+  // Initialize CMS pages on startup
+  await initializeCmsPages();
 
   // Configure multer for image uploads
   const uploadDir = path.join(process.cwd(), 'uploads');
@@ -515,7 +603,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Image upload with automatic .webp conversion
   app.post('/api/cms/upload-image', requireAdminSession, upload.single('image'), async (req: any, res) => {
     try {
-
       if (!req.file) {
         return res.status(400).json({ message: "No image file provided" });
       }
@@ -539,13 +626,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
         // Save to database
-        const mediaAsset = await storage.createMediaAsset({
+        const mediaAsset = await storage.createCmsMediaAsset({
           fileName: webpFileName,
           originalName: req.file.originalname,
-          mimeType: 'image/webp',
-          fileSize: req.file.size,
           filePath: `/uploads/${webpFileName}`,
-          altText: req.body.altText || '',
+          fileUrl: `/uploads/${webpFileName}`,
+          fileType: 'image/webp',
+          fileSize: req.file.size,
           uploadedBy: req.adminUser.id,
         });
 
@@ -574,258 +661,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   app.use('/uploads', express.static(uploadDir));
 
-  // Blog Posts CMS
-  app.put('/api/cms/blog-posts/:id', requireAdminSession, async (req: any, res) => {
+  // Public CMS API for accessing page content by slug
+  app.get('/api/cms/pages/:slug/content', async (req, res) => {
     try {
-      const post = await storage.updateBlogPost(req.params.id, req.body);
-      res.json(post);
-    } catch (error) {
-      console.error("Error updating blog post:", error);
-      res.status(500).json({ message: "Failed to update blog post" });
-    }
-  });
-
-  app.delete('/api/cms/blog-posts/:id', requireAdminSession, async (req: any, res) => {
-    try {
-
-      await storage.deleteBlogPost(req.params.id);
-      res.status(204).send();
-    } catch (error) {
-      console.error("Error deleting blog post:", error);
-      res.status(500).json({ message: "Failed to delete blog post" });
-    }
-  });
-
-  // Courses CMS
-  app.put('/api/cms/courses/:id', requireAdminSession, async (req: any, res) => {
-    try {
-      const course = await storage.updateCourse(req.params.id, req.body);
-      res.json(course);
-    } catch (error) {
-      console.error("Error updating course:", error);
-      res.status(500).json({ message: "Failed to update course" });
-    }
-  });
-
-  app.delete('/api/cms/courses/:id', requireAdminSession, async (req: any, res) => {
-    try {
-      await storage.deleteCourse(req.params.id);
-      res.status(204).send();
-    } catch (error) {
-      console.error("Error deleting course:", error);
-      res.status(500).json({ message: "Failed to delete course" });
-    }
-  });
-
-  // Content Pages CMS
-  app.get('/api/cms/content-pages/:pageName', async (req, res) => {
-    try {
-      const page = await storage.getContentPageByName(req.params.pageName);
-      res.json(page);
-    } catch (error) {
-      console.error("Error fetching content page:", error);
-      res.status(500).json({ message: "Failed to fetch content page" });
-    }
-  });
-
-  app.post('/api/cms/content-pages', requireAdminSession, async (req: any, res) => {
-    try {
-      const page = await storage.createContentPage(req.body);
-      res.status(201).json(page);
-    } catch (error) {
-      console.error("Error creating content page:", error);
-      res.status(500).json({ message: "Failed to create content page" });
-    }
-  });
-
-  app.put('/api/cms/content-pages/:id', requireAdminSession, async (req: any, res) => {
-    try {
-      const page = await storage.updateContentPage(req.params.id, req.body);
-      res.json(page);
-    } catch (error) {
-      console.error("Error updating content page:", error);
-      res.status(500).json({ message: "Failed to update content page" });
-    }
-  });
-
-  // Team Members CMS
-  app.get('/api/cms/team-members', async (req, res) => {
-    try {
-      const members = await storage.getTeamMembers();
-      res.json(members);
-    } catch (error) {
-      console.error("Error fetching team members:", error);
-      res.status(500).json({ message: "Failed to fetch team members" });
-    }
-  });
-
-  app.post('/api/cms/team-members', requireAdminSession, async (req: any, res) => {
-    try {
-      const member = await storage.createTeamMember(req.body);
-      res.status(201).json(member);
-    } catch (error) {
-      console.error("Error creating team member:", error);
-      res.status(500).json({ message: "Failed to create team member" });
-    }
-  });
-
-  app.put('/api/cms/team-members/:id', requireAdminSession, async (req: any, res) => {
-    try {
-      const member = await storage.updateTeamMember(req.params.id, req.body);
-      res.json(member);
-    } catch (error) {
-      console.error("Error updating team member:", error);
-      res.status(500).json({ message: "Failed to update team member" });
-    }
-  });
-
-  app.delete('/api/cms/team-members/:id', requireAdminSession, async (req: any, res) => {
-    try {
-      await storage.deleteTeamMember(req.params.id);
-      res.status(204).send();
-    } catch (error) {
-      console.error("Error deleting team member:", error);
-      res.status(500).json({ message: "Failed to delete team member" });
-    }
-  });
-
-  // Page Sections CMS
-  app.get('/api/cms/page-sections/:pageId', async (req, res) => {
-    try {
-      const sections = await storage.getPageSections(req.params.pageId);
-      res.json(sections);
-    } catch (error) {
-      console.error("Error fetching page sections:", error);
-      res.status(500).json({ message: "Failed to fetch page sections" });
-    }
-  });
-
-  app.post('/api/cms/page-sections', isAuthenticated, async (req: any, res) => {
-    try {
-      const user = await storage.getUser(req.user.claims.sub);
-      if (!user?.isAdmin) {
-        return res.status(403).json({ message: "Admin access required" });
+      const { slug } = req.params;
+      const page = await storage.getCmsPageBySlug(slug);
+      
+      if (!page) {
+        return res.status(404).json({ message: "Page not found" });
       }
 
-      const section = await storage.createPageSection(req.body);
-      res.status(201).json(section);
+      const sections = await storage.getCmsContentSections(page.id);
+      res.json({ page, sections });
     } catch (error) {
-      console.error("Error creating page section:", error);
-      res.status(500).json({ message: "Failed to create page section" });
+      console.error("Error fetching page content:", error);
+      res.status(500).json({ message: "Failed to fetch page content" });
     }
   });
 
-  app.put('/api/cms/page-sections/:id', isAuthenticated, async (req: any, res) => {
-    try {
-      const user = await storage.getUser(req.user.claims.sub);
-      if (!user?.isAdmin) {
-        return res.status(403).json({ message: "Admin access required" });
-      }
 
-      const section = await storage.updatePageSection(req.params.id, req.body);
-      res.json(section);
-    } catch (error) {
-      console.error("Error updating page section:", error);
-      res.status(500).json({ message: "Failed to update page section" });
-    }
-  });
-
-  app.delete('/api/cms/page-sections/:id', isAuthenticated, async (req: any, res) => {
-    try {
-      const user = await storage.getUser(req.user.claims.sub);
-      if (!user?.isAdmin) {
-        return res.status(403).json({ message: "Admin access required" });
-      }
-
-      await storage.deletePageSection(req.params.id);
-      res.status(204).send();
-    } catch (error) {
-      console.error("Error deleting page section:", error);
-      res.status(500).json({ message: "Failed to delete page section" });
-    }
-  });
-
-  // Menu Items CMS
-  app.get('/api/cms/menu-items', async (req, res) => {
-    try {
-      const items = await storage.getMenuItems();
-      res.json(items);
-    } catch (error) {
-      console.error("Error fetching menu items:", error);
-      res.status(500).json({ message: "Failed to fetch menu items" });
-    }
-  });
-
-  app.post('/api/cms/menu-items', isAuthenticated, async (req: any, res) => {
-    try {
-      const user = await storage.getUser(req.user.claims.sub);
-      if (!user?.isAdmin) {
-        return res.status(403).json({ message: "Admin access required" });
-      }
-
-      const item = await storage.createMenuItem(req.body);
-      res.status(201).json(item);
-    } catch (error) {
-      console.error("Error creating menu item:", error);
-      res.status(500).json({ message: "Failed to create menu item" });
-    }
-  });
-
-  app.put('/api/cms/menu-items/:id', isAuthenticated, async (req: any, res) => {
-    try {
-      const user = await storage.getUser(req.user.claims.sub);
-      if (!user?.isAdmin) {
-        return res.status(403).json({ message: "Admin access required" });
-      }
-
-      const item = await storage.updateMenuItem(req.params.id, req.body);
-      res.json(item);
-    } catch (error) {
-      console.error("Error updating menu item:", error);
-      res.status(500).json({ message: "Failed to update menu item" });
-    }
-  });
-
-  app.delete('/api/cms/menu-items/:id', isAuthenticated, async (req: any, res) => {
-    try {
-      const user = await storage.getUser(req.user.claims.sub);
-      if (!user?.isAdmin) {
-        return res.status(403).json({ message: "Admin access required" });
-      }
-
-      await storage.deleteMenuItem(req.params.id);
-      res.status(204).send();
-    } catch (error) {
-      console.error("Error deleting menu item:", error);
-      res.status(500).json({ message: "Failed to delete menu item" });
-    }
-  });
-
-  // Contact Info CMS
-  app.get('/api/cms/contact-info', async (req, res) => {
-    try {
-      const info = await storage.getContactInfo();
-      res.json(info);
-    } catch (error) {
-      console.error("Error fetching contact info:", error);
-      res.status(500).json({ message: "Failed to fetch contact info" });
-    }
-  });
-
-  app.put('/api/cms/contact-info', isAuthenticated, async (req: any, res) => {
-    try {
-      const user = await storage.getUser(req.user.claims.sub);
-      if (!user?.isAdmin) {
-        return res.status(403).json({ message: "Admin access required" });
-      }
-
-      const info = await storage.upsertContactInfo(req.body);
-      res.json(info);
-    } catch (error) {
-      console.error("Error updating contact info:", error);
-      res.status(500).json({ message: "Failed to update contact info" });
-    }
-  });
 
   // Admin authentication routes
   app.post('/api/admin/login', async (req, res) => {

@@ -55,6 +55,75 @@ export const programTypeEnum = pgEnum('program_type', ['observership', 'hands_on
 export const applicationStatusEnum = pgEnum('application_status', ['pending', 'accepted', 'rejected', 'waitlisted', 'visa_pending', 'visa_confirmed', 'enrolled']);
 export const reviewStatusEnum = pgEnum('review_status', ['pending', 'approved', 'rejected']);
 
+// CMS Content Management System Tables
+export const contentPageEnum = pgEnum('content_page', [
+  'home',
+  'about',
+  'courses', 
+  'contact',
+  'join',
+  'terms',
+  'disclaimer',
+  'refund'
+]);
+
+export const contentSectionEnum = pgEnum('content_section', [
+  'hero',
+  'main',
+  'sidebar',
+  'footer',
+  'header',
+  'banner',
+  'testimonials',
+  'features',
+  'pricing',
+  'gallery',
+  'custom'
+]);
+
+// CMS Pages table - stores all website pages
+export const cmsPages = pgTable("cms_pages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  pageName: contentPageEnum("page_name").notNull().unique(),
+  displayName: varchar("display_name").notNull(),
+  slug: varchar("slug").notNull().unique(),
+  title: varchar("title").notNull(),
+  metaDescription: text("meta_description"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// CMS Content Sections table - stores content sections for each page
+export const cmsContentSections = pgTable("cms_content_sections", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  pageId: varchar("page_id").references(() => cmsPages.id).notNull(),
+  sectionName: contentSectionEnum("section_name").notNull(),
+  sectionKey: varchar("section_key").notNull(), // unique identifier like "hero_title", "main_paragraph1"
+  sectionTitle: varchar("section_title").notNull(),
+  contentType: varchar("content_type").notNull().default("text"), // text, html, image, video
+  content: text("content"), // text/html content
+  imageUrl: varchar("image_url"), // for image content
+  altText: varchar("alt_text"), // for images
+  sortOrder: integer("sort_order").default(0),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// CMS Media Assets table - stores all uploaded images and media
+export const cmsMediaAssets = pgTable("cms_media_assets", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  fileName: varchar("file_name").notNull(),
+  originalName: varchar("original_name").notNull(),
+  filePath: varchar("file_path").notNull(),
+  fileUrl: varchar("file_url").notNull(),
+  fileType: varchar("file_type").notNull(), // image/jpeg, image/png, etc.
+  fileSize: integer("file_size").notNull(),
+  uploadedBy: varchar("uploaded_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Specialties table
 export const specialties = pgTable("specialties", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -238,6 +307,25 @@ export const waitlistRelations = relations(waitlist, ({ one }) => ({
   }),
 }));
 
+// CMS Relations
+export const cmsPagesRelations = relations(cmsPages, ({ many }) => ({
+  contentSections: many(cmsContentSections),
+}));
+
+export const cmsContentSectionsRelations = relations(cmsContentSections, ({ one }) => ({
+  page: one(cmsPages, {
+    fields: [cmsContentSections.pageId],
+    references: [cmsPages.id],
+  }),
+}));
+
+export const cmsMediaAssetsRelations = relations(cmsMediaAssets, ({ one }) => ({
+  uploadedByUser: one(users, {
+    fields: [cmsMediaAssets.uploadedBy],
+    references: [users.id],
+  }),
+}));
+
 // Zod schemas
 export const upsertUserSchema = createInsertSchema(users).pick({
   id: true,
@@ -291,6 +379,24 @@ export const insertContactQuerySchema = createInsertSchema(contactQueries).omit(
   createdAt: true,
 });
 
+// CMS Insert Schemas
+export const insertCmsPageSchema = createInsertSchema(cmsPages).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertCmsContentSectionSchema = createInsertSchema(cmsContentSections).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertCmsMediaAssetSchema = createInsertSchema(cmsMediaAssets).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types
 export type UpsertUser = z.infer<typeof upsertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -302,6 +408,15 @@ export type Review = typeof reviews.$inferSelect;
 export type Waitlist = typeof waitlist.$inferSelect;
 export type NewsletterSubscription = typeof newsletterSubscriptions.$inferSelect;
 export type ContactQuery = typeof contactQueries.$inferSelect;
+
+// CMS Types
+export type CmsPage = typeof cmsPages.$inferSelect;
+export type CmsContentSection = typeof cmsContentSections.$inferSelect;
+export type CmsMediaAsset = typeof cmsMediaAssets.$inferSelect;
+
+export type InsertCmsPage = z.infer<typeof insertCmsPageSchema>;
+export type InsertCmsContentSection = z.infer<typeof insertCmsContentSectionSchema>;
+export type InsertCmsMediaAsset = z.infer<typeof insertCmsMediaAssetSchema>;
 
 export type InsertSpecialty = z.infer<typeof insertSpecialtySchema>;
 export type InsertProgram = z.infer<typeof insertProgramSchema>;

@@ -1,927 +1,753 @@
-import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useAdminAuth } from "@/hooks/useAdminAuth";
-import { AdminNavbar } from "@/components/admin-navbar";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
-import { isUnauthorizedError } from "@/lib/authUtils";
+import { useState, useEffect } from 'react';
+import { Link, useLocation } from 'wouter';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
 import { 
-  FileText, 
-  BookOpen, 
-  Image, 
-  Settings, 
-  Plus, 
-  Edit, 
-  Trash, 
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger
+} from '@/components/ui/dialog';
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue 
+} from '@/components/ui/select';
+import { 
+  Plus,
+  Edit,
   Eye,
-  Upload,
-  User
-} from "lucide-react";
+  FileText,
+  Image as ImageIcon,
+  Save,
+  Trash2,
+  Settings
+} from 'lucide-react';
+import { AdminNavbar } from '@/components/admin-navbar';
 
-// Schema for forms
-const blogPostSchema = z.object({
-  title: z.string().min(1, "Title is required"),
-  slug: z.string().min(1, "Slug is required"),
-  excerpt: z.string().optional(),
-  content: z.string().min(1, "Content is required"),
-  author: z.string().min(1, "Author is required"),
-  category: z.string().min(1, "Category is required"),
-  tags: z.string().optional(),
-  featuredImage: z.string().optional(),
-  readTime: z.string().optional(),
-  status: z.enum(["draft", "published", "archived"]),
-});
+interface CmsPage {
+  id: string;
+  pageName: string;
+  displayName: string;
+  slug: string;
+  title: string;
+  metaDescription: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
 
-const courseSchema = z.object({
-  title: z.string().min(1, "Title is required"),
-  slug: z.string().min(1, "Slug is required"),
-  description: z.string().optional(),
-  fullDescription: z.string().optional(),
-  price: z.string().optional(),
-  category: z.string().optional(),
-  difficulty: z.enum(["beginner", "intermediate", "advanced"]).optional(),
-  duration: z.string().optional(),
-  featuredImage: z.string().optional(),
-  instructor: z.string().optional(),
-  status: z.enum(["draft", "published", "archived"]),
-});
+interface CmsContentSection {
+  id: string;
+  pageId: string;
+  sectionKey: string;
+  sectionType: 'text' | 'image' | 'html' | 'json';
+  content: string;
+  sortOrder: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
 
-export default function CMSDashboard() {
-  const { adminUser, isLoading: authLoading, isAuthenticated } = useAdminAuth();
-  const queryClient = useQueryClient();
+interface CmsMediaAsset {
+  id: string;
+  fileName: string;
+  originalName: string;
+  filePath: string;
+  fileUrl: string;
+  fileType: string;
+  fileSize: number;
+  uploadedBy: string;
+  createdAt: string;
+}
+
+export default function CmsDashboard() {
+  const [, navigate] = useLocation();
+  const [selectedPage, setSelectedPage] = useState<CmsPage | null>(null);
+  const [showAddPageDialog, setShowAddPageDialog] = useState(false);
+  const [showEditPageDialog, setShowEditPageDialog] = useState(false);
+  const [showAddSectionDialog, setShowAddSectionDialog] = useState(false);
+  const [editingSection, setEditingSection] = useState<CmsContentSection | null>(null);
+  const [activeTab, setActiveTab] = useState<'pages' | 'sections' | 'media'>('pages');
+  
+  const [newPageData, setNewPageData] = useState({
+    pageName: '',
+    displayName: '',
+    slug: '',
+    title: '',
+    metaDescription: ''
+  });
+
+  const [newSectionData, setNewSectionData] = useState({
+    sectionKey: '',
+    sectionType: 'text' as const,
+    content: '',
+    sortOrder: 0
+  });
+
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState("overview");
-  const [blogDialogOpen, setBlogDialogOpen] = useState(false);
-  const [courseDialogOpen, setCourseDialogOpen] = useState(false);
-  const [selectedBlogPost, setSelectedBlogPost] = useState<any>(null);
-  const [selectedCourse, setSelectedCourse] = useState<any>(null);
+  const queryClient = useQueryClient();
 
-  // Form setup
-  const blogForm = useForm<z.infer<typeof blogPostSchema>>({
-    resolver: zodResolver(blogPostSchema),
-    defaultValues: {
-      status: "draft",
-    },
+  // Fetch CMS pages
+  const { data: pages, isLoading: loadingPages } = useQuery<CmsPage[]>({
+    queryKey: ['/api/cms/pages'],
+    staleTime: 5 * 60 * 1000,
   });
 
-  const courseForm = useForm<z.infer<typeof courseSchema>>({
-    resolver: zodResolver(courseSchema),
-    defaultValues: {
-      status: "draft",
-      difficulty: "beginner",
-    },
+  // Fetch content sections for selected page
+  const { data: sections, isLoading: loadingSections } = useQuery<CmsContentSection[]>({
+    queryKey: ['/api/cms/pages', selectedPage?.id, 'sections'],
+    enabled: !!selectedPage?.id,
+    staleTime: 5 * 60 * 1000,
   });
 
-  // Data queries
-  const { data: blogPosts = [], isLoading: blogLoading } = useQuery<any[]>({
-    queryKey: ['/api/cms/blog-posts'],
-    retry: false,
-  });
-
-  const { data: courses = [], isLoading: coursesLoading } = useQuery<any[]>({
-    queryKey: ['/api/cms/courses'],
-    retry: false,
-  });
-
-  const { data: contentPages = [], isLoading: pagesLoading } = useQuery<any[]>({
-    queryKey: ['/api/cms/content-pages'],
-    retry: false,
-  });
-
-  const { data: mediaAssets = [], isLoading: mediaLoading } = useQuery<any[]>({
+  // Fetch media assets
+  const { data: mediaAssets, isLoading: loadingMedia } = useQuery<CmsMediaAsset[]>({
     queryKey: ['/api/cms/media-assets'],
-    retry: false,
+    staleTime: 5 * 60 * 1000,
   });
 
-  // Mutations
-  const createBlogPost = useMutation({
-    mutationFn: async (data: z.infer<typeof blogPostSchema>) => {
-      const tagsArray = data.tags ? data.tags.split(',').map(tag => tag.trim()) : [];
-      const payload = { ...data, tags: tagsArray };
-      return apiRequest("POST", "/api/cms/blog-posts", payload);
+  // Create new page mutation
+  const createPageMutation = useMutation({
+    mutationFn: async (pageData: typeof newPageData) => {
+      const response = await fetch('/api/cms/pages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(pageData)
+      });
+      if (!response.ok) throw new Error('Failed to create page');
+      return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/cms/blog-posts'] });
-      setBlogDialogOpen(false);
-      blogForm.reset();
-      toast({ title: "Success", description: "Blog post created successfully" });
+      queryClient.invalidateQueries({ queryKey: ['/api/cms/pages'] });
+      setShowAddPageDialog(false);
+      setNewPageData({ pageName: '', displayName: '', slug: '', title: '', metaDescription: '' });
+      toast({ title: "Success", description: "Page created successfully" });
     },
-    onError: (error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => window.location.href = "/admin-login", 500);
-        return;
-      }
-      toast({ title: "Error", description: "Failed to create blog post", variant: "destructive" });
-    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    }
   });
 
-  const createCourse = useMutation({
-    mutationFn: async (data: z.infer<typeof courseSchema>) => {
-      return apiRequest("POST", "/api/cms/courses", data);
+  // Update page mutation
+  const updatePageMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<CmsPage> }) => {
+      const response = await fetch(`/api/cms/pages/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      if (!response.ok) throw new Error('Failed to update page');
+      return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/cms/courses'] });
-      setCourseDialogOpen(false);
-      courseForm.reset();
-      toast({ title: "Success", description: "Course created successfully" });
+      queryClient.invalidateQueries({ queryKey: ['/api/cms/pages'] });
+      setShowEditPageDialog(false);
+      toast({ title: "Success", description: "Page updated successfully" });
     },
-    onError: (error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => window.location.href = "/admin-login", 500);
-        return;
-      }
-      toast({ title: "Error", description: "Failed to create course", variant: "destructive" });
-    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    }
   });
 
-  const updateBlogPost = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: z.infer<typeof blogPostSchema> }) => {
-      const tagsArray = data.tags ? data.tags.split(',').map(tag => tag.trim()) : [];
-      const payload = { ...data, tags: tagsArray };
-      return apiRequest("PUT", `/api/cms/blog-posts/${id}`, payload);
+  // Create content section mutation
+  const createSectionMutation = useMutation({
+    mutationFn: async (sectionData: typeof newSectionData & { pageId: string }) => {
+      const response = await fetch('/api/cms/content-sections', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(sectionData)
+      });
+      if (!response.ok) throw new Error('Failed to create section');
+      return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/cms/blog-posts'] });
-      setBlogDialogOpen(false);
-      setSelectedBlogPost(null);
-      blogForm.reset();
-      toast({ title: "Success", description: "Blog post updated successfully" });
+      queryClient.invalidateQueries({ queryKey: ['/api/cms/pages', selectedPage?.id, 'sections'] });
+      setShowAddSectionDialog(false);
+      setNewSectionData({ sectionKey: '', sectionType: 'text', content: '', sortOrder: 0 });
+      toast({ title: "Success", description: "Content section created successfully" });
     },
-    onError: (error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => window.location.href = "/admin-login", 500);
-        return;
-      }
-      toast({ title: "Error", description: "Failed to update blog post", variant: "destructive" });
-    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    }
   });
 
-  const deleteBlogPost = useMutation({
+  // Update content section mutation
+  const updateSectionMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<CmsContentSection> }) => {
+      const response = await fetch(`/api/cms/content-sections/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      if (!response.ok) throw new Error('Failed to update section');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/cms/pages', selectedPage?.id, 'sections'] });
+      setEditingSection(null);
+      toast({ title: "Success", description: "Content section updated successfully" });
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    }
+  });
+
+  // Delete content section mutation
+  const deleteSectionMutation = useMutation({
     mutationFn: async (id: string) => {
-      return apiRequest("DELETE", `/api/cms/blog-posts/${id}`);
+      const response = await fetch(`/api/cms/content-sections/${id}`, {
+        method: 'DELETE'
+      });
+      if (!response.ok) throw new Error('Failed to delete section');
+      return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/cms/blog-posts'] });
-      toast({ title: "Success", description: "Blog post deleted successfully" });
+      queryClient.invalidateQueries({ queryKey: ['/api/cms/pages', selectedPage?.id, 'sections'] });
+      toast({ title: "Success", description: "Content section deleted successfully" });
     },
-    onError: (error) => {
-      toast({ title: "Error", description: "Failed to delete blog post", variant: "destructive" });
-    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    }
   });
 
-  const updateCourse = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: z.infer<typeof courseSchema> }) => {
-      return apiRequest("PUT", `/api/cms/courses/${id}`, data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/cms/courses'] });
-      setCourseDialogOpen(false);
-      setSelectedCourse(null);
-      courseForm.reset();
-      toast({ title: "Success", description: "Course updated successfully" });
-    },
-    onError: (error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => window.location.href = "/admin-login", 500);
-        return;
-      }
-      toast({ title: "Error", description: "Failed to update course", variant: "destructive" });
-    },
-  });
-
-  const deleteCourse = useMutation({
-    mutationFn: async (id: string) => {
-      return apiRequest("DELETE", `/api/cms/courses/${id}`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/cms/courses'] });
-      toast({ title: "Success", description: "Course deleted successfully" });
-    },
-    onError: (error) => {
-      toast({ title: "Error", description: "Failed to delete course", variant: "destructive" });
-    },
-  });
-
-  // Helper functions
-  const generateSlug = (title: string) => {
-    return title
-      .toLowerCase()
-      .replace(/[^\w\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .trim();
+  const handleCreatePage = (e: React.FormEvent) => {
+    e.preventDefault();
+    createPageMutation.mutate(newPageData);
   };
 
-  const handleEditBlogPost = (post: any) => {
-    setSelectedBlogPost(post);
-    blogForm.reset({
-      title: post.title,
-      slug: post.slug,
-      excerpt: post.excerpt || '',
-      content: post.content,
-      author: post.author,
-      category: post.category,
-      tags: Array.isArray(post.tags) ? post.tags.join(', ') : post.tags || '',
-      featuredImage: post.featuredImage || '',
-      readTime: post.readTime || '',
-      status: post.status,
+  const handleCreateSection = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedPage) return;
+    createSectionMutation.mutate({ ...newSectionData, pageId: selectedPage.id });
+  };
+
+  const handleUpdateSection = (section: CmsContentSection) => {
+    updateSectionMutation.mutate({ 
+      id: section.id, 
+      data: { 
+        content: section.content,
+        sectionKey: section.sectionKey,
+        sectionType: section.sectionType,
+        sortOrder: section.sortOrder
+      } 
     });
-    setBlogDialogOpen(true);
   };
 
-  const handleEditCourse = (course: any) => {
-    setSelectedCourse(course);
-    courseForm.reset({
-      title: course.title,
-      slug: course.slug,
-      description: course.description || '',
-      fullDescription: course.fullDescription || '',
-      price: course.price || '',
-      category: course.category || '',
-      difficulty: course.difficulty || 'beginner',
-      duration: course.duration || '',
-      featuredImage: course.featuredImage || '',
-      instructor: course.instructor || '',
-      status: course.status,
-    });
-    setCourseDialogOpen(true);
+  const handleDeleteSection = (id: string) => {
+    if (confirm('Are you sure you want to delete this content section?')) {
+      deleteSectionMutation.mutate(id);
+    }
   };
-
-  const handleNewBlogPost = () => {
-    setSelectedBlogPost(null);
-    blogForm.reset({
-      status: "draft",
-    });
-    setBlogDialogOpen(true);
-  };
-
-  const handleNewCourse = () => {
-    setSelectedCourse(null);
-    courseForm.reset({
-      status: "draft",
-    });
-    setCourseDialogOpen(true);
-  };
-
-  // Check if user is admin - AFTER all hooks are declared
-  if (authLoading) {
-    return (
-      <div className="h-screen flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" aria-label="Loading"/>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated || !adminUser) {
-    return (
-      <div className="h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-red-600 mb-4">Access Denied</h1>
-          <p className="text-gray-600">You do not have permission to access the CMS Dashboard.</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <AdminNavbar />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Content Management System</h1>
-            <p className="text-gray-600 mt-2">Manage your website content, courses, and media</p>
-          </div>
-          <div className="flex items-center space-x-3">
-            <Button 
-              variant="outline"
-              onClick={() => window.location.href = "/admin-dashboard"}
-              className="bg-primary text-white hover:bg-primary/90"
-            >
-              <FileText className="mr-2 h-4 w-4" />
-              Applications Dashboard
-            </Button>
-            <Badge variant="secondary" className="px-4 py-2">
-              <User className="h-4 w-4 mr-2" />
-              {adminUser?.firstName} {adminUser?.lastName}
-            </Badge>
-          </div>
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
+            Content Management System
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            Manage website pages, content sections, and media assets
+          </p>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="blog">Blog Posts</TabsTrigger>
-            <TabsTrigger value="courses">Courses</TabsTrigger>
-            <TabsTrigger value="pages">Pages</TabsTrigger>
-            <TabsTrigger value="media">Media</TabsTrigger>
-          </TabsList>
+        {/* Tab Navigation */}
+        <div className="mb-8">
+          <nav className="flex space-x-8">
+            <button
+              onClick={() => setActiveTab('pages')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'pages'
+                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400'
+              }`}
+            >
+              Website Pages ({pages?.length || 0})
+            </button>
+            <button
+              onClick={() => setActiveTab('sections')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'sections'
+                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400'
+              }`}
+            >
+              Content Sections {selectedPage ? `(${sections?.length || 0})` : ''}
+            </button>
+            <button
+              onClick={() => setActiveTab('media')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'media'
+                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400'
+              }`}
+            >
+              Media Assets ({mediaAssets?.length || 0})
+            </button>
+          </nav>
+        </div>
 
-          <TabsContent value="overview" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Blog Posts</CardTitle>
-                  <FileText className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{blogPosts.length}</div>
-                  <p className="text-xs text-muted-foreground">
-                    {blogPosts.filter((post: any) => post.status === 'published').length} published
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Courses</CardTitle>
-                  <BookOpen className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{courses.length}</div>
-                  <p className="text-xs text-muted-foreground">
-                    {courses.filter((course: any) => course.status === 'published').length} published
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Content Pages</CardTitle>
-                  <Settings className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{contentPages.length}</div>
-                  <p className="text-xs text-muted-foreground">Site pages</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Media Assets</CardTitle>
-                  <Image className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{mediaAssets.length}</div>
-                  <p className="text-xs text-muted-foreground">Images & files</p>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="blog" className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold">Blog Posts</h2>
-              <Button onClick={handleNewBlogPost}>
-                <Plus className="h-4 w-4 mr-2" />
-                New Post
-              </Button>
-            </div>
-            
-            <div className="grid gap-4">
-              {blogPosts.map((post: any) => (
-                <Card key={post.id}>
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-2">
-                        <h3 className="text-lg font-semibold">{post.title}</h3>
-                        <p className="text-sm text-gray-600">{post.excerpt}</p>
-                        <div className="flex items-center space-x-4">
-                          <Badge variant={post.status === 'published' ? 'default' : 'secondary'}>
-                            {post.status}
-                          </Badge>
-                          <span className="text-sm text-gray-500">by {post.author}</span>
-                        </div>
-                      </div>
-                      <div className="flex space-x-2">
-                        <Button variant="outline" size="sm" onClick={() => handleEditBlogPost(post)}>
-                          <Edit className="h-4 w-4 mr-2" />
-                          Edit
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          onClick={() => deleteBlogPost.mutate(post.id)}
-                          disabled={deleteBlogPost.isPending}
-                        >
-                          <Trash className="h-4 w-4 mr-2" />
-                          Delete
-                        </Button>
-                      </div>
+        {/* Pages Tab */}
+        {activeTab === 'pages' && (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                Website Pages
+              </h2>
+              <Dialog open={showAddPageDialog} onOpenChange={setShowAddPageDialog}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Page
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[425px]">
+                  <DialogHeader>
+                    <DialogTitle>Add New Page</DialogTitle>
+                    <DialogDescription>
+                      Create a new website page for content management.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <form onSubmit={handleCreatePage} className="space-y-4">
+                    <div>
+                      <Label htmlFor="pageName">Page Name</Label>
+                      <Input
+                        id="pageName"
+                        value={newPageData.pageName}
+                        onChange={(e) => setNewPageData(prev => ({ ...prev, pageName: e.target.value }))}
+                        required
+                      />
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="courses" className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold">Courses</h2>
-              <Button onClick={handleNewCourse}>
-                <Plus className="h-4 w-4 mr-2" />
-                New Course
-              </Button>
-            </div>
-            
-            <div className="grid gap-4">
-              {courses.map((course: any) => (
-                <Card key={course.id}>
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-2">
-                        <h3 className="text-lg font-semibold">{course.title}</h3>
-                        <p className="text-sm text-gray-600">{course.description}</p>
-                        <div className="flex items-center space-x-4">
-                          <Badge variant={course.status === 'published' ? 'default' : 'secondary'}>
-                            {course.status}
-                          </Badge>
-                          {course.difficulty && (
-                            <Badge variant="outline">{course.difficulty}</Badge>
-                          )}
-                          {course.price && (
-                            <span className="text-sm font-medium">${course.price}</span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex space-x-2">
-                        <Button variant="outline" size="sm" onClick={() => handleEditCourse(course)}>
-                          <Edit className="h-4 w-4 mr-2" />
-                          Edit
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          onClick={() => deleteCourse.mutate(course.id)}
-                          disabled={deleteCourse.isPending}
-                        >
-                          <Trash className="h-4 w-4 mr-2" />
-                          Delete
-                        </Button>
-                      </div>
+                    <div>
+                      <Label htmlFor="displayName">Display Name</Label>
+                      <Input
+                        id="displayName"
+                        value={newPageData.displayName}
+                        onChange={(e) => setNewPageData(prev => ({ ...prev, displayName: e.target.value }))}
+                        required
+                      />
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    <div>
+                      <Label htmlFor="slug">URL Slug</Label>
+                      <Input
+                        id="slug"
+                        value={newPageData.slug}
+                        onChange={(e) => setNewPageData(prev => ({ ...prev, slug: e.target.value }))}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="title">Page Title</Label>
+                      <Input
+                        id="title"
+                        value={newPageData.title}
+                        onChange={(e) => setNewPageData(prev => ({ ...prev, title: e.target.value }))}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="metaDescription">Meta Description</Label>
+                      <Textarea
+                        id="metaDescription"
+                        value={newPageData.metaDescription}
+                        onChange={(e) => setNewPageData(prev => ({ ...prev, metaDescription: e.target.value }))}
+                      />
+                    </div>
+                    <Button 
+                      type="submit" 
+                      className="w-full"
+                      disabled={createPageMutation.isPending}
+                    >
+                      {createPageMutation.isPending ? 'Creating...' : 'Create Page'}
+                    </Button>
+                  </form>
+                </DialogContent>
+              </Dialog>
             </div>
-          </TabsContent>
 
-          <TabsContent value="pages" className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold">Content Pages</h2>
+            {loadingPages ? (
+              <div className="text-center py-8">Loading pages...</div>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {pages?.map((page) => (
+                  <Card key={page.id} className="hover:shadow-md transition-shadow">
+                    <CardHeader className="pb-2">
+                      <div className="flex justify-between items-start">
+                        <CardTitle className="text-lg">{page.displayName}</CardTitle>
+                        <Badge variant={page.isActive ? 'default' : 'secondary'}>
+                          {page.isActive ? 'Active' : 'Inactive'}
+                        </Badge>
+                      </div>
+                      <CardDescription>/{page.slug}</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-2">
+                        {page.metaDescription}
+                      </p>
+                      <div className="flex space-x-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setSelectedPage(page);
+                            setActiveTab('sections');
+                          }}
+                        >
+                          <Edit className="h-3 w-3 mr-1" />
+                          Edit Content
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setSelectedPage(page);
+                            setShowEditPageDialog(true);
+                          }}
+                        >
+                          <Settings className="h-3 w-3 mr-1" />
+                          Settings
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Content Sections Tab */}
+        {activeTab === 'sections' && (
+          <div className="space-y-6">
+            {!selectedPage ? (
+              <div className="text-center py-12">
+                <FileText className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                  No Page Selected
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400">
+                  Please select a page from the Pages tab to manage its content sections.
+                </p>
+                <Button 
+                  className="mt-4"
+                  onClick={() => setActiveTab('pages')}
+                >
+                  Go to Pages
+                </Button>
+              </div>
+            ) : (
+              <>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                      Content Sections for "{selectedPage.displayName}"
+                    </h2>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      Manage text, images, and other content sections
+                    </p>
+                  </div>
+                  <Dialog open={showAddSectionDialog} onOpenChange={setShowAddSectionDialog}>
+                    <DialogTrigger asChild>
+                      <Button>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Section
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[425px]">
+                      <DialogHeader>
+                        <DialogTitle>Add Content Section</DialogTitle>
+                        <DialogDescription>
+                          Add a new content section to this page.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <form onSubmit={handleCreateSection} className="space-y-4">
+                        <div>
+                          <Label htmlFor="sectionKey">Section Key</Label>
+                          <Input
+                            id="sectionKey"
+                            placeholder="e.g., hero_title, about_description"
+                            value={newSectionData.sectionKey}
+                            onChange={(e) => setNewSectionData(prev => ({ ...prev, sectionKey: e.target.value }))}
+                            required
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="sectionType">Section Type</Label>
+                          <Select 
+                            value={newSectionData.sectionType}
+                            onValueChange={(value: 'text' | 'image' | 'html' | 'json') => 
+                              setNewSectionData(prev => ({ ...prev, sectionType: value }))
+                            }
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="text">Text</SelectItem>
+                              <SelectItem value="image">Image</SelectItem>
+                              <SelectItem value="html">HTML</SelectItem>
+                              <SelectItem value="json">JSON</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label htmlFor="content">Content</Label>
+                          <Textarea
+                            id="content"
+                            value={newSectionData.content}
+                            onChange={(e) => setNewSectionData(prev => ({ ...prev, content: e.target.value }))}
+                            rows={4}
+                            required
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="sortOrder">Sort Order</Label>
+                          <Input
+                            id="sortOrder"
+                            type="number"
+                            value={newSectionData.sortOrder}
+                            onChange={(e) => setNewSectionData(prev => ({ ...prev, sortOrder: parseInt(e.target.value) || 0 }))}
+                          />
+                        </div>
+                        <Button 
+                          type="submit" 
+                          className="w-full"
+                          disabled={createSectionMutation.isPending}
+                        >
+                          {createSectionMutation.isPending ? 'Creating...' : 'Create Section'}
+                        </Button>
+                      </form>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+
+                {loadingSections ? (
+                  <div className="text-center py-8">Loading content sections...</div>
+                ) : (
+                  <div className="space-y-4">
+                    {sections?.map((section) => (
+                      <Card key={section.id}>
+                        <CardHeader className="pb-2">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <CardTitle className="text-lg">{section.sectionKey}</CardTitle>
+                              <div className="flex items-center space-x-2 mt-1">
+                                <Badge variant="outline">{section.sectionType}</Badge>
+                                <Badge variant="secondary">Order: {section.sortOrder}</Badge>
+                              </div>
+                            </div>
+                            <div className="flex space-x-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setEditingSection(section)}
+                              >
+                                <Edit className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleDeleteSection(section.id)}
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </div>
+                        </CardHeader>
+                        <CardContent>
+                          {editingSection?.id === section.id ? (
+                            <div className="space-y-3">
+                              <div>
+                                <Label>Section Key</Label>
+                                <Input
+                                  value={editingSection.sectionKey}
+                                  onChange={(e) => setEditingSection(prev => prev ? { ...prev, sectionKey: e.target.value } : null)}
+                                />
+                              </div>
+                              <div>
+                                <Label>Content</Label>
+                                <Textarea
+                                  value={editingSection.content}
+                                  onChange={(e) => setEditingSection(prev => prev ? { ...prev, content: e.target.value } : null)}
+                                  rows={4}
+                                />
+                              </div>
+                              <div className="flex space-x-2">
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleUpdateSection(editingSection)}
+                                  disabled={updateSectionMutation.isPending}
+                                >
+                                  <Save className="h-3 w-3 mr-1" />
+                                  Save
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => setEditingSection(null)}
+                                >
+                                  Cancel
+                                </Button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="text-sm text-gray-600 dark:text-gray-400">
+                              <div className="font-mono bg-gray-100 dark:bg-gray-800 p-3 rounded max-h-32 overflow-y-auto">
+                                {section.content}
+                              </div>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    ))}
+                    
+                    {sections?.length === 0 && (
+                      <div className="text-center py-8">
+                        <FileText className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+                        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                          No Content Sections
+                        </h3>
+                        <p className="text-gray-600 dark:text-gray-400">
+                          Start by adding content sections to this page.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Media Assets Tab */}
+        {activeTab === 'media' && (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                Media Assets
+              </h2>
               <Button>
                 <Plus className="h-4 w-4 mr-2" />
-                New Page
-              </Button>
-            </div>
-            
-            <Card>
-              <CardContent className="p-6">
-                <p className="text-gray-600">Content pages management coming soon...</p>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="media" className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold">Media Assets</h2>
-              <Button>
-                <Upload className="h-4 w-4 mr-2" />
                 Upload Media
               </Button>
             </div>
-            
-            <Card>
-              <CardContent className="p-6">
-                <p className="text-gray-600">Media management coming soon...</p>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
 
-        {/* Blog Post Dialog */}
-        <Dialog open={blogDialogOpen} onOpenChange={setBlogDialogOpen}>
-          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+            {loadingMedia ? (
+              <div className="text-center py-8">Loading media assets...</div>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {mediaAssets?.map((asset) => (
+                  <Card key={asset.id} className="overflow-hidden">
+                    <div className="aspect-video bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                      {asset.fileType.startsWith('image/') ? (
+                        <img 
+                          src={asset.fileUrl} 
+                          alt={asset.originalName}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <ImageIcon className="h-8 w-8 text-gray-400" />
+                      )}
+                    </div>
+                    <CardContent className="p-3">
+                      <h4 className="font-medium text-sm truncate" title={asset.originalName}>
+                        {asset.originalName}
+                      </h4>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        {(asset.fileSize / 1024).toFixed(1)} KB
+                      </p>
+                    </CardContent>
+                  </Card>
+                ))}
+                
+                {mediaAssets?.length === 0 && (
+                  <div className="col-span-full text-center py-8">
+                    <ImageIcon className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                      No Media Assets
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      Upload images and other media files to get started.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Edit Page Dialog */}
+        <Dialog open={showEditPageDialog} onOpenChange={setShowEditPageDialog}>
+          <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
-              <DialogTitle>{selectedBlogPost ? 'Edit Blog Post' : 'Create New Blog Post'}</DialogTitle>
+              <DialogTitle>Edit Page Settings</DialogTitle>
               <DialogDescription>
-                Fill in the details for the blog post. All fields with * are required.
+                Update page metadata and settings.
               </DialogDescription>
             </DialogHeader>
-            <Form {...blogForm}>
-              <form onSubmit={blogForm.handleSubmit((data) => {
-                if (selectedBlogPost) {
-                  updateBlogPost.mutate({ id: selectedBlogPost.id, data });
-                } else {
-                  createBlogPost.mutate(data);
-                }
-              })} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={blogForm.control}
-                    name="title"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Title *</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Enter blog post title" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={blogForm.control}
-                    name="slug"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Slug *</FormLabel>
-                        <FormControl>
-                          <Input placeholder="blog-post-url-slug" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+            {selectedPage && (
+              <form 
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  updatePageMutation.mutate({ 
+                    id: selectedPage.id, 
+                    data: { 
+                      displayName: selectedPage.displayName,
+                      title: selectedPage.title,
+                      metaDescription: selectedPage.metaDescription
+                    } 
+                  });
+                }} 
+                className="space-y-4"
+              >
+                <div>
+                  <Label htmlFor="editDisplayName">Display Name</Label>
+                  <Input
+                    id="editDisplayName"
+                    value={selectedPage.displayName}
+                    onChange={(e) => setSelectedPage(prev => prev ? { ...prev, displayName: e.target.value } : null)}
+                    required
                   />
                 </div>
-                
-                <FormField
-                  control={blogForm.control}
-                  name="excerpt"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Excerpt</FormLabel>
-                      <FormControl>
-                        <Textarea placeholder="Brief description of the blog post" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={blogForm.control}
-                  name="content"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Content *</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          placeholder="Write your blog post content here" 
-                          className="min-h-[200px]"
-                          {...field} 
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={blogForm.control}
-                    name="author"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Author *</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Author name" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={blogForm.control}
-                    name="category"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Category *</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Blog category" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                <div>
+                  <Label htmlFor="editTitle">Page Title</Label>
+                  <Input
+                    id="editTitle"
+                    value={selectedPage.title}
+                    onChange={(e) => setSelectedPage(prev => prev ? { ...prev, title: e.target.value } : null)}
+                    required
                   />
                 </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={blogForm.control}
-                    name="tags"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Tags</FormLabel>
-                        <FormControl>
-                          <Input placeholder="tag1, tag2, tag3" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={blogForm.control}
-                    name="readTime"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Read Time</FormLabel>
-                        <FormControl>
-                          <Input placeholder="5 min read" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                <div>
+                  <Label htmlFor="editMetaDescription">Meta Description</Label>
+                  <Textarea
+                    id="editMetaDescription"
+                    value={selectedPage.metaDescription}
+                    onChange={(e) => setSelectedPage(prev => prev ? { ...prev, metaDescription: e.target.value } : null)}
                   />
                 </div>
-                
-                <FormField
-                  control={blogForm.control}
-                  name="featuredImage"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Featured Image URL</FormLabel>
-                      <FormControl>
-                        <Input placeholder="https://example.com/image.jpg" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={blogForm.control}
-                  name="status"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Status *</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select status" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="draft">Draft</SelectItem>
-                          <SelectItem value="published">Published</SelectItem>
-                          <SelectItem value="archived">Archived</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <div className="flex justify-end space-x-2">
-                  <Button type="button" variant="outline" onClick={() => setBlogDialogOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button type="submit" disabled={createBlogPost.isPending || updateBlogPost.isPending}>
-                    {createBlogPost.isPending || updateBlogPost.isPending ? 'Saving...' : 'Save Post'}
-                  </Button>
-                </div>
+                <Button 
+                  type="submit" 
+                  className="w-full"
+                  disabled={updatePageMutation.isPending}
+                >
+                  {updatePageMutation.isPending ? 'Updating...' : 'Update Page'}
+                </Button>
               </form>
-            </Form>
-          </DialogContent>
-        </Dialog>
-
-        {/* Course Dialog */}
-        <Dialog open={courseDialogOpen} onOpenChange={setCourseDialogOpen}>
-          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>{selectedCourse ? 'Edit Course' : 'Create New Course'}</DialogTitle>
-              <DialogDescription>
-                Fill in the details for the course. All fields with * are required.
-              </DialogDescription>
-            </DialogHeader>
-            <Form {...courseForm}>
-              <form onSubmit={courseForm.handleSubmit((data) => {
-                if (selectedCourse) {
-                  updateCourse.mutate({ id: selectedCourse.id, data });
-                } else {
-                  createCourse.mutate(data);
-                }
-              })} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={courseForm.control}
-                    name="title"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Title *</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Enter course title" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={courseForm.control}
-                    name="slug"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Slug *</FormLabel>
-                        <FormControl>
-                          <Input placeholder="course-url-slug" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                
-                <FormField
-                  control={courseForm.control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Short Description</FormLabel>
-                      <FormControl>
-                        <Textarea placeholder="Brief description of the course" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={courseForm.control}
-                  name="fullDescription"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Full Description</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          placeholder="Detailed description of the course" 
-                          className="min-h-[150px]"
-                          {...field} 
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <div className="grid grid-cols-3 gap-4">
-                  <FormField
-                    control={courseForm.control}
-                    name="price"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Price</FormLabel>
-                        <FormControl>
-                          <Input placeholder="99.99" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={courseForm.control}
-                    name="category"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Category</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Course category" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={courseForm.control}
-                    name="duration"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Duration</FormLabel>
-                        <FormControl>
-                          <Input placeholder="6 weeks" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={courseForm.control}
-                    name="difficulty"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Difficulty Level</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select difficulty" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="beginner">Beginner</SelectItem>
-                            <SelectItem value="intermediate">Intermediate</SelectItem>
-                            <SelectItem value="advanced">Advanced</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={courseForm.control}
-                    name="instructor"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Instructor</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Instructor name" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                
-                <FormField
-                  control={courseForm.control}
-                  name="featuredImage"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Featured Image URL</FormLabel>
-                      <FormControl>
-                        <Input placeholder="https://example.com/course-image.jpg" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={courseForm.control}
-                  name="status"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Status *</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select status" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="draft">Draft</SelectItem>
-                          <SelectItem value="published">Published</SelectItem>
-                          <SelectItem value="archived">Archived</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <div className="flex justify-end space-x-2">
-                  <Button type="button" variant="outline" onClick={() => setCourseDialogOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button type="submit" disabled={createCourse.isPending || updateCourse.isPending}>
-                    {createCourse.isPending || updateCourse.isPending ? 'Saving...' : 'Save Course'}
-                  </Button>
-                </div>
-              </form>
-            </Form>
+            )}
           </DialogContent>
         </Dialog>
       </div>
