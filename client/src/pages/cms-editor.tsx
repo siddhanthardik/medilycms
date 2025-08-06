@@ -62,8 +62,6 @@ export default function CmsEditor() {
   const urlParams = new URLSearchParams(window.location.search);
   const pageId = urlParams.get('pageId');
 
-  console.log('CMS Editor - pageId from URL:', pageId);
-  
   const [editingSection, setEditingSection] = useState<ContentSection | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [sections, setSections] = useState<ContentSection[]>([]);
@@ -83,11 +81,6 @@ export default function CmsEditor() {
     queryKey: ['/api/cms/pages', pageId, 'sections'],
     enabled: !!pageId,
   });
-
-  console.log('Page data:', page);
-  console.log('Page error:', pageError);
-  console.log('Sections data:', pageSections);
-  console.log('Sections error:', sectionsError);
 
   useEffect(() => {
     if (pageSections && Array.isArray(pageSections)) {
