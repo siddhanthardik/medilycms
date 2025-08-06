@@ -324,10 +324,20 @@ export default function CMSDashboard() {
             <h1 className="text-3xl font-bold text-gray-900">Content Management System</h1>
             <p className="text-gray-600 mt-2">Manage your website content, courses, and media</p>
           </div>
-          <Badge variant="secondary" className="px-4 py-2">
-            <User className="h-4 w-4 mr-2" />
-            {adminUser?.firstName} {adminUser?.lastName}
-          </Badge>
+          <div className="flex items-center space-x-3">
+            <Button 
+              variant="outline"
+              onClick={() => window.location.href = "/admin-dashboard"}
+              className="bg-primary text-white hover:bg-primary/90"
+            >
+              <FileText className="mr-2 h-4 w-4" />
+              Applications Dashboard
+            </Button>
+            <Badge variant="secondary" className="px-4 py-2">
+              <User className="h-4 w-4 mr-2" />
+              {adminUser?.firstName} {adminUser?.lastName}
+            </Badge>
+          </div>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">

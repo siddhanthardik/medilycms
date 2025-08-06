@@ -42,8 +42,10 @@ function Router() {
       
       {/* Admin routes - require admin authentication */}
       <Route path="/cms-dashboard" component={CMSDashboard} />
+      <Route path="/admin-dashboard" component={AdminDashboard} />
       <Route path="/user-management" component={UserManagement} />
       <Route path="/preceptor-dashboard" component={PreceptorDashboard} />
+      <Route path="/add-program" component={AddProgram} />
       
       {isLoading || !isAuthenticated ? (
         <Route path="/" component={Landing} />
@@ -51,7 +53,6 @@ function Router() {
         <>
           <Route path="/" component={Home} />
           <Route path="/admin" component={AdminDashboard} />
-          <Route path="/admin/add-program" component={AddProgram} />
           <Route path="/dashboard" component={UserDashboard} />
           <Route path="/program/:id" component={ProgramDetail} />
           <Route path="/favorites" component={Favorites} />
