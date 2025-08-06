@@ -12,12 +12,18 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-// Create simple, stable connection pool
+// Create ultra-simple connection pool with minimal configuration
 export const pool = new Pool({ 
   connectionString: process.env.DATABASE_URL,
-  max: 3,
-  idleTimeoutMillis: 0,
+  max: 1,
+  connectionTimeoutMillis: 5000,
+  idleTimeoutMillis: 30000,
   allowExitOnIdle: false
+});
+
+// Add basic error handling
+pool.on('error', (err) => {
+  console.error('Database pool error (handled):', err.message);
 });
 
 export const db = drizzle({ client: pool, schema });

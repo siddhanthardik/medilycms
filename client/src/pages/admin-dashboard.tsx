@@ -291,14 +291,14 @@ export default function AdminDashboard() {
           <div className="flex items-center space-x-3">
             <Button 
               variant="outline"
-              onClick={() => window.location.href = "/cms"}
+              onClick={() => window.location.href = "/cms-dashboard"}
             >
               <FileText className="mr-2 h-4 w-4" />
               Content Management
             </Button>
             <Button 
               className="bg-primary hover:bg-primary/90"
-              onClick={() => window.location.href = "/admin/add-program"}
+              onClick={() => window.location.href = "/add-program"}
             >
               <Plus className="mr-2 h-4 w-4" />
               Add New Program
@@ -350,10 +350,10 @@ export default function AdminDashboard() {
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-3xl font-bold text-gray-900">{(analytics as any)?.pendingApplications || 0}</p>
-                      <p className="text-gray-600">Pending Applications</p>
+                      <p className="text-3xl font-bold text-gray-900">{applications?.length || 0}</p>
+                      <p className="text-gray-600">Total Applications</p>
                     </div>
-                    <Clock className="h-8 w-8 text-yellow-600" />
+                    <FileText className="h-8 w-8 text-purple-600" />
                   </div>
                 </CardContent>
               </Card>
@@ -436,8 +436,9 @@ export default function AdminDashboard() {
 
         {/* Enhanced Analytics Dashboard with Tabs */}
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="applications">Applications</TabsTrigger>
             <TabsTrigger value="programs">Programs</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
             {isSuperAdmin && <TabsTrigger value="financial">Financial</TabsTrigger>}
@@ -491,13 +492,261 @@ export default function AdminDashboard() {
             </Card>
           </TabsContent>
 
+          <TabsContent value="applications" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <CardTitle className="flex items-center">
+                    <FileText className="h-5 w-5 mr-2" />
+                    Application Management
+                  </CardTitle>
+                  <div className="flex items-center space-x-3">
+                    <Badge variant="outline" className="bg-blue-50 text-blue-700">
+                      {applications?.length || 0} Total Applications
+                    </Badge>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {applicationsLoading ? (
+                  <div className="space-y-4">
+                    {[...Array(5)].map((_, i) => (
+                      <div key={i} className="p-4 border border-gray-200 rounded-lg">
+                        <div className="flex justify-between items-center">
+                          <div className="flex-1">
+                            <Skeleton className="h-5 w-64 mb-2" />
+                            <Skeleton className="h-4 w-48 mb-2" />
+                            <Skeleton className="h-4 w-32" />
+                          </div>
+                          <div className="flex space-x-2">
+                            <Skeleton className="h-8 w-20" />
+                            <Skeleton className="h-8 w-16" />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : applications && applications?.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Applicant Details
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Program Applied
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Application Date
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Status
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Actions
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {applications?.map((application: any) => (
+                          <tr key={application.id} className="hover:bg-gray-50">
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="flex items-center">
+                                <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center mr-3">
+                                  <Users className="h-5 w-5 text-primary" />
+                                </div>
+                                <div>
+                                  <div className="text-sm font-medium text-gray-900">
+                                    {application.user?.firstName} {application.user?.lastName}
+                                  </div>
+                                  <div className="text-sm text-gray-500">
+                                    {application.user?.email}
+                                  </div>
+                                  <div className="text-xs text-gray-400">
+                                    ID: {application.userId}
+                                  </div>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div>
+                                <div className="text-sm font-medium text-gray-900">
+                                  {application.program?.title}
+                                </div>
+                                <div className="text-sm text-gray-500">
+                                  {application.program?.city}, {application.program?.country}
+                                </div>
+                                <div className="text-xs text-gray-400">
+                                  {application.program?.duration} weeks • {application.program?.type}
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              <div className="flex items-center">
+                                <Calendar className="h-4 w-4 mr-1 text-gray-400" />
+                                {new Date(application.applicationDate).toLocaleDateString()}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <Badge 
+                                variant={
+                                  application.status === 'approved' ? 'default' :
+                                  application.status === 'pending' ? 'secondary' :
+                                  application.status === 'rejected' ? 'destructive' :
+                                  'outline'
+                                }
+                                className={
+                                  application.status === 'approved' ? 'bg-green-100 text-green-800' :
+                                  application.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                  application.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                                  ''
+                                }
+                              >
+                                {application.status === 'approved' && <CheckCircle className="w-3 h-3 mr-1" />}
+                                {application.status === 'pending' && <Clock className="w-3 h-3 mr-1" />}
+                                {application.status === 'rejected' && <XCircle className="w-3 h-3 mr-1" />}
+                                {application.status?.charAt(0).toUpperCase() + application.status?.slice(1)}
+                              </Badge>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                              <div className="flex space-x-2">
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className="text-primary hover:text-primary/80"
+                                  onClick={() => {
+                                    // Create detailed view modal or navigate to detail page
+                                    const details = `
+                                      Applicant Details:
+                                      Name: ${application.user?.firstName} ${application.user?.lastName}
+                                      Email: ${application.user?.email}
+                                      Phone: ${application.user?.phone || 'Not provided'}
+                                      Address: ${application.user?.address || 'Not provided'}
+                                      
+                                      Program Details:
+                                      Program: ${application.program?.title}
+                                      Location: ${application.program?.city}, ${application.program?.country}
+                                      Hospital: ${application.program?.hospitalName || 'Not specified'}
+                                      Preceptor: ${application.program?.preceptorName || 'Not specified'}
+                                      Duration: ${application.program?.duration} weeks
+                                      Type: ${application.program?.type}
+                                      Fee: $${application.program?.cost || 0}
+                                      
+                                      Application Info:
+                                      Status: ${application.status}
+                                      Applied Date: ${new Date(application.applicationDate).toLocaleDateString()}
+                                      Visa Status: ${application.visaStatus || 'Not specified'}
+                                      Join Date: ${application.joinDate ? new Date(application.joinDate).toLocaleDateString() : 'Not set'}
+                                      
+                                      Documents:
+                                      CV: ${application.cvUrl || 'Not uploaded'}
+                                      Cover Letter: ${application.coverLetter ? 'Provided' : 'Not provided'}
+                                      Additional Documents: ${application.additionalDocuments?.length || 0} files
+                                      
+                                      Review Notes: ${application.reviewNotes || 'No notes'}
+                                    `;
+                                    alert(details);
+                                  }}
+                                >
+                                  View Details
+                                </Button>
+                                {application.status === 'pending' && (
+                                  <>
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm" 
+                                      className="text-green-600 hover:text-green-700"
+                                      onClick={() => {
+                                        // Handle approve action
+                                        alert('Approve functionality will be implemented');
+                                      }}
+                                    >
+                                      Approve
+                                    </Button>
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm" 
+                                      className="text-red-600 hover:text-red-700"
+                                      onClick={() => {
+                                        // Handle reject action
+                                        alert('Reject functionality will be implemented');
+                                      }}
+                                    >
+                                      Reject
+                                    </Button>
+                                  </>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <FileText className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">No applications found</h3>
+                    <p className="text-gray-600 mb-4">Applications will appear here once students start applying to programs.</p>
+                    <Button onClick={() => window.location.href = '/add-program'} className="bg-primary hover:bg-primary/90">
+                      <Plus className="mr-2 h-4 w-4" />
+                      Add Programs to Get Applications
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Application Analytics */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm font-medium text-gray-600">Pending Applications</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-yellow-600">
+                    {applications?.filter((app: any) => app.status === 'pending').length || 0}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">Awaiting review</p>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm font-medium text-gray-600">Approved Applications</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-green-600">
+                    {applications?.filter((app: any) => app.status === 'approved').length || 0}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">Successfully approved</p>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm font-medium text-gray-600">Application Success Rate</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-blue-600">
+                    {applications?.length > 0 
+                      ? Math.round((applications.filter((app: any) => app.status === 'approved').length / applications.length) * 100)
+                      : 0}%
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">Overall approval rate</p>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
           <TabsContent value="programs" className="space-y-6">
             <Card>
               <CardHeader>
                 <div className="flex justify-between items-center">
                   <CardTitle>Program Management</CardTitle>
                   <Button 
-                    onClick={() => window.location.href = '/admin/add-program'}
+                    onClick={() => window.location.href = '/add-program'}
                     className="bg-primary hover:bg-primary/90"
                   >
                     <Plus className="mr-2 h-4 w-4" />
@@ -600,7 +849,7 @@ export default function AdminDashboard() {
                     <Building className="mx-auto h-12 w-12 text-gray-400 mb-4" />
                     <h3 className="text-lg font-medium text-gray-900 mb-2">No programs found</h3>
                     <p className="text-gray-600 mb-4">Get started by adding your first clinical rotation program.</p>
-                    <Button onClick={() => window.location.href = '/admin/add-program'} className="bg-primary hover:bg-primary/90">
+                    <Button onClick={() => window.location.href = '/add-program'} className="bg-primary hover:bg-primary/90">
                       <Plus className="mr-2 h-4 w-4" />
                       Add New Program
                     </Button>
