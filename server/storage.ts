@@ -822,10 +822,13 @@ export class DatabaseStorage implements IStorage {
     return newSection;
   }
 
-  async updateCmsContentSection(id: string, updates: Partial<CmsContentSection>): Promise<CmsContentSection> {
+  async updateCmsContentSection(id: string, updates: Partial<Omit<CmsContentSection, 'id' | 'createdAt' | 'updatedAt'>>): Promise<CmsContentSection> {
+    // Filter out any timestamp fields that might be in the updates
+    const { id: _, createdAt: __, updatedAt: ___, ...safeUpdates } = updates as any;
+    
     const [updatedSection] = await db
       .update(cmsContentSections)
-      .set({ ...updates, updatedAt: new Date() })
+      .set({ ...safeUpdates, updatedAt: new Date() })
       .where(eq(cmsContentSections.id, id))
       .returning();
     return updatedSection;

@@ -481,7 +481,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put('/api/cms/content-sections/:id', requireAdminSession, async (req: any, res) => {
     try {
       const { id } = req.params;
-      const updates = req.body;
+      const { 
+        sectionName, 
+        sectionKey, 
+        sectionTitle, 
+        contentType, 
+        content, 
+        imageUrl, 
+        altText, 
+        sortOrder, 
+        isActive 
+      } = req.body;
+      
+      // Only allow updating specific fields, exclude timestamps and id
+      const updates = {
+        ...(sectionName && { sectionName }),
+        ...(sectionKey && { sectionKey }),
+        ...(sectionTitle && { sectionTitle }),
+        ...(contentType && { contentType }),
+        ...(content !== undefined && { content }),
+        ...(imageUrl !== undefined && { imageUrl }),
+        ...(altText !== undefined && { altText }),
+        ...(sortOrder !== undefined && { sortOrder }),
+        ...(isActive !== undefined && { isActive })
+      };
+      
       const section = await storage.updateCmsContentSection(id, updates);
       res.json(section);
     } catch (error) {
