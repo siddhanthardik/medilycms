@@ -83,10 +83,14 @@ export default function CmsEditor() {
   });
 
   useEffect(() => {
+    console.log('Page sections from API:', pageSections);
     if (pageSections && Array.isArray(pageSections)) {
+      console.log('Setting sections:', pageSections);
       setSections(pageSections);
     }
   }, [pageSections]);
+
+  console.log('Current sections state:', sections);
 
   // Update section mutation
   const updateSectionMutation = useMutation({
