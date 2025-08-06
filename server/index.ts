@@ -1,6 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { checkDatabaseHealth, startDatabaseHealthMonitor } from "./database-health";
 
 const app = express();
 app.use(express.json());
@@ -55,13 +56,29 @@ app.use((req, res, next) => {
       log('Running in development mode with Vite');
     }
 
+    log('Checking database connectivity...');
+    const dbHealthy = await checkDatabaseHealth();
+    if (!dbHealthy) {
+      console.warn('Database initial connection failed, but continuing startup...');
+    }
+
     log('Initializing server and registering routes...');
     const server = await registerRoutes(app);
     log('Routes registered successfully');
+    
+    // Start database monitoring
+    startDatabaseHealthMonitor();
 
     app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
       const status = err.status || err.statusCode || 500;
       const message = err.message || "Internal Server Error";
+
+      // Don't crash the server on database errors
+      if (err.code === 'ECONNRESET' || err.message?.includes('WebSocket')) {
+        console.error('Database connection error (handled):', err.message);
+        res.status(503).json({ message: "Database temporarily unavailable, please try again" });
+        return;
+      }
 
       console.error(`Error ${status}:`, err);
       res.status(status).json({ message });

@@ -657,9 +657,23 @@ export default function AdminDashboard() {
                                       variant="ghost" 
                                       size="sm" 
                                       className="text-green-600 hover:text-green-700"
-                                      onClick={() => {
-                                        // Handle approve action
-                                        alert('Approve functionality will be implemented');
+                                      onClick={async () => {
+                                        try {
+                                          const response = await fetch(`/api/applications/${application.id}`, {
+                                            method: 'PUT',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({ status: 'approved' })
+                                          });
+                                          
+                                          if (response.ok) {
+                                            alert('Application approved successfully!');
+                                            window.location.reload();
+                                          } else {
+                                            alert('Failed to approve application');
+                                          }
+                                        } catch (error) {
+                                          alert('Error approving application');
+                                        }
                                       }}
                                     >
                                       Approve
@@ -668,9 +682,27 @@ export default function AdminDashboard() {
                                       variant="ghost" 
                                       size="sm" 
                                       className="text-red-600 hover:text-red-700"
-                                      onClick={() => {
-                                        // Handle reject action
-                                        alert('Reject functionality will be implemented');
+                                      onClick={async () => {
+                                        const notes = prompt('Add rejection reason (optional):');
+                                        try {
+                                          const response = await fetch(`/api/applications/${application.id}`, {
+                                            method: 'PUT',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({ 
+                                              status: 'rejected',
+                                              reviewNotes: notes || 'Application rejected by admin'
+                                            })
+                                          });
+                                          
+                                          if (response.ok) {
+                                            alert('Application rejected successfully!');
+                                            window.location.reload();
+                                          } else {
+                                            alert('Failed to reject application');
+                                          }
+                                        } catch (error) {
+                                          alert('Error rejecting application');
+                                        }
                                       }}
                                     >
                                       Reject

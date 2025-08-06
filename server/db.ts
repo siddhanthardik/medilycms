@@ -12,18 +12,47 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-// Create ultra-simple connection pool with minimal configuration
+// Create stable connection pool optimized for Neon
 export const pool = new Pool({ 
   connectionString: process.env.DATABASE_URL,
-  max: 1,
-  connectionTimeoutMillis: 5000,
-  idleTimeoutMillis: 30000,
-  allowExitOnIdle: false
+  max: 2,
+  min: 0,
+  connectionTimeoutMillis: 10000,
+  idleTimeoutMillis: 60000,
+  maxUses: 7500,
+  allowExitOnIdle: true,
+  application_name: 'medily_app'
 });
 
-// Add basic error handling
+// Enhanced error handling with reconnection
 pool.on('error', (err) => {
-  console.error('Database pool error (handled):', err.message);
+  console.error('Database pool error:', err.message);
+  // Don't exit process on connection errors
+});
+
+pool.on('connect', (client) => {
+  console.log('Database client connected successfully');
+});
+
+pool.on('acquire', () => {
+  console.log('Database client acquired from pool');
+});
+
+pool.on('release', () => {
+  console.log('Database client released back to pool');
+});
+
+// Graceful shutdown
+process.on('SIGINT', async () => {
+  console.log('Shutting down database pool...');
+  await pool.end();
+  process.exit(0);
+});
+
+process.on('SIGTERM', async () => {
+  console.log('Shutting down database pool...');
+  await pool.end();
+  process.exit(0);
 });
 
 export const db = drizzle({ client: pool, schema });
