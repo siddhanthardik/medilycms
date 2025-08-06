@@ -45,13 +45,19 @@ app.use((req, res, next) => {
       
       if (missingEnvVars.length > 0) {
         console.error('Missing required environment variables for production:', missingEnvVars);
+        console.error('Please ensure all required environment variables are set as production secrets');
         process.exit(1);
       }
       
       log('Production environment variables verified');
+      log('Running in production mode - serving static files');
+    } else {
+      log('Running in development mode with Vite');
     }
 
+    log('Initializing server and registering routes...');
     const server = await registerRoutes(app);
+    log('Routes registered successfully');
 
     app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
       const status = err.status || err.statusCode || 500;
@@ -69,7 +75,14 @@ app.use((req, res, next) => {
       await setupVite(app, server);
     } else {
       log('Setting up production environment with static file serving');
-      serveStatic(app);
+      try {
+        serveStatic(app);
+        log('Static file serving configured successfully');
+      } catch (error) {
+        console.error('Failed to configure static file serving:', error);
+        console.error('Make sure the client has been built with: npm run build');
+        process.exit(1);
+      }
     }
 
     // ALWAYS serve the app on the port specified in the environment variable PORT
@@ -85,6 +98,7 @@ app.use((req, res, next) => {
     }, () => {
       log(`Server successfully started on port ${port}`);
       log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+      log(`Host: 0.0.0.0:${port}`);
       log(`Server ready to accept connections`);
     });
 
