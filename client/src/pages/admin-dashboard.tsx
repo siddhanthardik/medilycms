@@ -642,7 +642,10 @@ export default function AdminDashboard() {
                                     {application.user?.firstName} {application.user?.lastName}
                                   </div>
                                   <div className="text-sm text-gray-500">
-                                    {application.user?.email}
+                                    📧 {application.user?.email}
+                                  </div>
+                                  <div className="text-sm text-gray-500">
+                                    📱 {application.user?.phoneNumber || 'No phone provided'}
                                   </div>
                                   <div className="text-xs text-gray-400">
                                     ID: {application.userId}

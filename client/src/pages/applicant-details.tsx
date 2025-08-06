@@ -227,7 +227,31 @@ export default function ApplicantDetails() {
                   <Mail className="h-4 w-4 mr-1" />
                   Email Address
                 </label>
-                <p className="text-base text-gray-900">{application.user?.email}</p>
+                <p className="text-base text-gray-900 font-medium">{application.user?.email}</p>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-gray-600 flex items-center">
+                  <Phone className="h-4 w-4 mr-1" />
+                  Mobile Number
+                </label>
+                <p className="text-base text-gray-900 font-medium">
+                  {application.user?.phoneNumber || 'Not provided'}
+                </p>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-gray-600">Medical School</label>
+                <p className="text-base text-gray-900">
+                  {application.user?.medicalSchool || 'Not specified'}
+                </p>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-gray-600">Graduation Year</label>
+                <p className="text-base text-gray-900">
+                  {application.user?.graduationYear || 'Not specified'}
+                </p>
               </div>
 
               <div>
