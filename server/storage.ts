@@ -467,8 +467,8 @@ export class DatabaseStorage implements IStorage {
     await db.delete(programs).where(eq(programs.id, id));
   }
 
-  // Application operations
-  async getApplications(filters?: { userId?: string; programId?: string; status?: string }): Promise<Application[]> {
+  // Application operations with joins
+  async getApplications(filters?: { userId?: string; programId?: string; status?: string }): Promise<any[]> {
     const conditions = [];
     
     if (filters?.userId) {
@@ -483,11 +483,51 @@ export class DatabaseStorage implements IStorage {
       conditions.push(eq(applications.status, filters.status as any));
     }
     
+    const query = db.select({
+      id: applications.id,
+      userId: applications.userId,
+      programId: applications.programId,
+      status: applications.status,
+      applicationDate: applications.applicationDate,
+      coverLetter: applications.coverLetter,
+      cvUrl: applications.cvUrl,
+      additionalDocuments: applications.additionalDocuments,
+      reviewNotes: applications.reviewNotes,
+      reviewedAt: applications.reviewedAt,
+      reviewedBy: applications.reviewedBy,
+      visaStatus: applications.visaStatus,
+      joinDate: applications.joinDate,
+      actualJoinDate: applications.actualJoinDate,
+      createdAt: applications.createdAt,
+      updatedAt: applications.updatedAt,
+      user: {
+        id: users.id,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        email: users.email,
+      },
+      program: {
+        id: programs.id,
+        title: programs.title,
+        type: programs.type,
+        city: programs.city,
+        country: programs.country,
+        hospitalName: programs.hospitalName,
+        mentorName: programs.mentorName,
+        duration: programs.duration,
+        cost: programs.fee,
+      },
+    })
+    .from(applications)
+    .leftJoin(users, eq(applications.userId, users.id))
+    .leftJoin(programs, eq(applications.programId, programs.id))
+    .orderBy(desc(applications.createdAt));
+    
     if (conditions.length > 0) {
-      return await db.select().from(applications).where(and(...conditions)).orderBy(desc(applications.createdAt));
+      return await query.where(and(...conditions));
     }
     
-    return await db.select().from(applications).orderBy(desc(applications.createdAt));
+    return await query;
   }
 
   async getApplication(id: string): Promise<Application | undefined> {

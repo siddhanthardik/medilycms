@@ -18,6 +18,15 @@ import { promisify } from "util";
 const execPromise = promisify(exec);
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Admin authentication middleware function declared here
+  const requireAdminSession = (req: any, res: any, next: any) => {
+    if (!(req.session as any)?.adminUser) {
+      return res.status(401).json({ message: "Admin authentication required" });
+    }
+    req.adminUser = (req.session as any).adminUser;
+    next();
+  };
+
   // Auth middleware
   await setupAuth(app);
 
@@ -159,23 +168,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Application routes
-  app.get('/api/applications', isAuthenticated, async (req: any, res) => {
+  // Application routes (admin access)
+  app.get('/api/applications', requireAdminSession, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      
       const filters: any = {};
       
-      // Regular users can only see their own applications
-      if (!user?.isAdmin) {
-        filters.userId = userId;
-      } else {
-        // Admins can filter by userId or programId
-        if (req.query.userId) filters.userId = req.query.userId as string;
-        if (req.query.programId) filters.programId = req.query.programId as string;
-        if (req.query.status) filters.status = req.query.status as string;
-      }
+      // Admins can filter by userId, programId, or status
+      if (req.query.userId) filters.userId = req.query.userId as string;
+      if (req.query.programId) filters.programId = req.query.programId as string;
+      if (req.query.status) filters.status = req.query.status as string;
       
       const applications = await storage.getApplications(filters);
       res.json(applications);
@@ -380,14 +381,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Admin middleware for session-based authentication
-  const requireAdminSession = (req: any, res: any, next: any) => {
-    if (!(req.session as any)?.adminUser) {
-      return res.status(401).json({ message: "Admin authentication required" });
-    }
-    req.adminUser = (req.session as any).adminUser;
-    next();
-  };
+  // Admin middleware functions defined above
 
   // CMS Routes - Blog Posts
   app.get('/api/cms/blog-posts', requireAdminSession, async (req: any, res) => {
