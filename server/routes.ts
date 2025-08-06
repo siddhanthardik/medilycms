@@ -451,9 +451,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/cms/content-sections', requireAdminSession, async (req: any, res) => {
     try {
-      const sectionData = req.body;
+      const sectionData = {
+        ...req.body,
+        sectionName: req.body.sectionName || 'main',
+        sectionTitle: req.body.sectionTitle || 'New Section'
+      };
       const section = await storage.createCmsContentSection(sectionData);
-      res.json(section);
+      res.status(201).json(section);
     } catch (error) {
       console.error("Error creating content section:", error);
       res.status(500).json({ message: "Failed to create content section" });

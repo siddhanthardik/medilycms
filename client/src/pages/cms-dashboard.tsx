@@ -398,6 +398,15 @@ export default function CmsDashboard() {
                         {page.metaDescription}
                       </p>
                       <div className="flex space-x-2">
+                        <Link href={`/cms-editor?pageId=${page.id}`}>
+                          <Button
+                            size="sm"
+                            variant="default"
+                          >
+                            <Edit className="h-3 w-3 mr-1" />
+                            Edit Content
+                          </Button>
+                        </Link>
                         <Button
                           size="sm"
                           variant="outline"
@@ -406,8 +415,8 @@ export default function CmsDashboard() {
                             setActiveTab('sections');
                           }}
                         >
-                          <Edit className="h-3 w-3 mr-1" />
-                          Edit Content
+                          <Settings className="h-3 w-3 mr-1" />
+                          Advanced
                         </Button>
                         <Button
                           size="sm"

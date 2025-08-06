@@ -18,6 +18,7 @@ import Blog from "@/pages/blog";
 import Join from "@/pages/join";
 import ClinicalRotations from "@/pages/clinical-rotations";
 import CMSDashboard from "@/pages/cms-dashboard";
+import CmsEditor from "@/pages/cms-editor";
 import AdminLogin from "@/pages/admin-login";
 import UserManagement from "@/pages/user-management";
 import Favorites from "@/pages/favorites";
@@ -43,6 +44,7 @@ function Router() {
       
       {/* Admin routes - require admin authentication */}
       <Route path="/cms-dashboard" component={CMSDashboard} />
+      <Route path="/cms-editor" component={CmsEditor} />
       <Route path="/admin-dashboard" component={AdminDashboard} />
       <Route path="/applicant/:id" component={ApplicantDetails} />
       <Route path="/user-management" component={UserManagement} />
