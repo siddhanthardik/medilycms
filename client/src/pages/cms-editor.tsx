@@ -61,6 +61,8 @@ export default function CmsEditor() {
   const [, navigate] = useLocation();
   const urlParams = new URLSearchParams(window.location.search);
   const pageId = urlParams.get('pageId');
+
+  console.log('CMS Editor - pageId from URL:', pageId);
   
   const [editingSection, setEditingSection] = useState<ContentSection | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -71,16 +73,21 @@ export default function CmsEditor() {
   const queryClient = useQueryClient();
 
   // Fetch page data
-  const { data: page } = useQuery<CmsPage>({
+  const { data: page, isLoading: pageLoading, error: pageError } = useQuery<CmsPage>({
     queryKey: ['/api/cms/pages', pageId],
     enabled: !!pageId,
   });
 
   // Fetch page sections
-  const { data: pageSections, isLoading } = useQuery<ContentSection[]>({
+  const { data: pageSections, isLoading: sectionsLoading, error: sectionsError } = useQuery<ContentSection[]>({
     queryKey: ['/api/cms/pages', pageId, 'sections'],
     enabled: !!pageId,
   });
+
+  console.log('Page data:', page);
+  console.log('Page error:', pageError);
+  console.log('Sections data:', pageSections);
+  console.log('Sections error:', sectionsError);
 
   useEffect(() => {
     if (pageSections && Array.isArray(pageSections)) {
@@ -256,12 +263,48 @@ export default function CmsEditor() {
     );
   };
 
-  if (!pageId || !page) {
+  if (!pageId) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <AdminNavbar />
+        <div className="max-w-4xl mx-auto px-4 py-8 text-center">
+          <h1 className="text-2xl font-bold mb-4">No page selected</h1>
+          <p className="text-gray-600 mb-4">Please select a page to edit from the CMS dashboard.</p>
+          <Button onClick={() => navigate('/cms-dashboard')}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to CMS Dashboard
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (pageLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <AdminNavbar />
+        <div className="max-w-4xl mx-auto px-4 py-8 text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading page data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (pageError || !page) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <AdminNavbar />
         <div className="max-w-4xl mx-auto px-4 py-8 text-center">
           <h1 className="text-2xl font-bold mb-4">Page not found</h1>
+          <p className="text-gray-600 mb-4">
+            The page with ID "{pageId}" could not be found or you don't have permission to access it.
+          </p>
+          {pageError && (
+            <p className="text-red-600 mb-4 text-sm">
+              Error: {pageError.message || 'Unknown error occurred'}
+            </p>
+          )}
           <Button onClick={() => navigate('/cms-dashboard')}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to CMS Dashboard
@@ -342,7 +385,7 @@ export default function CmsEditor() {
           </div>
         )}
 
-        {isLoading ? (
+        {sectionsLoading ? (
           <div className="text-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
             <p className="mt-4 text-gray-600">Loading page content...</p>

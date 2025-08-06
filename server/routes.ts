@@ -414,6 +414,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get('/api/cms/pages/:id', requireAdminSession, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const page = await storage.getCmsPageById(id);
+      if (!page) {
+        return res.status(404).json({ message: "Page not found" });
+      }
+      res.json(page);
+    } catch (error) {
+      console.error("Error fetching CMS page:", error);
+      res.status(500).json({ message: "Failed to fetch CMS page" });
+    }
+  });
+
   app.post('/api/cms/pages', requireAdminSession, async (req: any, res) => {
     try {
       const pageData = req.body;

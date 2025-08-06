@@ -805,6 +805,11 @@ export class DatabaseStorage implements IStorage {
     return page;
   }
 
+  async getCmsPageById(id: string): Promise<CmsPage | undefined> {
+    const [page] = await db.select().from(cmsPages).where(eq(cmsPages.id, id));
+    return page;
+  }
+
   async getCmsContentSections(pageId: string): Promise<CmsContentSection[]> {
     return await db.select()
       .from(cmsContentSections)
