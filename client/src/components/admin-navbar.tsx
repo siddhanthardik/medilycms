@@ -63,6 +63,9 @@ export function AdminNavbar() {
             <Link href="/user-management">
               <Button variant="ghost" className="text-sm font-medium">Users</Button>
             </Link>
+            <Link href="/team-management">
+              <Button variant="ghost" className="text-sm font-medium">Team</Button>
+            </Link>
           </div>
 
           {/* Admin User Info */}

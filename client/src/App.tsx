@@ -26,6 +26,7 @@ import Reviews from "@/pages/reviews";
 import PreceptorLogin from "@/pages/preceptor-login";
 import PreceptorDashboard from "@/pages/preceptor-dashboard";
 import ApplicantDetails from "@/pages/applicant-details";
+import TeamManagement from "@/pages/team-management";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -45,6 +46,7 @@ function Router() {
       {/* Admin routes - require admin authentication */}
       <Route path="/cms-dashboard" component={CMSDashboard} />
       <Route path="/cms-editor" component={CmsEditor} />
+      <Route path="/team-management" component={TeamManagement} />
       <Route path="/admin-dashboard" component={AdminDashboard} />
       <Route path="/applicant/:id" component={ApplicantDetails} />
       <Route path="/user-management" component={UserManagement} />

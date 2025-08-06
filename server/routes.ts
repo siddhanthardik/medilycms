@@ -1044,6 +1044,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Team Member Management Routes
+  // Get all team members
+  app.get("/api/team-members", async (req, res) => {
+    try {
+      const members = await storage.getAllTeamMembers();
+      res.json(members);
+    } catch (error) {
+      console.error("Error fetching team members:", error);
+      res.status(500).json({ error: "Failed to fetch team members" });
+    }
+  });
+
+  // Get team member by ID
+  app.get("/api/team-members/:id", async (req, res) => {
+    try {
+      const member = await storage.getTeamMemberById(req.params.id);
+      if (!member) {
+        return res.status(404).json({ error: "Team member not found" });
+      }
+      res.json(member);
+    } catch (error) {
+      console.error("Error fetching team member:", error);
+      res.status(500).json({ error: "Failed to fetch team member" });
+    }
+  });
+
+  // Create team member (admin only)
+  app.post("/api/team-members", requireAdminSession, async (req: any, res) => {
+    try {
+      const newMember = await storage.createTeamMember(req.body);
+      res.status(201).json(newMember);
+    } catch (error) {
+      console.error("Error creating team member:", error);
+      res.status(500).json({ error: "Failed to create team member" });
+    }
+  });
+
+  // Update team member (admin only)
+  app.put("/api/team-members/:id", requireAdminSession, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const updatedMember = await storage.updateTeamMember(id, req.body);
+      res.json(updatedMember);
+    } catch (error) {
+      console.error("Error updating team member:", error);
+      res.status(500).json({ error: "Failed to update team member" });
+    }
+  });
+
+  // Delete team member (admin only)
+  app.delete("/api/team-members/:id", requireAdminSession, async (req: any, res) => {
+    try {
+      await storage.deleteTeamMember(req.params.id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting team member:", error);
+      res.status(500).json({ error: "Failed to delete team member" });
+    }
+  });
+
+  // Reorder team members (admin only)
+  app.put("/api/team-members/reorder", requireAdminSession, async (req: any, res) => {
+    try {
+      const { memberIds } = req.body;
+      await storage.reorderTeamMembers(memberIds);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error reordering team members:", error);
+      res.status(500).json({ error: "Failed to reorder team members" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

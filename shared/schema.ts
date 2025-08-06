@@ -397,6 +397,8 @@ export const insertCmsMediaAssetSchema = createInsertSchema(cmsMediaAssets).omit
   createdAt: true,
 });
 
+// Team member schema will be defined after the table
+
 // Types
 export type UpsertUser = z.infer<typeof upsertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -413,10 +415,12 @@ export type ContactQuery = typeof contactQueries.$inferSelect;
 export type CmsPage = typeof cmsPages.$inferSelect;
 export type CmsContentSection = typeof cmsContentSections.$inferSelect;
 export type CmsMediaAsset = typeof cmsMediaAssets.$inferSelect;
+export type TeamMember = typeof teamMembers.$inferSelect;
 
 export type InsertCmsPage = z.infer<typeof insertCmsPageSchema>;
 export type InsertCmsContentSection = z.infer<typeof insertCmsContentSectionSchema>;
 export type InsertCmsMediaAsset = z.infer<typeof insertCmsMediaAssetSchema>;
+export type InsertTeamMember = z.infer<typeof insertTeamMemberSchema>;
 
 export type InsertSpecialty = z.infer<typeof insertSpecialtySchema>;
 export type InsertProgram = z.infer<typeof insertProgramSchema>;
@@ -475,6 +479,21 @@ export const courses = pgTable("courses", {
   createdBy: varchar("created_by").references(() => users.id),
 });
 
+// Team Members table for About page
+export const teamMembers = pgTable("team_members", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name").notNull(),
+  title: varchar("title").notNull(),
+  bio: text("bio"),
+  profileImage: varchar("profile_image"),
+  email: varchar("email"),
+  linkedinUrl: varchar("linkedin_url"),
+  sortOrder: integer("sort_order").default(0),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Content Pages table for CMS (for managing static pages like About, Contact, etc.)
 export const contentPages = pgTable("content_pages", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -528,20 +547,10 @@ export const insertMediaAssetSchema = createInsertSchema(mediaAssets).omit({
   createdAt: true,
 });
 
-// CMS Team Members for About Us page
-export const teamMembers = pgTable("team_members", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  name: varchar("name").notNull(),
-  position: varchar("position").notNull(),
-  bio: text("bio"),
-  image: varchar("image"),
-  linkedinUrl: varchar("linkedin_url"),
-  twitterUrl: varchar("twitter_url"),
-  email: varchar("email"),
-  displayOrder: integer("display_order").default(0),
-  isActive: boolean("is_active").default(true),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+export const insertTeamMemberSchema = createInsertSchema(teamMembers).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
 });
 
 // CMS Page Sections for flexible content blocks
@@ -586,12 +595,7 @@ export const contactInfo = pgTable("contact_info", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Additional CMS Zod schemas
-export const insertTeamMemberSchema = createInsertSchema(teamMembers).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
+// This duplicate will be removed - using the one defined earlier
 
 export const insertPageSectionSchema = createInsertSchema(pageSections).omit({
   id: true,
@@ -619,8 +623,7 @@ export type ContentPage = typeof contentPages.$inferSelect;
 export type InsertContentPage = z.infer<typeof insertContentPageSchema>;
 export type MediaAsset = typeof mediaAssets.$inferSelect;
 export type InsertMediaAsset = z.infer<typeof insertMediaAssetSchema>;
-export type TeamMember = typeof teamMembers.$inferSelect;
-export type InsertTeamMember = z.infer<typeof insertTeamMemberSchema>;
+// Duplicate removed - using the one defined earlier in CMS Types section
 export type PageSection = typeof pageSections.$inferSelect;
 export type InsertPageSection = z.infer<typeof insertPageSectionSchema>;
 export type MenuItem = typeof menuItems.$inferSelect;

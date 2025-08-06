@@ -11,6 +11,7 @@ import {
   cmsPages,
   cmsContentSections,
   cmsMediaAssets,
+  teamMembers,
   type User,
   type UpsertUser,
   type Specialty,
@@ -24,6 +25,7 @@ import {
   type CmsPage,
   type CmsContentSection,
   type CmsMediaAsset,
+  type TeamMember,
   type InsertSpecialty,
   type InsertProgram,
   type InsertApplication,
@@ -35,6 +37,7 @@ import {
   type InsertCmsPage,
   type InsertCmsContentSection,
   type InsertCmsMediaAsset,
+  type InsertTeamMember,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, asc, ilike, sql, count, avg } from "drizzle-orm";
@@ -832,6 +835,46 @@ export class DatabaseStorage implements IStorage {
       .where(eq(cmsContentSections.id, id))
       .returning();
     return updatedSection;
+  }
+
+  // Team Member Management Methods
+  async getAllTeamMembers(): Promise<TeamMember[]> {
+    return await db.select().from(teamMembers).where(eq(teamMembers.isActive, true)).orderBy(teamMembers.sortOrder, teamMembers.name);
+  }
+
+  async getTeamMemberById(id: string): Promise<TeamMember | undefined> {
+    const [member] = await db.select().from(teamMembers).where(eq(teamMembers.id, id));
+    return member;
+  }
+
+  async createTeamMember(member: InsertTeamMember): Promise<TeamMember> {
+    const [newMember] = await db.insert(teamMembers).values(member).returning();
+    return newMember;
+  }
+
+  async updateTeamMember(id: string, updates: Partial<Omit<TeamMember, 'id' | 'createdAt' | 'updatedAt'>>): Promise<TeamMember> {
+    // Filter out any timestamp fields that might be in the updates
+    const { id: _, createdAt: __, updatedAt: ___, ...safeUpdates } = updates as any;
+    
+    const [updatedMember] = await db
+      .update(teamMembers)
+      .set({ ...safeUpdates, updatedAt: new Date() })
+      .where(eq(teamMembers.id, id))
+      .returning();
+    return updatedMember;
+  }
+
+  async deleteTeamMember(id: string): Promise<void> {
+    await db.update(teamMembers).set({ isActive: false, updatedAt: new Date() }).where(eq(teamMembers.id, id));
+  }
+
+  async reorderTeamMembers(memberIds: string[]): Promise<void> {
+    for (let i = 0; i < memberIds.length; i++) {
+      await db
+        .update(teamMembers)
+        .set({ sortOrder: i, updatedAt: new Date() })
+        .where(eq(teamMembers.id, memberIds[i]));
+    }
   }
 
   async deleteCmsContentSection(id: string): Promise<void> {

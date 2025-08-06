@@ -3,6 +3,8 @@ import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useQuery } from "@tanstack/react-query";
+import type { TeamMember } from "@shared/schema";
 import { 
   Users, 
   Target, 
@@ -19,26 +21,10 @@ import {
 } from "lucide-react";
 
 export default function About() {
-  const teamMembers = [
-    {
-      name: "Mr. Siddhant Hardik",
-      role: "Founder",
-      image: "/api/placeholder/400/400",
-      description: "Visionary leader dedicated to transforming healthcare education"
-    },
-    {
-      name: "Dr Jitendra Singh",
-      role: "Growth Mentor",
-      image: "/api/placeholder/400/400", 
-      description: "Expert in scaling healthcare education programs"
-    },
-    {
-      name: "Dr Rajeev Ranjan",
-      role: "Program Mentor",
-      image: "/api/placeholder/400/400",
-      description: "Specialist in clinical program development and mentorship"
-    }
-  ];
+  // Fetch team members from API
+  const { data: teamMembers, isLoading: isLoadingTeam } = useQuery<TeamMember[]>({
+    queryKey: ["/api/team-members"],
+  });
 
   const features = [
     {
@@ -182,24 +168,44 @@ export default function About() {
       <section className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">Meet Our Team</h2>
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            {teamMembers.map((member, index) => (
-              <Card key={index} className="text-center bg-white shadow-lg hover:shadow-xl transition-shadow">
-                <CardHeader>
-                  <div className="mx-auto mb-4">
-                    <div className="w-32 h-32 mx-auto bg-gray-200 rounded-full flex items-center justify-center">
-                      <Users className="h-16 w-16 text-gray-400" />
+          {isLoadingTeam ? (
+            <div className="flex justify-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            </div>
+          ) : (
+            <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+              {teamMembers?.map((member) => (
+                <Card key={member.id} className="text-center bg-white shadow-lg hover:shadow-xl transition-shadow">
+                  <CardHeader>
+                    <div className="mx-auto mb-4">
+                      <img
+                        src={member.profileImage || "/api/placeholder/400/400"}
+                        alt={member.name}
+                        className="w-32 h-32 mx-auto rounded-full object-cover border-4 border-blue-100"
+                      />
                     </div>
-                  </div>
-                  <CardTitle className="text-xl font-bold text-gray-900">{member.name}</CardTitle>
-                  <Badge variant="secondary" className="mt-2">{member.role}</Badge>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-gray-600">{member.description}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                    <CardTitle className="text-xl font-bold text-gray-900">{member.name}</CardTitle>
+                    <Badge variant="secondary" className="mt-2">{member.title}</Badge>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-gray-600">{member.bio}</p>
+                    {member.linkedinUrl && (
+                      <div className="mt-4">
+                        <a
+                          href={member.linkedinUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                        >
+                          Connect on LinkedIn →
+                        </a>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
