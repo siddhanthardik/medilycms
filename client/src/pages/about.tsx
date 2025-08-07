@@ -52,9 +52,8 @@ export default function About() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
-      
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-primary via-blue-600 to-blue-700 text-white py-20">
+      <section className="from-primary via-blue-600 to-blue-700 py-20 text-[#000000] bg-[#ffffff00]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <div className="flex justify-center mb-6">
@@ -74,7 +73,6 @@ export default function About() {
           </div>
         </div>
       </section>
-
       {/* Introduction Section */}
       <section className="py-16 bg-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -100,7 +98,6 @@ export default function About() {
           </div>
         </div>
       </section>
-
       {/* Vision & Mission */}
       <section className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -141,7 +138,6 @@ export default function About() {
           </div>
         </div>
       </section>
-
       {/* Why Choose Medily */}
       <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -163,7 +159,6 @@ export default function About() {
           </div>
         </div>
       </section>
-
       {/* Meet Our Team */}
       <section className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -208,7 +203,6 @@ export default function About() {
           )}
         </div>
       </section>
-
       {/* Call to Action */}
       <section className="py-16 bg-primary text-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -236,7 +230,6 @@ export default function About() {
           </div>
         </div>
       </section>
-
       <Footer />
     </div>
   );
