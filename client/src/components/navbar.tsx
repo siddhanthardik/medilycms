@@ -77,27 +77,7 @@ export function Navbar() {
           </div>
 
           <div className="flex items-center space-x-4">
-            {/* Auth Buttons for Non-Authenticated Users */}
-            {!isAuthenticated && (
-              <div className="hidden md:flex items-center space-x-2">
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => window.location.href = "/api/login"}
-                  className="hover:scale-105 transition-transform duration-200"
-                >
-                  <UserIcon className="h-4 w-4 mr-2" />
-                  Sign In
-                </Button>
-                <Button 
-                  size="sm"
-                  onClick={() => window.location.href = "/api/login"}
-                  className="hover:scale-105 transition-transform duration-200"
-                >
-                  Get Started
-                </Button>
-              </div>
-            )}
+
 
             {/* Notifications */}
             {isAuthenticated && (
@@ -168,6 +148,7 @@ export function Navbar() {
                 variant="ghost"
                 size="sm"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="p-2"
               >
                 {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
               </Button>

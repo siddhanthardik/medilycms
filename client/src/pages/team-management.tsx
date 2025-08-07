@@ -120,12 +120,17 @@ export default function TeamManagement() {
       return;
     }
 
+    console.log("Submitting form data:", formData);
+    console.log("Editing member:", editingMember);
+
     if (editingMember) {
+      console.log("Updating member with ID:", editingMember.id);
       updateMemberMutation.mutate({
         id: editingMember.id,
         data: formData,
       });
     } else {
+      console.log("Creating new member");
       createMemberMutation.mutate(formData);
     }
   };
@@ -168,6 +173,11 @@ export default function TeamManagement() {
     <div className="container mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-8">
         <div>
+          <div className="flex items-center gap-4 mb-2">
+            <Button variant="outline" onClick={() => window.location.href = '/cms-dashboard'} className="flex items-center gap-2">
+              ← Back to Dashboard
+            </Button>
+          </div>
           <h1 className="text-3xl font-bold">Team Member Management</h1>
           <p className="text-gray-600 mt-2">Manage your team members for the About page</p>
         </div>
