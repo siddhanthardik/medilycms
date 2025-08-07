@@ -73,27 +73,37 @@ export default function Landing() {
   return (
     <div className="min-h-screen bg-white">
       {/* Navigation */}
-      <nav className="bg-white shadow-sm border-b sticky top-0 z-50">
+      <nav className="bg-white shadow-lg sticky top-0 z-50 border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
-              <div className="flex-shrink-0 flex items-center">
+              <div className="flex-shrink-0 flex items-center logo-hover">
                 <img 
                   src={medilyLogoSrc} 
                   alt="Medily" 
-                  className="h-8 w-auto"
+                  className="h-8 w-auto mr-2"
                 />
+              </div>
+              
+              {/* Desktop Navigation */}
+              <div className="hidden md:ml-10 md:flex md:space-x-2">
+                <a href="/" className="navbar-item nav-item-hover px-4 py-2 text-sm font-bold rounded-md text-blue-600 bg-blue-50">Home</a>
+                <a href="/about" className="navbar-item nav-item-hover px-4 py-2 text-sm font-bold rounded-md text-black hover:bg-blue-50">About us</a>
+                <a href="/courses" className="navbar-item nav-item-hover px-4 py-2 text-sm font-bold rounded-md text-black hover:bg-blue-50">Courses</a>
+                <a href="/clinical-rotations" className="navbar-item nav-item-hover px-4 py-2 text-sm font-bold rounded-md text-black hover:bg-blue-50">Clinical Rotations</a>
+                <a href="/join" className="navbar-item nav-item-hover px-4 py-2 text-sm font-bold rounded-md text-black hover:bg-blue-50">Jobs</a>
+                <a href="/blog" className="navbar-item nav-item-hover px-4 py-2 text-sm font-bold rounded-md text-black hover:bg-blue-50">Blog</a>
+                <a href="/contact" className="navbar-item nav-item-hover px-4 py-2 text-sm font-bold rounded-md text-black hover:bg-blue-50">Contact us</a>
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <div className="hidden md:flex items-center space-x-8">
-                <a href="/" className="text-gray-500 hover:text-gray-900">Home</a>
-                <a href="/about" className="text-gray-500 hover:text-gray-900">About us</a>
-                <a href="/courses" className="text-gray-500 hover:text-gray-900">Courses</a>
-                <a href="/clinical-rotations" className="text-gray-500 hover:text-gray-900">Clinical Rotations</a>
-                <a href="/join" className="text-gray-500 hover:text-gray-900">Jobs</a>
-                <a href="/blog" className="text-gray-500 hover:text-gray-900">Blog</a>
-                <a href="/contact" className="text-gray-500 hover:text-gray-900">Contact us</a>
+              {/* Add mobile menu button if needed */}
+              <div className="md:hidden">
+                <button className="p-2 text-black hover:text-black hover:bg-blue-50 transition-all duration-300">
+                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  </svg>
+                </button>
               </div>
             </div>
           </div>
