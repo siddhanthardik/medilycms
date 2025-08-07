@@ -80,14 +80,14 @@ export default function Home() {
       <Navbar />
       <HeroSection onSearch={handleSearch} specialties={specialties as any[]} />
       
-      {/* Medical Department Programs Carousel - Only on Home Page for Authenticated Users */}
-      <div className="py-16 bg-white overflow-hidden">
+      {/* Medical Department Programs Carousel - Visible on all pages, responsive design */}
+      <div className="py-8 md:py-16 bg-white overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 sm:text-4xl">
+          <div className="text-center mb-8 md:mb-12">
+            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900">
               Medical Department Programs
             </h2>
-            <p className="mt-4 text-xl text-gray-600">
+            <p className="mt-2 md:mt-4 text-lg md:text-xl text-gray-600">
               Specialized training programs across various medical departments
             </p>
           </div>
@@ -98,16 +98,16 @@ export default function Home() {
               <div className="carousel-track">
                 {/* First set of programs */}
                 <div className="carousel-item">
-                  <div className="relative h-64 rounded-xl overflow-hidden shadow-lg">
+                  <div className="relative h-48 md:h-64 rounded-xl overflow-hidden shadow-lg">
                     <img 
                       src="https://images.unsplash.com/photo-1551601651-2a8555f1a136?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300" 
                       alt="Emergency Medicine"
                       className="w-full h-full object-cover"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-                    <div className="absolute bottom-6 left-6 text-white">
-                      <h3 className="text-xl font-bold">Emergency Medicine Training</h3>
-                      <p className="text-sm opacity-90">Critical care and emergency procedures</p>
+                    <div className="absolute bottom-4 md:bottom-6 left-4 md:left-6 text-white">
+                      <h3 className="text-lg md:text-xl font-bold">Emergency Medicine Training</h3>
+                      <p className="text-xs md:text-sm opacity-90">Critical care and emergency procedures</p>
                     </div>
                   </div>
                 </div>

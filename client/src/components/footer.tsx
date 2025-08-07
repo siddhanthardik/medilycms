@@ -12,7 +12,7 @@ export function Footer() {
               <img 
                 src={medilyLogoSrc} 
                 alt="Medily" 
-                className="h-8 w-auto brightness-0 invert"
+                className="h-8 w-auto"
               />
             </div>
             <p className="text-gray-400 mb-4">

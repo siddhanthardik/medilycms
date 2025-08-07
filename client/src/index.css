@@ -163,3 +163,69 @@ img[src*="unsplash.com"] {
 .text-error {
   color: var(--error);
 }
+
+/* Carousel styles for mobile responsiveness */
+.carousel-container {
+  overflow: hidden;
+  mask: linear-gradient(90deg, transparent 0%, black 5%, black 95%, transparent 100%);
+  -webkit-mask: linear-gradient(90deg, transparent 0%, black 5%, black 95%, transparent 100%);
+}
+
+.carousel-track {
+  display: flex;
+  gap: 1.5rem;
+  animation: scroll-left 30s infinite linear;
+  width: max-content;
+}
+
+.carousel-track:hover {
+  animation-play-state: paused;
+}
+
+.carousel-item {
+  min-width: 280px;
+  flex-shrink: 0;
+}
+
+@media (min-width: 640px) {
+  .carousel-item {
+    min-width: 320px;
+  }
+}
+
+@media (min-width: 768px) {
+  .carousel-item {
+    min-width: 350px;
+  }
+}
+
+@keyframes scroll-left {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(calc(-1 * (280px + 1.5rem) * 6));
+  }
+}
+
+@media (min-width: 640px) {
+  @keyframes scroll-left {
+    0% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(calc(-1 * (320px + 1.5rem) * 6));
+    }
+  }
+}
+
+@media (min-width: 768px) {
+  @keyframes scroll-left {
+    0% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(calc(-1 * (350px + 1.5rem) * 6));
+    }
+  }
+}

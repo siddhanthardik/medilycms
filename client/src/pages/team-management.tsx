@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,6 +12,7 @@ import { Plus, Edit, Trash2, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import type { TeamMember, InsertTeamMember } from "@shared/schema";
+import medilyLogoSrc from "@assets/medily-website-logo_1754424305557.jpg";
 
 interface TeamMemberFormData {
   name: string;
@@ -68,7 +70,7 @@ export default function TeamManagement() {
 
   // Update team member mutation
   const updateMemberMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<TeamMember> }) => 
+    mutationFn: ({ id, data }: { id: string; data: TeamMemberFormData }) => 
       apiRequest(`/api/team-members/${id}`, "PUT", data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/team-members"] });
@@ -170,17 +172,36 @@ export default function TeamManagement() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <div className="flex items-center gap-4 mb-2">
-            <Button variant="outline" onClick={() => window.location.href = '/cms-dashboard'} className="flex items-center gap-2">
-              ← Back to Dashboard
-            </Button>
+    <div className="min-h-screen bg-gray-50">
+      {/* Navigation with Logo */}
+      <nav className="bg-white shadow-sm border-b sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between h-16">
+            <div className="flex items-center">
+              <Link href="/" className="flex-shrink-0 flex items-center hover:opacity-80 transition-opacity">
+                <img 
+                  src={medilyLogoSrc} 
+                  alt="Medily" 
+                  className="h-8 w-auto mr-2"
+                />
+              </Link>
+              <span className="ml-4 text-lg font-semibold text-gray-900">Admin Dashboard</span>
+            </div>
+            <div className="flex items-center">
+              <Button variant="outline" onClick={() => window.location.href = '/cms-dashboard'} className="flex items-center gap-2">
+                ← Back to Dashboard
+              </Button>
+            </div>
           </div>
-          <h1 className="text-3xl font-bold">Team Member Management</h1>
-          <p className="text-gray-600 mt-2">Manage your team members for the About page</p>
         </div>
+      </nav>
+
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-bold">Team Member Management</h1>
+            <p className="text-gray-600 mt-2">Manage your team members for the About page</p>
+          </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button onClick={openCreateDialog} className="flex items-center gap-2">
@@ -364,6 +385,7 @@ export default function TeamManagement() {
           ))}
         </div>
       )}
+      </div>
     </div>
   );
 }

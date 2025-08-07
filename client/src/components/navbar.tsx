@@ -158,8 +158,8 @@ export function Navbar() {
 
         {/* Mobile Navigation */}
         {mobileMenuOpen && (
-          <div className="md:hidden">
-            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 border-t border-gray-200">
+          <div className="md:hidden bg-white border-t border-gray-200">
+            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
               {navItems.map((item) => (
                 <Link
                   key={item.href}
@@ -167,7 +167,7 @@ export function Navbar() {
                   className={`block px-3 py-2 rounded-md text-base font-medium transition-all duration-200 ${
                     item.active
                       ? "text-primary bg-blue-50"
-                      : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                      : "text-gray-900 hover:text-primary hover:bg-gray-50"
                   }`}
                   onClick={() => setMobileMenuOpen(false)}
                 >
