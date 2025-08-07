@@ -42,8 +42,15 @@ export function Navbar() {
     ] : []),
   ];
 
-  // Show clinical rotation navigation for all logged-in users
-  const navItems = isAuthenticated ? clinicalRotationNavItems : primaryNavItems;
+  // Always show the same navigation design - use primaryNavItems for consistent styling
+  // But add additional items for authenticated users
+  const additionalAuthItems = isAuthenticated ? [
+    { href: "/dashboard", label: "My Applications", active: location === "/dashboard" },
+    { href: "/favorites", label: "Favorites", active: location === "/favorites" },
+    { href: "/reviews", label: "My Reviews", active: location === "/reviews" },
+  ] : [];
+  
+  const navItems = [...primaryNavItems, ...additionalAuthItems];
 
   return (
     <nav className="bg-white shadow-lg sticky top-0 z-50 border-b border-gray-200">
