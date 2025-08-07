@@ -46,7 +46,7 @@ export function Navbar() {
   const navItems = isAuthenticated ? clinicalRotationNavItems : primaryNavItems;
 
   return (
-    <nav className="bg-white shadow-sm border-b sticky top-0 z-50">
+    <nav className="bg-blue-600 shadow-lg sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex items-center">
@@ -66,8 +66,8 @@ export function Navbar() {
                   href={item.href}
                   className={`px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 transform hover:scale-105 hover:shadow-md ${
                     item.active
-                      ? "text-primary bg-blue-50"
-                      : "text-gray-700 hover:text-primary hover:bg-blue-50"
+                      ? "text-white bg-blue-700 shadow-md"
+                      : "text-blue-100 hover:text-white hover:bg-blue-700"
                   }`}
                 >
                   {item.label}
@@ -148,7 +148,7 @@ export function Navbar() {
                 variant="ghost"
                 size="sm"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="p-2"
+                className="p-2 text-blue-100 hover:text-white hover:bg-blue-700"
               >
                 {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
               </Button>
@@ -158,7 +158,7 @@ export function Navbar() {
 
         {/* Mobile Navigation */}
         {mobileMenuOpen && (
-          <div className="md:hidden bg-white border-t border-gray-200">
+          <div className="md:hidden bg-blue-600 border-t border-blue-500">
             <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
               {navItems.map((item) => (
                 <Link
@@ -166,8 +166,8 @@ export function Navbar() {
                   href={item.href}
                   className={`block px-3 py-2 rounded-md text-base font-medium transition-all duration-200 ${
                     item.active
-                      ? "text-primary bg-blue-50"
-                      : "text-gray-900 hover:text-primary hover:bg-gray-50"
+                      ? "text-white bg-blue-700"
+                      : "text-blue-100 hover:text-white hover:bg-blue-700"
                   }`}
                   onClick={() => setMobileMenuOpen(false)}
                 >

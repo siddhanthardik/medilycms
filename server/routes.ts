@@ -1073,11 +1073,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create team member (admin only)
   app.post("/api/team-members", requireAdminSession, async (req: any, res) => {
     try {
+      console.log("Creating team member with data:", req.body);
+      console.log("Admin user:", req.adminUser);
       const newMember = await storage.createTeamMember(req.body);
       res.status(201).json(newMember);
     } catch (error) {
       console.error("Error creating team member:", error);
-      res.status(500).json({ error: "Failed to create team member" });
+      res.status(500).json({ error: "Failed to create team member", details: error.message });
     }
   });
 
@@ -1085,11 +1087,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/team-members/:id", requireAdminSession, async (req: any, res) => {
     try {
       const { id } = req.params;
+      console.log("Updating team member:", id, "with data:", req.body);
+      console.log("Admin user:", req.adminUser);
       const updatedMember = await storage.updateTeamMember(id, req.body);
       res.json(updatedMember);
     } catch (error) {
       console.error("Error updating team member:", error);
-      res.status(500).json({ error: "Failed to update team member" });
+      res.status(500).json({ error: "Failed to update team member", details: error.message });
     }
   });
 

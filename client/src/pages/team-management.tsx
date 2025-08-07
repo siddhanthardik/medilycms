@@ -59,10 +59,12 @@ export default function TeamManagement() {
         description: "Team member added successfully",
       });
     },
-    onError: () => {
+    onError: (error: any) => {
+      console.error("Team member creation error:", error);
+      const errorMessage = error?.message || "Failed to add team member. Please ensure you're logged in as an admin.";
       toast({
         title: "Error",
-        description: "Failed to add team member",
+        description: errorMessage,
         variant: "destructive",
       });
     },
