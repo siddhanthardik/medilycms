@@ -1075,7 +1075,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log("Creating team member with data:", req.body);
       console.log("Admin user:", req.adminUser);
-      const newMember = await storage.createTeamMember(req.body);
+      
+      // Convert Google Drive URLs to proper image URLs
+      const convertGoogleDriveUrl = (url: string) => {
+        if (!url) return null;
+        
+        // Check if it's a Google Drive sharing URL
+        const driveMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+        if (driveMatch) {
+          const fileId = driveMatch[1];
+          return `https://drive.google.com/uc?export=view&id=${fileId}`;
+        }
+        
+        return url;
+      };
+      
+      // Process the data with Google Drive URL conversion
+      const processedData = {
+        ...req.body,
+        profileImage: convertGoogleDriveUrl(req.body.profileImage)
+      };
+      
+      const newMember = await storage.createTeamMember(processedData);
       res.status(201).json(newMember);
     } catch (error) {
       console.error("Error creating team member:", error);
@@ -1098,12 +1119,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
+      // Convert Google Drive URLs to proper image URLs
+      const convertGoogleDriveUrl = (url: string) => {
+        if (!url) return null;
+        
+        // Check if it's a Google Drive sharing URL
+        const driveMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+        if (driveMatch) {
+          const fileId = driveMatch[1];
+          return `https://drive.google.com/uc?export=view&id=${fileId}`;
+        }
+        
+        return url;
+      };
+
       // Ensure proper data types
       const updateData = {
         name: String(req.body.name),
         title: String(req.body.title),
         bio: req.body.bio ? String(req.body.bio) : null,
-        profileImage: req.body.profileImage ? String(req.body.profileImage) : null,
+        profileImage: convertGoogleDriveUrl(req.body.profileImage),
         email: req.body.email ? String(req.body.email) : null,
         linkedinUrl: req.body.linkedinUrl ? String(req.body.linkedinUrl) : null,
         sortOrder: req.body.sortOrder ? parseInt(req.body.sortOrder) : 0,
