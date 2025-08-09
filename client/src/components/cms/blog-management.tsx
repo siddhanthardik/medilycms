@@ -50,7 +50,9 @@ export function BlogManagement() {
 
   // Fetch blog posts
   const { data: posts = [], isLoading } = useQuery({
-    queryKey: ["/api/cms/blog", { search: searchTerm, status: filterStatus, category: filterCategory }],
+    queryKey: searchTerm || filterStatus !== "all" || filterCategory !== "all" 
+      ? [`/api/cms/blog?search=${searchTerm}&status=${filterStatus}&category=${filterCategory}`]
+      : ["/api/cms/blog"],
   });
 
   // Fetch blog statistics
@@ -71,7 +73,9 @@ export function BlogManagement() {
         title: "Success",
         description: "Blog post deleted successfully",
       });
+      // Invalidate all blog-related queries
       queryClient.invalidateQueries({ queryKey: ["/api/cms/blog"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/cms/blog/stats"] });
       setDeletePostId(null);
     },
     onError: () => {
@@ -101,7 +105,9 @@ export function BlogManagement() {
   const handleSavePost = () => {
     setShowEditor(false);
     setEditingPostId(undefined);
+    // Invalidate all blog-related queries
     queryClient.invalidateQueries({ queryKey: ["/api/cms/blog"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/cms/blog/stats"] });
   };
 
   const getStatusColor = (status: string) => {
