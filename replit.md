@@ -51,6 +51,8 @@ Preferred communication style: Simple, everyday language.
 - Comprehensive application management with status tracking and waitlist system.
 - Notification system for user feedback.
 - Universal Image Upload System supporting local files, Google Drive URLs, and public links.
+- Full-featured Blog Management System with rich text editing, SEO optimization, and image uploads.
+- Public blog page with search, filtering, and category browsing.
 
 ## External Dependencies
 
