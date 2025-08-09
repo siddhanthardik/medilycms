@@ -235,7 +235,7 @@ export default function About() {
             <Button 
               variant="outline"
               onClick={() => window.location.href = "/contact"}
-              className="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-primary transition-colors"
+              className="h-11 border-2 border-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-primary transition-colors bg-[#f5f3f3] text-[#61a6fa]"
               size="lg"
             >
               Contact Us
