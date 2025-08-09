@@ -1089,7 +1089,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { id } = req.params;
       console.log("Updating team member:", id, "with data:", req.body);
       console.log("Admin user:", req.adminUser);
-      const updatedMember = await storage.updateTeamMember(id, req.body);
+      
+      // Validate required fields
+      if (!req.body.name || !req.body.title) {
+        return res.status(400).json({ 
+          error: "Missing required fields", 
+          details: "Name and title are required" 
+        });
+      }
+      
+      // Ensure proper data types
+      const updateData = {
+        name: String(req.body.name),
+        title: String(req.body.title),
+        bio: req.body.bio ? String(req.body.bio) : null,
+        profileImage: req.body.profileImage ? String(req.body.profileImage) : null,
+        email: req.body.email ? String(req.body.email) : null,
+        linkedinUrl: req.body.linkedinUrl ? String(req.body.linkedinUrl) : null,
+        sortOrder: req.body.sortOrder ? parseInt(req.body.sortOrder) : 0,
+      };
+      
+      console.log("Processed update data:", updateData);
+      const updatedMember = await storage.updateTeamMember(id, updateData);
       res.json(updatedMember);
     } catch (error) {
       console.error("Error updating team member:", error);

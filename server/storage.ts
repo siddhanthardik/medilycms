@@ -853,15 +853,32 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateTeamMember(id: string, updates: Partial<Omit<TeamMember, 'id' | 'createdAt' | 'updatedAt'>>): Promise<TeamMember> {
-    // Filter out any timestamp fields that might be in the updates
-    const { id: _, createdAt: __, updatedAt: ___, ...safeUpdates } = updates as any;
-    
-    const [updatedMember] = await db
-      .update(teamMembers)
-      .set({ ...safeUpdates, updatedAt: new Date() })
-      .where(eq(teamMembers.id, id))
-      .returning();
-    return updatedMember;
+    try {
+      console.log("Storage: Updating team member", id, "with updates:", updates);
+      
+      // Filter out any timestamp fields that might be in the updates
+      const { id: _, createdAt: __, updatedAt: ___, ...safeUpdates } = updates as any;
+      
+      console.log("Storage: Safe updates after filtering:", safeUpdates);
+      
+      // Check if team member exists first
+      const existingMember = await db.select().from(teamMembers).where(eq(teamMembers.id, id)).limit(1);
+      if (existingMember.length === 0) {
+        throw new Error(`Team member with id ${id} not found`);
+      }
+      
+      const [updatedMember] = await db
+        .update(teamMembers)
+        .set({ ...safeUpdates, updatedAt: new Date() })
+        .where(eq(teamMembers.id, id))
+        .returning();
+      
+      console.log("Storage: Successfully updated team member:", updatedMember);
+      return updatedMember;
+    } catch (error) {
+      console.error("Storage: Error updating team member:", error);
+      throw error;
+    }
   }
 
   async deleteTeamMember(id: string): Promise<void> {

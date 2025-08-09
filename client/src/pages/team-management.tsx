@@ -84,10 +84,12 @@ export default function TeamManagement() {
         description: "Team member updated successfully",
       });
     },
-    onError: () => {
+    onError: (error: any) => {
+      console.error("Team member update error:", error);
+      const errorMessage = error?.message || error?.response?.data?.error || "Failed to update team member";
       toast({
         title: "Error",
-        description: "Failed to update team member",
+        description: errorMessage,
         variant: "destructive",
       });
     },
