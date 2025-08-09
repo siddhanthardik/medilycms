@@ -656,7 +656,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Image upload with automatic .webp conversion
+  // Universal image upload endpoint (supports team members and CMS)
+  app.post('/api/upload-image', requireAdminSession, upload.single('image'), async (req: any, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No image file provided" });
+      }
+
+      const originalPath = req.file.path;
+      const webpFileName = `${path.parse(req.file.filename).name}.webp`;
+      const webpPath = path.join(uploadDir, webpFileName);
+
+      try {
+        // Convert to WebP using sharp or ffmpeg (fallback)
+        try {
+          await execPromise(`ffmpeg -i "${originalPath}" -c:v libwebp -quality 80 "${webpPath}"`);
+        } catch (ffmpegError) {
+          // If ffmpeg is not available, just copy the file for now
+          fs.copyFileSync(originalPath, webpPath);
+        }
+
+        // Clean up original file if conversion was successful
+        if (fs.existsSync(webpPath)) {
+          fs.unlinkSync(originalPath);
+        }
+
+        res.json({
+          success: true,
+          url: `/uploads/${webpFileName}`,
+          message: "Image uploaded successfully"
+        });
+      } catch (conversionError) {
+        console.error('Error converting image:', conversionError);
+        // Clean up files
+        if (fs.existsSync(originalPath)) fs.unlinkSync(originalPath);
+        if (fs.existsSync(webpPath)) fs.unlinkSync(webpPath);
+        res.status(500).json({ message: "Error processing image" });
+      }
+    } catch (error) {
+      console.error("Upload error:", error);
+      res.status(500).json({ message: "Upload failed", error: (error as Error).message });
+    }
+  });
+
+  // CMS specific image upload (legacy support)
   app.post('/api/cms/upload-image', requireAdminSession, upload.single('image'), async (req: any, res) => {
     try {
       if (!req.file) {

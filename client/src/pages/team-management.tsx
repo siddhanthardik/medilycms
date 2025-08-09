@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import type { TeamMember, InsertTeamMember } from "@shared/schema";
 import medilyLogoSrc from "@assets/medily-website-logo_1754424305557.jpg";
+import { UniversalImageUpload } from "@/components/universal-image-upload";
 
 interface TeamMemberFormData {
   name: string;
@@ -276,16 +277,13 @@ export default function TeamManagement() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="profileImage">Profile Image URL</Label>
-                  <Input
-                    id="profileImage"
-                    value={formData.profileImage}
-                    onChange={(e) => setFormData(prev => ({ ...prev, profileImage: e.target.value }))}
-                    placeholder="https://example.com/image.jpg"
-                  />
-                </div>
+              <div className="space-y-4">
+                <UniversalImageUpload
+                  onImageUploaded={(imageUrl) => setFormData(prev => ({ ...prev, profileImage: imageUrl }))}
+                  currentImage={formData.profileImage}
+                  label="Profile Image"
+                  showPreview={true}
+                />
                 <div className="space-y-2">
                   <Label htmlFor="sortOrder">Sort Order</Label>
                   <Input
