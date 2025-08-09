@@ -7,6 +7,8 @@ import { Heart, MapPin, Clock, Calendar, Users, Search, Play, CheckCircle, BookO
 import { Footer } from "@/components/footer";
 import medilyLogoSrc from "@assets/medily-website-logo_1754424305557.jpg";
 
+import medily_top_hero_section from "@assets/medily top hero section.png";
+
 export default function Landing() {
   const handleLogin = () => {
     window.location.href = "/api/login";
@@ -109,7 +111,6 @@ export default function Landing() {
           </div>
         </div>
       </nav>
-
       {/* Hero Section */}
       <div className="bg-gradient-to-r from-blue-50 to-indigo-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
@@ -129,7 +130,7 @@ export default function Landing() {
             </div>
             <div className="relative">
               <img 
-                src="https://images.unsplash.com/photo-1559757175-0eb30cd8c063?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600" 
+                src={medily_top_hero_section} 
                 alt="Medical professionals in training" 
                 className="rounded-lg shadow-2xl w-full h-auto"
               />
@@ -137,7 +138,6 @@ export default function Landing() {
           </div>
         </div>
       </div>
-
       {/* Why Choose Medily Section */}
       <div className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -164,7 +164,6 @@ export default function Landing() {
           </div>
         </div>
       </div>
-
       {/* Popular Courses Section */}
       <div className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -206,7 +205,6 @@ export default function Landing() {
           </div>
         </div>
       </div>
-
       {/* Statistics Section */}
       <div className="py-16 bg-blue-600">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -220,7 +218,6 @@ export default function Landing() {
           </div>
         </div>
       </div>
-
       {/* Call to Action Section */}
       <div className="py-16 bg-white">
         <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
@@ -241,7 +238,6 @@ export default function Landing() {
           </div>
         </div>
       </div>
-
       {/* Footer */}
       <Footer />
     </div>

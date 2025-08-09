@@ -38,7 +38,7 @@ export default function HeroSection({ onSearch, specialties }: HeroSectionProps)
     (section.sectionName === 'header' && section.sectionKey === 'hero_image') ||
     (section.sectionName === 'hero' && section.contentType === 'image')
   );
-  const heroImageUrl = heroSection?.imageUrl || "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&h=800";
+  const heroImageUrl = heroSection?.imageUrl || "https://drive.google.com/file/d/1c6NCmW_XJ38V2um4ktsKtmzDksMj25dj/ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&h=800";
 
   console.log('=== HERO SECTION DEBUG ===');
   console.log('1. Hero Content loaded:', !!heroContent, heroContent?.length, 'sections');
