@@ -149,38 +149,118 @@ export function Navbar() {
               </DropdownMenu>
             )}
 
-            {/* Mobile menu button */}
+            {/* Mobile menu button - fixed clickability */}
             <div className="md:hidden">
-              <Button
-                variant="ghost"
-                size="sm"
+              <button
+                type="button"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="p-2 text-black hover:text-black hover:bg-blue-50 transition-all duration-300"
+                className="p-2 text-black hover:text-black hover:bg-blue-50 transition-all duration-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                aria-expanded={mobileMenuOpen}
+                aria-label="Toggle navigation menu"
               >
                 {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-              </Button>
+              </button>
             </div>
           </div>
         </div>
 
-        {/* Mobile Navigation */}
+        {/* Mobile Navigation - enhanced functionality */}
         {mobileMenuOpen && (
-          <div className="md:hidden bg-white border-t border-gray-200">
+          <div className="md:hidden bg-white border-t border-gray-200 shadow-lg">
             <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
               {navItems.map((item) => (
-                <Link
+                <a
                   key={item.href}
                   href={item.href}
-                  className={`navbar-item nav-item-hover block px-3 py-2 rounded-md text-base font-bold ${
+                  className={`navbar-item nav-item-hover block px-3 py-2 rounded-md text-base font-bold transition-colors duration-200 ${
                     item.active
                       ? "text-blue-600 bg-blue-50"
-                      : "text-black hover:bg-blue-50"
+                      : "text-black hover:bg-blue-50 hover:text-blue-600"
                   }`}
-                  onClick={() => setMobileMenuOpen(false)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setMobileMenuOpen(false);
+                    // Use native navigation for proper routing
+                    window.location.href = item.href;
+                  }}
                 >
                   {item.label}
-                </Link>
+                </a>
               ))}
+              
+              {/* Mobile user actions */}
+              {isAuthenticated && user && (
+                <div className="border-t border-gray-200 pt-2 mt-2">
+                  <a
+                    href="/dashboard"
+                    className="block px-3 py-2 rounded-md text-base font-medium text-black hover:bg-blue-50 hover:text-blue-600"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setMobileMenuOpen(false);
+                      window.location.href = "/dashboard";
+                    }}
+                  >
+                    My Dashboard
+                  </a>
+                  <a
+                    href="/profile"
+                    className="block px-3 py-2 rounded-md text-base font-medium text-black hover:bg-blue-50 hover:text-blue-600"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setMobileMenuOpen(false);
+                      window.location.href = "/profile";
+                    }}
+                  >
+                    Profile Settings
+                  </a>
+                  {(user as any).isAdmin && (user as any).adminRole && (
+                    <>
+                      <a
+                        href="/admin"
+                        className="block px-3 py-2 rounded-md text-base font-medium text-black hover:bg-blue-50 hover:text-blue-600"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setMobileMenuOpen(false);
+                          window.location.href = "/admin";
+                        }}
+                      >
+                        Admin Dashboard
+                      </a>
+                      <a
+                        href="/cms-editor"
+                        className="block px-3 py-2 rounded-md text-base font-medium text-black hover:bg-blue-50 hover:text-blue-600"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setMobileMenuOpen(false);
+                          window.location.href = "/cms-editor";
+                        }}
+                      >
+                        Content Management
+                      </a>
+                    </>
+                  )}
+                  <button
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      handleLogout();
+                    }}
+                    className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-red-600 hover:bg-red-50"
+                  >
+                    Log Out
+                  </button>
+                </div>
+              )}
+              
+              {!isAuthenticated && (
+                <div className="border-t border-gray-200 pt-2 mt-2">
+                  <a
+                    href="/api/login"
+                    className="block px-3 py-2 rounded-md text-base font-medium bg-blue-600 text-white hover:bg-blue-700 text-center"
+                  >
+                    Sign In
+                  </a>
+                </div>
+              )}
             </div>
           </div>
         )}

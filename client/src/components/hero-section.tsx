@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -23,6 +24,18 @@ export default function HeroSection({ onSearch, specialties }: HeroSectionProps)
     search: "",
   });
 
+  // Fetch hero content from CMS
+  const { data: heroContent } = useQuery({
+    queryKey: ['/api/cms/pages/home-page-id/sections'],
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
+  // Get hero background image from CMS or use default
+  const heroSection = heroContent?.sections?.find((section: any) => 
+    section.sectionName === 'hero' && section.contentType === 'image'
+  );
+  const heroImageUrl = heroSection?.imageUrl || "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&h=800";
+
   const handleSearch = () => {
     onSearch(searchFilters);
   };
@@ -37,9 +50,13 @@ export default function HeroSection({ onSearch, specialties }: HeroSectionProps)
     <div className="relative">
       <div className="absolute inset-0">
         <img 
-          src="https://images.unsplash.com/photo-1559757148-5c350d0d3c56?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&h=800" 
+          src={heroImageUrl} 
           alt="Modern medical facility" 
           className="w-full h-full object-cover" 
+          onError={(e) => {
+            // Fallback to default image if CMS image fails to load
+            e.currentTarget.src = "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&h=800";
+          }}
         />
         <div className="absolute inset-0 bg-primary bg-opacity-70"></div>
       </div>

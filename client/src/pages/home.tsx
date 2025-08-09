@@ -7,6 +7,7 @@ import ProgramCard from "@/components/program-card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { FullPageCMSWrapper } from "@/components/full-page-cms-wrapper";
 
 export default function Home() {
   const [filters, setFilters] = useState({
@@ -75,7 +76,12 @@ export default function Home() {
     setFilters({ ...filters, ...newFilters });
   };
 
-  return (
+  // Check if we're in CMS edit mode
+  const urlParams = new URLSearchParams(window.location.search);
+  const cmsMode = urlParams.get('cms') === 'edit';
+  const pageId = urlParams.get('pageId') || 'home-page-id';
+
+  const pageContent = (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
       <HeroSection onSearch={handleSearch} specialties={specialties as any[]} />
@@ -394,5 +400,15 @@ export default function Home() {
         </div>
       </div>
     </div>
+  );
+
+  return (
+    <FullPageCMSWrapper 
+      enableCMS={cmsMode} 
+      pageId={pageId} 
+      pageName="Home Page"
+    >
+      {pageContent}
+    </FullPageCMSWrapper>
   );
 }

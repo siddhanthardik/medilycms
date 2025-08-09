@@ -125,21 +125,7 @@ export default function Landing() {
                 advanced their skills through our comprehensive courses
                 and clinical rotations.
               </p>
-              <div className="mt-8 flex flex-col sm:flex-row gap-4">
-                <Button 
-                  onClick={handleGetStarted}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg"
-                >
-                  Explore Courses
-                </Button>
-                <Button 
-                  variant="outline"
-                  className="border-blue-600 text-blue-600 hover:bg-blue-50 px-8 py-3 text-lg"
-                >
-                  <Play className="mr-2 h-5 w-5" />
-                  Watch Demo
-                </Button>
-              </div>
+              {/* Buttons removed as requested */}
             </div>
             <div className="relative">
               <img 
