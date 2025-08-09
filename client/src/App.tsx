@@ -15,6 +15,7 @@ import About from "@/pages/about";
 import Contact from "@/pages/contact";
 import Courses from "@/pages/courses";
 import Blog from "@/pages/blog";
+import BlogPost from "@/pages/blog-post";
 import Join from "@/pages/join";
 import ClinicalRotations from "@/pages/clinical-rotations";
 import CMSDashboard from "@/pages/cms-dashboard";
@@ -38,6 +39,7 @@ function Router() {
       <Route path="/contact" component={Contact} />
       <Route path="/courses" component={Courses} />
       <Route path="/blog" component={Blog} />
+      <Route path="/blog/:slug" component={BlogPost} />
       <Route path="/join" component={Join} />
       <Route path="/clinical-rotations" component={ClinicalRotations} />
       <Route path="/admin-login" component={AdminLogin} />

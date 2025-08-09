@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Navbar } from "@/components/navbar";
-import { Footer } from "@/components/footer";
+import Footer from "@/components/footer";
 import { Search, Calendar, User, Clock, ChevronRight, Tag } from "lucide-react";
 import { Link } from "wouter";
 

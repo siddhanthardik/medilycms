@@ -626,6 +626,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get single blog post by slug (public)
+  app.get('/api/blog-posts/post/:slug', async (req: any, res) => {
+    try {
+      const { slug } = req.params;
+      const post = await storage.getBlogPostBySlug(slug);
+      if (!post || post.status !== 'published') {
+        return res.status(404).json({ message: "Blog post not found" });
+      }
+      res.json(post);
+    } catch (error) {
+      console.error("Error fetching blog post by slug:", error);
+      res.status(500).json({ message: "Failed to fetch blog post" });
+    }
+  });
+
   // CMS Routes - Blog Management
   app.get('/api/cms/blog', requireAdminSession, async (req: any, res) => {
     try {

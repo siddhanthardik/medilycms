@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Heart, MapPin, Clock, Calendar, Users, Search, Play, CheckCircle, BookOpen, Award, TrendingUp, Globe, Star, X } from "lucide-react";
-import { Footer } from "@/components/footer";
+import Footer from "@/components/footer";
 import medilyLogoSrc from "@assets/medily-website-logo_1754424305557.jpg";
 
 import medily_top_hero_section from "@assets/medily top hero section.png";
