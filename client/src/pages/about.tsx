@@ -196,7 +196,7 @@ export default function About() {
                     <Badge variant="secondary" className="mt-2">{member.title}</Badge>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-gray-600">{member.bio}</p>
+                    <p className="text-gray-600 text-justify">{member.bio}</p>
                     {member.linkedinUrl && (
                       <div className="mt-4">
                         <a
