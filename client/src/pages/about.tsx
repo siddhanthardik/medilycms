@@ -85,7 +85,7 @@ export default function About() {
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-gray-900 mb-6">Who We Are</h2>
             <div className="prose prose-lg mx-auto text-gray-700">
-              <p className="text-lg leading-relaxed mb-6">
+              <p className="text-lg leading-relaxed mb-6 text-justify">
                 Healthcare is changing all the time, and we know how important it is to keep learning. 
                 That's why we've created an easy-to-use platform where learning fits into your busy schedule. 
                 Some of the programs are designed to take anytime from anywhere and learn at your own pace. 
