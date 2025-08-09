@@ -18,6 +18,20 @@ import { promisify } from "util";
 const execPromise = promisify(exec);
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Helper function to convert Google Drive URLs to proper image URLs
+  const convertGoogleDriveUrl = (url: string) => {
+    if (!url) return null;
+    
+    // Check if it's a Google Drive sharing URL
+    const driveMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+    if (driveMatch) {
+      const fileId = driveMatch[1];
+      return `https://drive.google.com/thumbnail?id=${fileId}&sz=w400`;
+    }
+    
+    return url;
+  };
+
   // Admin authentication middleware function declared here
   const requireAdminSession = (req: any, res: any, next: any) => {
     if (!(req.session as any)?.adminUser) {
@@ -1076,20 +1090,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Creating team member with data:", req.body);
       console.log("Admin user:", req.adminUser);
       
-      // Convert Google Drive URLs to proper image URLs
-      const convertGoogleDriveUrl = (url: string) => {
-        if (!url) return null;
-        
-        // Check if it's a Google Drive sharing URL
-        const driveMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
-        if (driveMatch) {
-          const fileId = driveMatch[1];
-          return `https://drive.google.com/uc?export=view&id=${fileId}`;
-        }
-        
-        return url;
-      };
-      
       // Process the data with Google Drive URL conversion
       const processedData = {
         ...req.body,
@@ -1119,20 +1119,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Convert Google Drive URLs to proper image URLs
-      const convertGoogleDriveUrl = (url: string) => {
-        if (!url) return null;
-        
-        // Check if it's a Google Drive sharing URL
-        const driveMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
-        if (driveMatch) {
-          const fileId = driveMatch[1];
-          return `https://drive.google.com/uc?export=view&id=${fileId}`;
-        }
-        
-        return url;
-      };
-
       // Ensure proper data types
       const updateData = {
         name: String(req.body.name),

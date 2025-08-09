@@ -177,6 +177,13 @@ export default function About() {
                         src={member.profileImage || "/api/placeholder/400/400"}
                         alt={member.name}
                         className="w-32 h-32 mx-auto rounded-full object-cover border-4 border-blue-100"
+                        onError={(e) => {
+                          console.log('Image failed to load:', member.profileImage);
+                          e.currentTarget.src = "/api/placeholder/400/400";
+                        }}
+                        onLoad={() => {
+                          console.log('Image loaded successfully:', member.profileImage);
+                        }}
                       />
                     </div>
                     <CardTitle className="text-xl font-bold text-gray-900">{member.name}</CardTitle>
