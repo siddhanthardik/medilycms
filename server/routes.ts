@@ -697,8 +697,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updates = {
         ...req.body,
         updatedAt: new Date(),
-        publishedAt: req.body.status === 'published' && !req.body.publishedAt ? new Date() : req.body.publishedAt
+        publishedAt: req.body.status === 'published' 
+          ? (req.body.publishedAt ? new Date(req.body.publishedAt) : new Date())
+          : (req.body.publishedAt ? new Date(req.body.publishedAt) : null)
       };
+      
+      // Ensure dates are properly formatted
+      if (updates.createdAt) {
+        updates.createdAt = new Date(updates.createdAt);
+      }
+      
       const post = await storage.updateBlogPost(req.params.id, updates);
       res.json(post);
     } catch (error) {
