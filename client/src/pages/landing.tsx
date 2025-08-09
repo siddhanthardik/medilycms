@@ -3,19 +3,25 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Heart, MapPin, Clock, Calendar, Users, Search, Play, CheckCircle, BookOpen, Award, TrendingUp, Globe, Star } from "lucide-react";
+import { Heart, MapPin, Clock, Calendar, Users, Search, Play, CheckCircle, BookOpen, Award, TrendingUp, Globe, Star, X } from "lucide-react";
 import { Footer } from "@/components/footer";
 import medilyLogoSrc from "@assets/medily-website-logo_1754424305557.jpg";
 
 import medily_top_hero_section from "@assets/medily top hero section.png";
 
 export default function Landing() {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  
   const handleLogin = () => {
     window.location.href = "/api/login";
   };
 
   const handleGetStarted = () => {
     window.location.href = "/api/login";
+  };
+
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
   const features = [
@@ -99,16 +105,73 @@ export default function Landing() {
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              {/* Add mobile menu button if needed */}
+              {/* Mobile menu button */}
               <div className="md:hidden">
-                <button className="p-2 text-black hover:text-black hover:bg-blue-50 transition-all duration-300">
-                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                  </svg>
+                <button 
+                  onClick={toggleMobileMenu}
+                  className="p-2 text-black hover:text-black hover:bg-blue-50 transition-all duration-300"
+                  aria-label="Toggle mobile menu"
+                >
+                  {isMobileMenuOpen ? (
+                    <X className="h-6 w-6" />
+                  ) : (
+                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                  )}
                 </button>
               </div>
             </div>
           </div>
+          
+          {/* Mobile Menu Overlay */}
+          {isMobileMenuOpen && (
+            <div className="md:hidden fixed inset-0 z-50 bg-black bg-opacity-50" onClick={toggleMobileMenu}>
+              <div 
+                className="absolute right-0 top-0 h-full w-64 bg-white shadow-xl transform transition-transform duration-300"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex items-center justify-between p-4 border-b">
+                  <img 
+                    src={medilyLogoSrc} 
+                    alt="Medily" 
+                    className="h-8 w-auto"
+                  />
+                  <button 
+                    onClick={toggleMobileMenu}
+                    className="p-2 text-gray-500 hover:text-gray-700"
+                    aria-label="Close menu"
+                  >
+                    <X className="h-6 w-6" />
+                  </button>
+                </div>
+                
+                <nav className="px-4 py-6">
+                  <a href="/" className="block px-4 py-3 text-base font-semibold text-blue-600 bg-blue-50 rounded-md mb-2">
+                    Home
+                  </a>
+                  <a href="/about" className="block px-4 py-3 text-base font-semibold text-gray-700 hover:bg-gray-50 rounded-md mb-2">
+                    About us
+                  </a>
+                  <a href="/courses" className="block px-4 py-3 text-base font-semibold text-gray-700 hover:bg-gray-50 rounded-md mb-2">
+                    Courses
+                  </a>
+                  <a href="/clinical-rotations" className="block px-4 py-3 text-base font-semibold text-gray-700 hover:bg-gray-50 rounded-md mb-2">
+                    Clinical Rotations
+                  </a>
+                  <a href="/join" className="block px-4 py-3 text-base font-semibold text-gray-700 hover:bg-gray-50 rounded-md mb-2">
+                    Jobs
+                  </a>
+                  <a href="/blog" className="block px-4 py-3 text-base font-semibold text-gray-700 hover:bg-gray-50 rounded-md mb-2">
+                    Blog
+                  </a>
+                  <a href="/contact" className="block px-4 py-3 text-base font-semibold text-gray-700 hover:bg-gray-50 rounded-md mb-2">
+                    Contact us
+                  </a>
+                </nav>
+              </div>
+            </div>
+          )}
         </div>
       </nav>
       {/* Hero Section */}
