@@ -48,7 +48,7 @@ export default function TeamManagement() {
 
   // Create team member mutation
   const createMemberMutation = useMutation({
-    mutationFn: (data: InsertTeamMember) => apiRequest(`/api/team-members`, "POST", data),
+    mutationFn: (data: InsertTeamMember) => apiRequest("POST", `/api/team-members`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/team-members"] });
       setIsDialogOpen(false);
@@ -73,7 +73,7 @@ export default function TeamManagement() {
   // Update team member mutation
   const updateMemberMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: TeamMemberFormData }) => 
-      apiRequest(`/api/team-members/${id}`, "PUT", data),
+      apiRequest("PUT", `/api/team-members/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/team-members"] });
       setIsDialogOpen(false);
@@ -97,7 +97,7 @@ export default function TeamManagement() {
 
   // Delete team member mutation
   const deleteMemberMutation = useMutation({
-    mutationFn: (id: string) => apiRequest(`/api/team-members/${id}`, "DELETE"),
+    mutationFn: (id: string) => apiRequest("DELETE", `/api/team-members/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/team-members"] });
       toast({
