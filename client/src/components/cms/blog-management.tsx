@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Edit, Trash2, Eye, Search, Filter, Calendar, User, Tag, BarChart3, TrendingUp, Clock, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { BlogEditor } from "./blog-editor";
+import { BlogEditorImproved } from "./blog-editor-improved";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -129,7 +129,7 @@ export function BlogManagement() {
 
   if (showEditor) {
     return (
-      <BlogEditor
+      <BlogEditorImproved
         postId={editingPostId}
         onSave={handleSavePost}
         onCancel={() => {

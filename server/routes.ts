@@ -12,12 +12,29 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import express from "express";
+
+// Configure multer for memory storage (for blog images)
+const uploadBlog = multer({ 
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 10 * 1024 * 1024 // 10MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    // Accept images only
+    if (!file.mimetype.startsWith('image/')) {
+      return cb(new Error('Only image files are allowed'), false);
+    }
+    cb(null, true);
+  }
+});
 import { exec } from "child_process";
 import { promisify } from "util";
 
 const execPromise = promisify(exec);
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Serve static files from uploads directory
+  app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
   // Helper function to convert Google Drive URLs to proper image URLs
   const convertGoogleDriveUrl = (url: string) => {
     if (!url) return null;
@@ -560,6 +577,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching media assets:", error);
       res.status(500).json({ message: "Failed to fetch media assets" });
+    }
+  });
+
+  // Upload image route for blog posts
+  app.post('/api/cms/upload-image', requireAdminSession, uploadBlog.single('file'), async (req: any, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      // Create uploads directory if it doesn't exist
+      const uploadsDir = path.join(process.cwd(), 'uploads', 'blog');
+      if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true });
+      }
+
+      // Generate unique filename
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      const fileExt = path.extname(req.file.originalname);
+      const fileName = `blog-${uniqueSuffix}${fileExt}`;
+      const filePath = path.join(uploadsDir, fileName);
+
+      // Move file to uploads directory
+      fs.writeFileSync(filePath, req.file.buffer);
+
+      // Return the URL
+      const imageUrl = `/uploads/blog/${fileName}`;
+      res.json({ url: imageUrl });
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      res.status(500).json({ message: "Failed to upload image" });
+    }
+  });
+
+  // Public Blog Posts API (for public blog page)
+  app.get('/api/blog-posts/:category?', async (req: any, res) => {
+    try {
+      const { category } = req.params;
+      const posts = await storage.getBlogPosts({ 
+        status: 'published',
+        category: category && category !== 'All' ? category : undefined
+      });
+      res.json(posts || []);
+    } catch (error) {
+      console.error("Error fetching public blog posts:", error);
+      res.json([]); // Return empty array for public endpoint
     }
   });
 
