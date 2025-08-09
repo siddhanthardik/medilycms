@@ -40,9 +40,15 @@ export default function HeroSection({ onSearch, specialties }: HeroSectionProps)
   );
   const heroImageUrl = heroSection?.imageUrl || "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&h=800";
 
-  console.log('Hero Content:', heroContent);
-  console.log('Hero Section found:', heroSection);
-  console.log('Hero Image URL being used:', heroImageUrl);
+  console.log('=== HERO SECTION DEBUG ===');
+  console.log('1. Hero Content loaded:', !!heroContent, heroContent?.length, 'sections');
+  console.log('2. Looking for section with:', { sectionName: 'gallery', sectionKey: 'hero_image' });
+  console.log('3. Available sections:', heroContent?.map(s => ({ name: s.sectionName, key: s.sectionKey, type: s.contentType })));
+  console.log('4. Hero Section found:', !!heroSection, heroSection);
+  console.log('5. Image URL from section:', heroSection?.imageUrl);
+  console.log('6. Final Image URL being used:', heroImageUrl);
+  console.log('7. Is using default image?', heroImageUrl.includes('unsplash'));
+  console.log('========================');
 
   const handleSearch = () => {
     onSearch(searchFilters);
