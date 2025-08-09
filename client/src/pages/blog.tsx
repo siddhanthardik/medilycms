@@ -59,10 +59,9 @@ export default function BlogPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
       <Navbar />
-      
       <main className="pt-20">
         {/* Hero Section */}
-        <section className="relative py-16 bg-gradient-to-r from-teal-600 to-teal-700">
+        <section className="relative py-16 from-teal-600 to-teal-700 bg-[#0079f2]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center">
               <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
@@ -276,7 +275,6 @@ export default function BlogPage() {
           </div>
         </section>
       </main>
-
       <Footer />
     </div>
   );
