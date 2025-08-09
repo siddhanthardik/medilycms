@@ -91,7 +91,7 @@ export default function About() {
                 Some of the programs are designed to take anytime from anywhere and learn at your own pace. 
                 But more focus is given on enhancing hands-on skills.
               </p>
-              <p className="text-lg leading-relaxed mb-6">
+              <p className="text-lg leading-relaxed mb-6 text-justify">
                 Our team includes experienced medical professionals who design courses that are useful, clear, 
                 and based on real-world practice. We keep things simple so that anyone can learn without feeling 
                 overwhelmed. We started Medily because we saw a need for quality training that's affordable and 
