@@ -12,6 +12,7 @@ import {
   cmsContentSections,
   cmsMediaAssets,
   teamMembers,
+  dynamicPageContent,
   type User,
   type UpsertUser,
   type Specialty,
@@ -26,6 +27,7 @@ import {
   type CmsContentSection,
   type CmsMediaAsset,
   type TeamMember,
+  type DynamicPageContent,
   type InsertSpecialty,
   type InsertProgram,
   type InsertApplication,
@@ -38,6 +40,7 @@ import {
   type InsertCmsContentSection,
   type InsertCmsMediaAsset,
   type InsertTeamMember,
+  type InsertDynamicPageContent,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, asc, ilike, sql, count, avg } from "drizzle-orm";
@@ -145,6 +148,10 @@ export interface IStorage {
   getCmsMediaAssets(): Promise<CmsMediaAsset[]>;
   createCmsMediaAsset(asset: InsertCmsMediaAsset): Promise<CmsMediaAsset>;
   deleteCmsMediaAsset(id: string): Promise<void>;
+  
+  // Dynamic page content operations (full DOM editing)
+  savePageContent(content: InsertDynamicPageContent): Promise<DynamicPageContent>;
+  getPageContent(pageId: string): Promise<DynamicPageContent | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -913,9 +920,43 @@ export class DatabaseStorage implements IStorage {
     await db.delete(cmsMediaAssets).where(eq(cmsMediaAssets.id, id));
   }
 
+  // Dynamic page content operations (full DOM editing)
+  async savePageContent(content: InsertDynamicPageContent): Promise<DynamicPageContent> {
+    // Check if content already exists for this page
+    const existing = await this.getPageContent(content.pageId);
+    
+    if (existing) {
+      // Update existing content
+      const [updatedContent] = await db
+        .update(dynamicPageContent)
+        .set({ 
+          elements: content.elements,
+          fullPageHTML: content.fullPageHTML,
+          updatedBy: content.updatedBy,
+          updatedAt: new Date()
+        })
+        .where(eq(dynamicPageContent.pageId, content.pageId))
+        .returning();
+      return updatedContent;
+    } else {
+      // Create new content
+      const [newContent] = await db
+        .insert(dynamicPageContent)
+        .values(content)
+        .returning();
+      return newContent;
+    }
+  }
 
-
-
+  async getPageContent(pageId: string): Promise<DynamicPageContent | undefined> {
+    const [content] = await db
+      .select()
+      .from(dynamicPageContent)
+      .where(eq(dynamicPageContent.pageId, pageId))
+      .orderBy(desc(dynamicPageContent.updatedAt))
+      .limit(1);
+    return content;
+  }
 }
 
 export const storage = new DatabaseStorage();

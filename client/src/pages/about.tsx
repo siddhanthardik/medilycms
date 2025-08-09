@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import type { TeamMember } from "@shared/schema";
+import { FullPageCMSWrapper } from "@/components/full-page-cms-wrapper";
 import { 
   Users, 
   Target, 
@@ -49,7 +50,12 @@ export default function About() {
     }
   ];
 
-  return (
+  // Check if we're in CMS edit mode
+  const urlParams = new URLSearchParams(window.location.search);
+  const cmsMode = urlParams.get('cms') === 'edit';
+  const pageId = urlParams.get('pageId') || 'about-page-id';
+
+  const pageContent = (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
       {/* Hero Section */}
@@ -239,5 +245,15 @@ export default function About() {
       </section>
       <Footer />
     </div>
+  );
+
+  return (
+    <FullPageCMSWrapper 
+      enableCMS={cmsMode} 
+      pageId={pageId} 
+      pageName="About Us"
+    >
+      {pageContent}
+    </FullPageCMSWrapper>
   );
 }

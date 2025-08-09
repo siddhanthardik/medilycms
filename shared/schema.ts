@@ -397,7 +397,22 @@ export const insertCmsMediaAssetSchema = createInsertSchema(cmsMediaAssets).omit
   createdAt: true,
 });
 
-// Team member schema will be defined after the table
+// Dynamic Page Content table for full DOM editing
+export const dynamicPageContent = pgTable("dynamic_page_content", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  pageId: varchar("page_id").references(() => cmsPages.id).notNull(),
+  elements: jsonb("elements"), // JSON array of editable elements
+  fullPageHTML: text("full_page_html"), // Complete page HTML
+  updatedBy: varchar("updated_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertDynamicPageContentSchema = createInsertSchema(dynamicPageContent).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
 
 // Types
 export type UpsertUser = z.infer<typeof upsertUserSchema>;
@@ -421,6 +436,8 @@ export type InsertCmsPage = z.infer<typeof insertCmsPageSchema>;
 export type InsertCmsContentSection = z.infer<typeof insertCmsContentSectionSchema>;
 export type InsertCmsMediaAsset = z.infer<typeof insertCmsMediaAssetSchema>;
 export type InsertTeamMember = z.infer<typeof insertTeamMemberSchema>;
+export type DynamicPageContent = typeof dynamicPageContent.$inferSelect;
+export type InsertDynamicPageContent = z.infer<typeof insertDynamicPageContentSchema>;
 
 export type InsertSpecialty = z.infer<typeof insertSpecialtySchema>;
 export type InsertProgram = z.infer<typeof insertProgramSchema>;

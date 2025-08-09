@@ -32,6 +32,7 @@ import {
   EyeOff
 } from 'lucide-react';
 import { AdminNavbar } from '@/components/admin-navbar';
+import { DynamicCMSEditor } from '@/components/dynamic-cms-editor';
 
 interface ContentSection {
   id?: string;
@@ -316,7 +317,21 @@ export default function CmsEditor() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <AdminNavbar />
       
-      <div className="border-b bg-white dark:bg-gray-800 sticky top-16 z-40">
+      {/* Dynamic CMS Editor Integration */}
+      <DynamicCMSEditor 
+        pageId={page.id}
+        pageName={page.displayName}
+        onSave={() => {
+          queryClient.invalidateQueries({ queryKey: ['/api/cms/pages', pageId] });
+          queryClient.invalidateQueries({ queryKey: ['/api/cms/page-content', pageId] });
+          toast({
+            title: "Page saved successfully",
+            description: "All changes have been saved to the database.",
+          });
+        }}
+      />
+      
+      <div className="border-b bg-white dark:bg-gray-800 sticky top-32 z-30">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <Button 
@@ -327,8 +342,8 @@ export default function CmsEditor() {
               Back to Dashboard
             </Button>
             <div>
-              <h1 className="text-xl font-semibold">Edit: {page.displayName}</h1>
-              <p className="text-sm text-gray-500">/{page.slug}</p>
+              <h1 className="text-xl font-semibold">Legacy Editor: {page.displayName}</h1>
+              <p className="text-sm text-gray-500">/{page.slug} (Section-based editing)</p>
             </div>
           </div>
           

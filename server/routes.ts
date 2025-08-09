@@ -699,6 +699,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Save dynamic page content (full DOM editing)
+  app.post('/api/cms/save-page-content', requireAdminSession, async (req: any, res) => {
+    try {
+      const { pageId, elements, fullPageHTML } = req.body;
+      
+      if (!pageId) {
+        return res.status(400).json({ message: "Page ID is required" });
+      }
+
+      // Save to a new table for dynamic page content
+      const pageContent = await storage.savePageContent({
+        pageId,
+        elements: JSON.stringify(elements),
+        fullPageHTML,
+        updatedBy: req.adminUser.id
+      });
+
+      res.json({
+        success: true,
+        message: "Page content saved successfully",
+        contentId: pageContent.id
+      });
+    } catch (error) {
+      console.error("Error saving page content:", error);
+      res.status(500).json({ 
+        message: "Failed to save page content", 
+        error: (error as Error).message 
+      });
+    }
+  });
+
+  // Get dynamic page content
+  app.get('/api/cms/page-content/:pageId', async (req, res) => {
+    try {
+      const { pageId } = req.params;
+      const pageContent = await storage.getPageContent(pageId);
+      
+      if (!pageContent) {
+        return res.status(404).json({ message: "Page content not found" });
+      }
+
+      res.json({
+        ...pageContent,
+        elements: JSON.parse(pageContent.elements || '[]')
+      });
+    } catch (error) {
+      console.error("Error fetching page content:", error);
+      res.status(500).json({ 
+        message: "Failed to fetch page content", 
+        error: (error as Error).message 
+      });
+    }
+  });
+
   // CMS specific image upload (legacy support)
   app.post('/api/cms/upload-image', requireAdminSession, upload.single('image'), async (req: any, res) => {
     try {
