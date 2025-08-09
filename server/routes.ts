@@ -466,7 +466,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // CMS Routes - Content Sections Management
-  app.get('/api/cms/pages/:pageId/sections', requireAdminSession, async (req: any, res) => {
+  // Public endpoint for reading CMS content sections (for frontend display)
+  app.get('/api/cms/pages/:pageId/sections', async (req: any, res) => {
+    try {
+      const { pageId } = req.params;
+      const sections = await storage.getCmsContentSections(pageId);
+      res.json(sections);
+    } catch (error) {
+      console.error("Error fetching content sections:", error);
+      res.status(500).json({ message: "Failed to fetch content sections" });
+    }
+  });
+
+  // Admin-only endpoint for managing CMS content sections
+  app.get('/api/admin/cms/pages/:pageId/sections', requireAdminSession, async (req: any, res) => {
     try {
       const { pageId } = req.params;
       const sections = await storage.getCmsContentSections(pageId);

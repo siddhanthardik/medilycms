@@ -24,17 +24,24 @@ export default function HeroSection({ onSearch, specialties }: HeroSectionProps)
     search: "",
   });
 
-  // Fetch hero content from CMS
+  // Fetch hero content from CMS using the correct page ID
   const { data: heroContent } = useQuery({
-    queryKey: ['/api/cms/pages/home-page-id/sections'],
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    queryKey: ['/api/cms/pages/fe06c65c-887a-423c-832d-670fe2d4e603/sections'],
+    staleTime: 30 * 1000, // 30 seconds for testing - will update quickly
+    refetchOnWindowFocus: true, // Refetch when window gains focus
   });
 
   // Get hero background image from CMS or use default
-  const heroSection = heroContent?.sections?.find((section: any) => 
-    section.sectionName === 'hero' && section.contentType === 'image'
+  // Look for hero image in header section with hero_image key
+  const heroSection = heroContent?.find((section: any) => 
+    (section.section_name === 'header' && section.section_key === 'hero_image') ||
+    (section.section_name === 'hero' && section.content_type === 'image')
   );
-  const heroImageUrl = heroSection?.imageUrl || "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&h=800";
+  const heroImageUrl = heroSection?.image_url || "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&h=800";
+
+  console.log('Hero Content:', heroContent);
+  console.log('Hero Section found:', heroSection);
+  console.log('Hero Image URL being used:', heroImageUrl);
 
   const handleSearch = () => {
     onSearch(searchFilters);

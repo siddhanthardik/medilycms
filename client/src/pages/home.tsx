@@ -79,7 +79,7 @@ export default function Home() {
   // Check if we're in CMS edit mode
   const urlParams = new URLSearchParams(window.location.search);
   const cmsMode = urlParams.get('cms') === 'edit';
-  const pageId = urlParams.get('pageId') || 'home-page-id';
+  const pageId = urlParams.get('pageId') || 'fe06c65c-887a-423c-832d-670fe2d4e603'; // Use correct home page ID
 
   const pageContent = (
     <div className="min-h-screen bg-gray-50">
