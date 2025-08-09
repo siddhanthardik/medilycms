@@ -33,6 +33,7 @@ import {
 } from 'lucide-react';
 import { AdminNavbar } from '@/components/admin-navbar';
 import { DynamicCMSEditor } from '@/components/dynamic-cms-editor';
+import { UniversalImageUpload } from '@/components/universal-image-upload';
 
 interface ContentSection {
   id?: string;
@@ -548,30 +549,57 @@ export default function CmsEditor() {
               </div>
 
               {editingSection.contentType === 'image' ? (
-                <>
+                <div className="space-y-6">
                   <div>
-                    <Label htmlFor="imageUrl">Image URL</Label>
-                    <Input
-                      id="imageUrl"
-                      value={editingSection.imageUrl || ''}
-                      onChange={(e) => setEditingSection(prev => 
-                        prev ? { ...prev, imageUrl: e.target.value } : null
-                      )}
-                      placeholder="Enter image URL or upload image"
+                    <Label className="text-base font-semibold mb-3 block">Upload Image</Label>
+                    <p className="text-sm text-gray-600 mb-4">
+                      Upload from your computer, Google Drive, or enter a public URL. Supports JPG, PNG, GIF formats.
+                    </p>
+                    <UniversalImageUpload
+                      onImageUploaded={(imageUrl) => {
+                        console.log('Section image uploaded:', imageUrl);
+                        setEditingSection(prev => 
+                          prev ? { ...prev, imageUrl: imageUrl } : null
+                        );
+                      }}
+                      currentImage={editingSection.imageUrl || ''}
+                      label=""
+                      showPreview={true}
+                      className="w-full"
                     />
                   </div>
-                  <div>
-                    <Label htmlFor="altText">Image Description (Alt Text)</Label>
+                  
+                  <div className="border-t pt-4">
+                    <Label htmlFor="altText" className="text-base font-semibold">Image Description (Alt Text)</Label>
+                    <p className="text-sm text-gray-600 mb-2">
+                      Describe what's in the image for screen readers and accessibility.
+                    </p>
                     <Input
                       id="altText"
                       value={editingSection.altText || ''}
                       onChange={(e) => setEditingSection(prev => 
                         prev ? { ...prev, altText: e.target.value } : null
                       )}
-                      placeholder="Describe the image for accessibility"
+                      placeholder="e.g., Medical professional reviewing patient chart"
+                      className="mt-1"
                     />
                   </div>
-                </>
+                  
+                  <div className="border-t pt-4">
+                    <Label className="text-base font-semibold mb-2 block">Image URL</Label>
+                    <Input
+                      value={editingSection.imageUrl || ''}
+                      onChange={(e) => setEditingSection(prev => 
+                        prev ? { ...prev, imageUrl: e.target.value } : null
+                      )}
+                      placeholder="https://example.com/image.jpg"
+                      className="font-mono text-sm"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      This updates automatically when you upload an image above, or you can paste a URL directly.
+                    </p>
+                  </div>
+                </div>
               ) : (
                 <div>
                   <Label htmlFor="content">Content</Label>

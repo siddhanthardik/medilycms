@@ -385,20 +385,31 @@ export function DynamicCMSEditor({ pageId, pageName, onSave }: DynamicCMSEditorP
           {selectedElement && (
             <div className="space-y-4">
               {selectedElement.tagName === 'img' ? (
-                <div className="space-y-4">
-                  <UniversalImageUpload
-                    onImageUploaded={(imageUrl) => {
-                      setSelectedElement(prev => 
-                        prev ? { ...prev, content: imageUrl } : null
-                      );
-                    }}
-                    currentImage={selectedElement.content}
-                    label="Image Source"
-                    showPreview={true}
-                  />
-                  
+                <div className="space-y-6">
                   <div>
-                    <Label htmlFor="alt-text">Alt Text</Label>
+                    <Label className="text-base font-semibold mb-3 block">Upload New Image</Label>
+                    <p className="text-sm text-gray-600 mb-4">
+                      Choose from local files, Google Drive, or public URLs. Supports JPG, PNG, GIF formats.
+                    </p>
+                    <UniversalImageUpload
+                      onImageUploaded={(imageUrl) => {
+                        console.log('Image uploaded:', imageUrl);
+                        setSelectedElement(prev => 
+                          prev ? { ...prev, content: imageUrl } : null
+                        );
+                      }}
+                      currentImage={selectedElement.content}
+                      label=""
+                      showPreview={true}
+                      className="w-full"
+                    />
+                  </div>
+                  
+                  <div className="border-t pt-4">
+                    <Label htmlFor="alt-text" className="text-base font-semibold">Alt Text (Accessibility)</Label>
+                    <p className="text-sm text-gray-600 mb-2">
+                      Describe what's in the image for screen readers and accessibility.
+                    </p>
                     <Input
                       id="alt-text"
                       value={selectedElement.attributes.alt || ''}
@@ -408,8 +419,25 @@ export function DynamicCMSEditor({ pageId, pageName, onSave }: DynamicCMSEditorP
                           attributes: { ...prev.attributes, alt: e.target.value }
                         } : null
                       )}
-                      placeholder="Describe the image for accessibility"
+                      placeholder="e.g., Doctor examining patient with stethoscope"
+                      className="mt-1"
                     />
+                  </div>
+                  
+                  <div className="border-t pt-4">
+                    <Label className="text-base font-semibold mb-2 block">Current Image URL</Label>
+                    <Input
+                      value={selectedElement.content}
+                      onChange={(e) => setSelectedElement(prev =>
+                        prev ? { ...prev, content: e.target.value } : null
+                      )}
+                      placeholder="https://example.com/image.jpg"
+                      className="font-mono text-sm"
+                      readOnly
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      This will update automatically when you upload a new image above.
+                    </p>
                   </div>
                 </div>
               ) : selectedElement.tagName === 'a' ? (

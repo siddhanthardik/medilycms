@@ -101,8 +101,20 @@ export function UniversalImageUpload({
   const handleUrlSubmit = async () => {
     if (!urlInput.trim()) {
       toast({
-        title: "Invalid URL",
+        title: "URL required",
         description: "Please enter a valid image URL",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate URL format
+    try {
+      new URL(urlInput.trim());
+    } catch {
+      toast({
+        title: "Invalid URL format",
+        description: "Please enter a valid URL starting with http:// or https://",
         variant: "destructive",
       });
       return;
@@ -118,16 +130,16 @@ export function UniversalImageUpload({
         onImageUploaded(processedUrl);
         setUrlInput("");
         toast({
-          title: "Image URL added successfully",
-          description: "Your image URL has been processed and is ready to use",
+          title: "Image URL updated successfully",
+          description: "Your image has been updated and is ready to use",
         });
         setUploading(false);
       };
       
       testImage.onerror = () => {
         toast({
-          title: "Invalid image URL",
-          description: "The provided URL doesn't appear to be a valid image. Please check the URL and try again.",
+          title: "Image failed to load",
+          description: "The URL doesn't appear to contain a valid image. Please verify the URL and try again. For Freepik images, ensure you're using the direct image URL, not the page URL.",
           variant: "destructive",
         });
         setUploading(false);
@@ -137,7 +149,7 @@ export function UniversalImageUpload({
     } catch (error) {
       console.error('URL processing error:', error);
       toast({
-        title: "URL processing failed",
+        title: "URL processing failed", 
         description: "There was an error processing your image URL. Please try again.",
         variant: "destructive",
       });

@@ -1,174 +1,76 @@
 # MEDILY - Clinical Rotation Marketplace
 
 ## Overview
-
-MEDILY is a full-stack web application that serves as a clinical rotation marketplace for medical professionals. The platform connects healthcare professionals with short-term clinical experiences including observerships, hands-on training, fellowships, and clerkships. Built with a modern tech stack, it provides a comprehensive solution for browsing, filtering, and applying to medical rotations while offering administrative tools for program management.
+MEDILY is a full-stack web application designed as a clinical rotation marketplace. It connects healthcare professionals with short-term clinical experiences like observerships, hands-on training, fellowships, and clerkships. The platform aims to provide a comprehensive solution for browsing, filtering, and applying to medical rotations, complemented by administrative tools for program management. Its vision is to simplify access to valuable clinical experiences and streamline the management of such programs within the medical field.
 
 ## User Preferences
-
 Preferred communication style: Simple, everyday language.
-
-## Recent Changes
-
-### August 5, 2025
-- Updated navigation menu: Changed "Join" to "Jobs" in landing page navigation
-- Created completely new About Us page with authentic content from skillwithmedily.com
-- Enhanced About Us page features authentic team information (Mr. Siddhant Hardik - Founder, Dr Jitendra Singh - Growth Mentor, Dr Rajeev Ranjan - Program Mentor)
-- Added authentic vision and mission statements from Skill With Medily
-- Included "Why Skill With Medily" section with key features: simple content, expert-made courses, real skills focus, affordable pricing
-- Enhanced admin dashboard with comprehensive analytics including real-time metrics, charts, and role-based access control
-- Fixed TypeScript errors and improved server-side analytics functionality
-- Added smooth horizontal carousel on home page (authenticated users only) showcasing medical department programs with continuous right-to-left scrolling effect
-- Implemented CSS animations for carousel with 30-second loop, pause on hover functionality, and seamless infinite scroll
-- Carousel features Emergency Medicine, IVF Training, Ultrasound Training, Radiology Training, Surgery Training, and Cardiology Training programs
-- Carousel only displays to authenticated users on home page, hidden from non-authenticated users on landing page
-- Removed "Get Started" and "Log In" buttons from navigation menu for cleaner interface
-- Optimized page loading performance with proper authentication caching, reduced unnecessary API requests, and improved query configurations
-- Added performance optimizations: reduced auth polling, proper stale time settings, image lazy loading, and font display optimization
-- Target loading time reduced to under 1 second through query caching and request reduction
-- Updated MEDILY logo consistently across all pages including navbar, landing page, footer, and page title for cohesive branding
-- Implemented clinical rotation-focused navigation for logged-in users with dedicated sections: Browse Rotations, My Applications, All Programs, Favorites, and My Reviews
-- Created Favorites page for users to manage saved clinical rotation programs with empty state and program cards
-- Created Reviews page for users to view, edit, and delete their program reviews with star ratings and content management
-- Updated navigation system to automatically switch to clinical rotation-specific menu items when users are authenticated
-- Completed comprehensive admin authentication system with email/password login using bcrypt encryption
-- Implemented full user management functionality allowing admins to manage all platform users with CRUD operations
-- Created admin login page at /admin-login with secure form validation and error handling
-- Successfully created two admin users: admin@medily.com and siddhanthardik@gmail.com (for Saroj)
-- Database schema updated with password field and admin role functionality, migrations pushed successfully
-- Admin CMS dashboard accessible only to authenticated admin users with complete user management capabilities
-
-### August 6, 2025
-- **Deployment Fixes Applied**: Resolved deployment initialization failures with comprehensive production readiness improvements
-- Enhanced server startup with NODE_ENV=production environment variable detection and validation
-- Improved static file serving for production deployment with proper build directory structure
-- Added graceful shutdown handlers (SIGTERM, SIGINT) and comprehensive error logging for debugging
-- Created deployment preparation scripts (post-build.js, prepare-deployment.js) for automated deployment checks
-- Fixed build process to properly serve static assets from server/public/ directory in production
-- Added environment variable validation for required production secrets (DATABASE_URL)
-- Enhanced error handling and logging throughout server initialization process
-- Created comprehensive DEPLOYMENT.md documentation with troubleshooting guide
-- Verified production build process creates correct file structure and serves assets properly
-- **Database Stability Crisis Resolved**: Completely fixed frequent app crashes caused by WebSocket connection failures
-- Implemented robust database connection pool with proper error handling and auto-recovery
-- Added comprehensive database health monitoring with exponential backoff retry logic
-- Enhanced error handling to prevent server crashes on database connection issues
-- Application now runs stably with optimized Neon PostgreSQL connection configuration
-- **Complete Admin Dashboard Enhancement**: Implemented comprehensive application management system
-- Added full Applications tab with detailed student application tracking and management
-- Admin panel now displays total applications count and detailed applicant information
-- Implemented functional approve/reject system with status updates and review notes
-- Added complete application details view including personal info, program details, and documents
-- Fixed all navigation links to use proper routing instead of broken window.location calls
-- Enhanced application analytics with pending/approved counts and success rate calculations
-- **Admin Authentication System Completed**: Successfully resolved admin session authentication and routing issues
-- Fixed session cookie security settings for development environment (secure: false for HTTP)
-- Corrected routing configuration - Admin Dashboard now properly accessible at /admin-dashboard
-- Enhanced Applications API with comprehensive filtering (status, search, date range) and detailed user/program joins
-- All 5 applications now display correctly with complete applicant and program information
-- Added navigation button between CMS dashboard and Applications dashboard for easy access
-- Admin credentials confirmed working: admin@medily.com and siddhanthardik@gmail.com with password MedilyAdmin123!
-- **WordPress-Style CMS Editor Fully Operational**: Successfully completed comprehensive content management system with direct editing capabilities
-- **Universal Image Upload System Implemented**: Created comprehensive image management solution supporting local file uploads, Google Drive URLs, and public image links across entire platform
-- Set up Replit Object Storage with default bucket for secure file storage and management
-- Enhanced team member management with new Universal Image Upload component replacing simple URL input
-- Added tabbed interface for different upload methods: Local Files, Google Drive, and Public URLs
-- Implemented automatic Google Drive URL conversion for reliable image display
-- Created unified /api/upload-image endpoint supporting all platform image upload needs
-- Fixed critical timestamp error causing "Failed to update" when saving content sections by implementing proper field filtering and type safety
-- **Revolutionary Full-Page DOM Editing System Implemented**: Transformed CMS from section-based to complete DOM editing capability
-- Created DynamicCMSEditor component that scans and makes ALL page elements editable (headings, paragraphs, images, buttons, links)
-- Added hover-to-edit and click-to-edit functionality for every element on any page automatically
-- Implemented universal edit system removing section-based limitations - works across all pages without manual registration
-- Added new database table `dynamic_page_content` for storing full-page editable content with JSON elements storage
-- Enhanced CMS editor with comprehensive element detection using CSS selectors for all text, image, and interactive elements
-- Integrated universal image upload system into dynamic editing for seamless image replacement workflow
-- Created rich, professional content for all 8 website pages (Home, About, Contact, Courses, Join, Terms, Disclaimer, Refund Policy)
-- Implemented true WordPress-style inline editing with visual clickable interface - users can click directly on any text or image to edit
-- Added comprehensive visual feedback with dashed borders, hover effects, and "Click to Edit" buttons for intuitive user experience
-- Enhanced editor with content section counter, visual indicators for content types, and clear editing instructions
-- All content sections now display properly with professional styling including hero sections, features, contact information, and call-to-action buttons
-- Interface designed for simplicity - suitable for non-technical users (class 8 standard) as requested
-- CMS editor fully functional at /cms-editor with successful save operations and comprehensive content management capabilities
 
 ## System Architecture
 
 ### Frontend Architecture
-- **Framework**: React 18 with TypeScript for type safety and modern development
-- **Routing**: Wouter for lightweight client-side routing
-- **State Management**: TanStack Query (React Query) for server state management and caching
-- **UI Framework**: Shadcn/ui with Radix UI primitives for accessible, customizable components
-- **Styling**: Tailwind CSS with CSS variables for theming support
-- **Build Tool**: Vite for fast development and optimized production builds
+- **Framework**: React 18 with TypeScript.
+- **Routing**: Wouter.
+- **State Management**: TanStack Query (React Query) for server state management and caching.
+- **UI Framework**: Shadcn/ui with Radix UI primitives.
+- **Styling**: Tailwind CSS with CSS variables.
+- **Build Tool**: Vite.
 
 ### Backend Architecture
-- **Runtime**: Node.js with Express.js framework
-- **Language**: TypeScript for full-stack type safety
-- **API Design**: RESTful API with structured route handlers
-- **Authentication**: OpenID Connect (OIDC) with Passport.js integration
-- **Session Management**: Express sessions with PostgreSQL storage using connect-pg-simple
+- **Runtime**: Node.js with Express.js.
+- **Language**: TypeScript.
+- **API Design**: RESTful API.
+- **Authentication**: OpenID Connect (OIDC) with Passport.js.
+- **Session Management**: Express sessions with PostgreSQL storage using connect-pg-simple.
 
 ### Database Layer
-- **Database**: PostgreSQL for relational data storage
-- **ORM**: Drizzle ORM for type-safe database operations
-- **Schema Management**: Drizzle Kit for migrations and schema management
-- **Connection**: Neon serverless PostgreSQL with connection pooling
+- **Database**: PostgreSQL.
+- **ORM**: Drizzle ORM.
+- **Schema Management**: Drizzle Kit for migrations.
+- **Connection**: Neon serverless PostgreSQL with connection pooling.
 
 ### Key Data Models
-- **Users**: Medical professionals and administrators with role-based access
-- **Programs**: Clinical rotation listings with detailed metadata
-- **Applications**: User applications to programs with status tracking
-- **Specialties**: Medical specialties for categorization
-- **Reviews**: User feedback system for programs
-- **Favorites**: User bookmark functionality
+- Users, Programs, Applications, Specialties, Reviews, Favorites.
 
 ### Authentication & Authorization
-- **Provider**: Replit OIDC integration for seamless authentication
-- **Session Storage**: PostgreSQL-backed sessions for scalability
-- **Role-Based Access**: Differentiated permissions for users, sub-admins, and super-admins
-- **Security**: Secure session management with HTTP-only cookies
+- **Provider**: Replit OIDC integration.
+- **Session Storage**: PostgreSQL-backed sessions.
+- **Role-Based Access**: Differentiated permissions for users, sub-admins, and super-admins.
+- **Security**: Secure session management with HTTP-only cookies.
 
 ### UI/UX Design
-- **Design System**: Consistent component library with shadcn/ui
-- **Responsive Design**: Mobile-first approach with Tailwind breakpoints
-- **Accessibility**: ARIA-compliant components from Radix UI
-- **Theme Support**: CSS custom properties for light/dark mode capability
-- **Medical Theme**: Custom color palette optimized for healthcare applications
+- **Design System**: Shadcn/ui.
+- **Responsive Design**: Mobile-first approach with Tailwind breakpoints.
+- **Accessibility**: ARIA-compliant components from Radix UI.
+- **Theme Support**: CSS custom properties for light/dark mode.
+- **Medical Theme**: Custom color palette.
+- **CMS Editor**: WordPress-style full-page DOM editing with inline visual editing.
 
-### Search & Filtering
-- **Multi-faceted Search**: Specialty, location, duration, type, and cost filters
-- **Real-time Updates**: Dynamic filtering with immediate results
-- **Query Optimization**: Efficient database queries with proper indexing
-
-### Application Management
-- **Status Tracking**: Comprehensive application lifecycle management
-- **Waitlist System**: Automated waitlist handling for full programs
-- **Notification System**: Toast notifications for user feedback
+### Features
+- Multi-faceted search and filtering for clinical rotations.
+- Comprehensive application management with status tracking and waitlist system.
+- Notification system for user feedback.
+- Universal Image Upload System supporting local files, Google Drive URLs, and public links.
 
 ## External Dependencies
 
 ### Core Infrastructure
-- **Database**: Neon PostgreSQL serverless database
-- **Authentication**: Replit OIDC service for user authentication
-- **Session Storage**: PostgreSQL for distributed session management
+- **Database**: Neon PostgreSQL serverless database.
+- **Authentication**: Replit OIDC service.
+- **Session Storage**: PostgreSQL.
 
 ### Development & Build Tools
-- **Package Manager**: npm with lock file for consistent dependencies
-- **Build System**: Vite for frontend bundling and development server
-- **TypeScript**: Full-stack type checking and compilation
-- **ESBuild**: Backend bundling for production deployment
+- **Package Manager**: npm.
+- **Build System**: Vite.
+- **TypeScript**: Full-stack type checking.
+- **ESBuild**: Backend bundling.
 
 ### UI Component Libraries
-- **Radix UI**: Accessible primitive components for complex UI elements
-- **Lucide React**: Icon library for consistent iconography
-- **TailwindCSS**: Utility-first CSS framework with PostCSS processing
+- **Radix UI**: Accessible primitive components.
+- **Lucide React**: Icon library.
+- **TailwindCSS**: Utility-first CSS framework.
 
 ### Data & State Management
-- **TanStack Query**: Server state management with caching and synchronization
-- **React Hook Form**: Form handling with validation
-- **Zod**: Schema validation for type-safe data handling
-
-### Development Experience
-- **Hot Module Replacement**: Vite HMR for fast development iteration
-- **Error Overlay**: Runtime error modal for development debugging
-- **TypeScript Path Mapping**: Organized imports with custom path aliases
+- **TanStack Query**: Server state management.
+- **React Hook Form**: Form handling with validation.
+- **Zod**: Schema validation.
