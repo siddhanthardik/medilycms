@@ -448,7 +448,7 @@ export type InsertWaitlist = z.infer<typeof insertWaitlistSchema>;
 export type InsertNewsletterSubscription = z.infer<typeof insertNewsletterSchema>;
 export type InsertContactQuery = z.infer<typeof insertContactQuerySchema>;
 
-// Blog Posts table for CMS
+// Blog Posts table for CMS with SEO optimization
 export const blogPosts = pgTable("blog_posts", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   title: varchar("title").notNull(),
@@ -456,15 +456,61 @@ export const blogPosts = pgTable("blog_posts", {
   excerpt: text("excerpt"),
   content: text("content").notNull(),
   author: varchar("author").notNull(),
+  authorId: varchar("author_id").references(() => users.id),
   category: varchar("category").notNull(),
   tags: text("tags").array(),
   featuredImage: varchar("featured_image"),
+  featuredImageAlt: varchar("featured_image_alt"),
   readTime: varchar("read_time"),
   status: varchar("status").notNull().default("draft"), // draft, published, archived
+  
+  // SEO Fields
+  metaTitle: varchar("meta_title"),
+  metaDescription: text("meta_description"),
+  focusKeyword: varchar("focus_keyword"),
+  keywords: text("keywords").array(),
+  canonicalUrl: varchar("canonical_url"),
+  ogTitle: varchar("og_title"),
+  ogDescription: text("og_description"),
+  ogImage: varchar("og_image"),
+  structuredData: jsonb("structured_data"),
+  
+  // Analytics
+  views: integer("views").default(0),
+  likes: integer("likes").default(0),
+  shares: integer("shares").default(0),
+  
   publishedAt: timestamp("published_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
   createdBy: varchar("created_by").references(() => users.id),
+});
+
+// Blog Categories table
+export const blogCategories = pgTable("blog_categories", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name").notNull().unique(),
+  slug: varchar("slug").notNull().unique(),
+  description: text("description"),
+  parentId: varchar("parent_id"),
+  sortOrder: integer("sort_order").default(0),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Blog Comments table
+export const blogComments = pgTable("blog_comments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  postId: varchar("post_id").references(() => blogPosts.id).notNull(),
+  userId: varchar("user_id").references(() => users.id),
+  authorName: varchar("author_name"),
+  authorEmail: varchar("author_email"),
+  content: text("content").notNull(),
+  status: varchar("status").notNull().default("pending"), // pending, approved, spam
+  parentId: varchar("parent_id"), // for nested comments
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 // Courses table for CMS
@@ -631,9 +677,26 @@ export const insertContactInfoSchema = createInsertSchema(contactInfo).omit({
   updatedAt: true,
 });
 
+// Insert schemas for new blog tables
+export const insertBlogCategorySchema = createInsertSchema(blogCategories).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertBlogCommentSchema = createInsertSchema(blogComments).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Export CMS types
 export type BlogPost = typeof blogPosts.$inferSelect;
 export type InsertBlogPost = z.infer<typeof insertBlogPostSchema>;
+export type BlogCategory = typeof blogCategories.$inferSelect;
+export type InsertBlogCategory = z.infer<typeof insertBlogCategorySchema>;
+export type BlogComment = typeof blogComments.$inferSelect;
+export type InsertBlogComment = z.infer<typeof insertBlogCommentSchema>;
 export type Course = typeof courses.$inferSelect;
 export type InsertCourse = z.infer<typeof insertCourseSchema>;
 export type ContentPage = typeof contentPages.$inferSelect;

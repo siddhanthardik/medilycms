@@ -563,6 +563,103 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // CMS Routes - Blog Management
+  app.get('/api/cms/blog', requireAdminSession, async (req: any, res) => {
+    try {
+      const { search, status, category } = req.query;
+      const posts = await storage.getBlogPosts({ search, status, category });
+      res.json(posts);
+    } catch (error) {
+      console.error("Error fetching blog posts:", error);
+      res.status(500).json({ message: "Failed to fetch blog posts" });
+    }
+  });
+
+  app.get('/api/cms/blog/stats', requireAdminSession, async (req: any, res) => {
+    try {
+      const stats = await storage.getBlogStats();
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching blog stats:", error);
+      res.status(500).json({ message: "Failed to fetch blog stats" });
+    }
+  });
+
+  app.get('/api/cms/blog/:id', requireAdminSession, async (req: any, res) => {
+    try {
+      const post = await storage.getBlogPost(req.params.id);
+      if (!post) {
+        return res.status(404).json({ message: "Blog post not found" });
+      }
+      res.json(post);
+    } catch (error) {
+      console.error("Error fetching blog post:", error);
+      res.status(500).json({ message: "Failed to fetch blog post" });
+    }
+  });
+
+  app.post('/api/cms/blog', requireAdminSession, async (req: any, res) => {
+    try {
+      const postData = {
+        ...req.body,
+        createdBy: req.adminUser.id,
+        authorId: req.adminUser.id,
+        publishedAt: req.body.status === 'published' ? new Date() : null
+      };
+      const post = await storage.createBlogPost(postData);
+      res.status(201).json(post);
+    } catch (error) {
+      console.error("Error creating blog post:", error);
+      res.status(500).json({ message: "Failed to create blog post" });
+    }
+  });
+
+  app.put('/api/cms/blog/:id', requireAdminSession, async (req: any, res) => {
+    try {
+      const updates = {
+        ...req.body,
+        updatedAt: new Date(),
+        publishedAt: req.body.status === 'published' && !req.body.publishedAt ? new Date() : req.body.publishedAt
+      };
+      const post = await storage.updateBlogPost(req.params.id, updates);
+      res.json(post);
+    } catch (error) {
+      console.error("Error updating blog post:", error);
+      res.status(500).json({ message: "Failed to update blog post" });
+    }
+  });
+
+  app.delete('/api/cms/blog/:id', requireAdminSession, async (req: any, res) => {
+    try {
+      await storage.deleteBlogPost(req.params.id);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting blog post:", error);
+      res.status(500).json({ message: "Failed to delete blog post" });
+    }
+  });
+
+  // Blog Categories
+  app.get('/api/cms/blog-categories', async (req, res) => {
+    try {
+      const categories = await storage.getBlogCategories();
+      res.json(categories);
+    } catch (error) {
+      console.error("Error fetching blog categories:", error);
+      res.status(500).json({ message: "Failed to fetch blog categories" });
+    }
+  });
+
+  app.post('/api/cms/blog-categories', requireAdminSession, async (req: any, res) => {
+    try {
+      const category = await storage.createBlogCategory(req.body);
+      res.status(201).json(category);
+    } catch (error) {
+      console.error("Error creating blog category:", error);
+      res.status(500).json({ message: "Failed to create blog category" });
+    }
+  });
+
   // Initialize CMS with default pages
   async function initializeCmsPages() {
     try {

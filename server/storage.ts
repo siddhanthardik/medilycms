@@ -13,6 +13,9 @@ import {
   cmsMediaAssets,
   teamMembers,
   dynamicPageContent,
+  blogPosts,
+  blogCategories,
+  blogComments,
   type User,
   type UpsertUser,
   type Specialty,
@@ -28,6 +31,9 @@ import {
   type CmsMediaAsset,
   type TeamMember,
   type DynamicPageContent,
+  type BlogPost,
+  type BlogCategory,
+  type BlogComment,
   type InsertSpecialty,
   type InsertProgram,
   type InsertApplication,
@@ -41,6 +47,9 @@ import {
   type InsertCmsMediaAsset,
   type InsertTeamMember,
   type InsertDynamicPageContent,
+  type InsertBlogPost,
+  type InsertBlogCategory,
+  type InsertBlogComment,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, asc, ilike, sql, count, avg } from "drizzle-orm";
@@ -152,6 +161,27 @@ export interface IStorage {
   // Dynamic page content operations (full DOM editing)
   savePageContent(content: InsertDynamicPageContent): Promise<DynamicPageContent>;
   getPageContent(pageId: string): Promise<DynamicPageContent | undefined>;
+  
+  // Blog operations
+  getBlogPosts(filters?: { search?: string; status?: string; category?: string }): Promise<BlogPost[]>;
+  getBlogPost(id: string): Promise<BlogPost | undefined>;
+  createBlogPost(post: InsertBlogPost): Promise<BlogPost>;
+  updateBlogPost(id: string, updates: Partial<BlogPost>): Promise<BlogPost>;
+  deleteBlogPost(id: string): Promise<void>;
+  getBlogStats(): Promise<{
+    totalPosts: number;
+    publishedPosts: number;
+    totalViews: number;
+    totalEngagement: number;
+    viewsGrowth: number;
+    avgReadTime: string;
+  }>;
+  
+  // Blog Category operations
+  getBlogCategories(): Promise<BlogCategory[]>;
+  createBlogCategory(category: InsertBlogCategory): Promise<BlogCategory>;
+  updateBlogCategory(id: string, updates: Partial<BlogCategory>): Promise<BlogCategory>;
+  deleteBlogCategory(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -956,6 +986,116 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(dynamicPageContent.updatedAt))
       .limit(1);
     return content;
+  }
+
+  // Blog operations
+  async getBlogPosts(filters?: { search?: string; status?: string; category?: string }): Promise<BlogPost[]> {
+    let query = db.select().from(blogPosts);
+    
+    if (filters) {
+      const conditions = [];
+      
+      if (filters.search) {
+        conditions.push(
+          sql`${blogPosts.title} ILIKE ${`%${filters.search}%`} OR ${blogPosts.excerpt} ILIKE ${`%${filters.search}%`} OR ${blogPosts.author} ILIKE ${`%${filters.search}%`}`
+        );
+      }
+      
+      if (filters.status && filters.status !== 'all') {
+        conditions.push(eq(blogPosts.status, filters.status));
+      }
+      
+      if (filters.category && filters.category !== 'all') {
+        conditions.push(eq(blogPosts.category, filters.category));
+      }
+      
+      if (conditions.length > 0) {
+        query = query.where(and(...conditions));
+      }
+    }
+    
+    return await query.orderBy(desc(blogPosts.createdAt));
+  }
+
+  async getBlogPost(id: string): Promise<BlogPost | undefined> {
+    const [post] = await db.select().from(blogPosts).where(eq(blogPosts.id, id));
+    return post;
+  }
+
+  async createBlogPost(post: InsertBlogPost): Promise<BlogPost> {
+    const [newPost] = await db.insert(blogPosts).values(post).returning();
+    return newPost;
+  }
+
+  async updateBlogPost(id: string, updates: Partial<BlogPost>): Promise<BlogPost> {
+    const [updatedPost] = await db
+      .update(blogPosts)
+      .set(updates)
+      .where(eq(blogPosts.id, id))
+      .returning();
+    return updatedPost;
+  }
+
+  async deleteBlogPost(id: string): Promise<void> {
+    await db.delete(blogPosts).where(eq(blogPosts.id, id));
+  }
+
+  async getBlogStats(): Promise<{
+    totalPosts: number;
+    publishedPosts: number;
+    totalViews: number;
+    totalEngagement: number;
+    viewsGrowth: number;
+    avgReadTime: string;
+  }> {
+    const posts = await db.select().from(blogPosts);
+    const publishedPosts = posts.filter(p => p.status === 'published');
+    const totalViews = posts.reduce((sum, p) => sum + (p.views || 0), 0);
+    const totalEngagement = posts.reduce((sum, p) => sum + (p.likes || 0) + (p.shares || 0), 0);
+    
+    // Calculate views growth (mock for now, would need historical data)
+    const viewsGrowth = 12.5;
+    
+    // Calculate average read time
+    const totalReadTime = posts
+      .filter(p => p.readTime)
+      .reduce((sum, p) => {
+        const time = parseInt(p.readTime || '0');
+        return sum + time;
+      }, 0);
+    const avgReadTime = posts.length > 0 ? Math.round(totalReadTime / posts.length) + ' min' : '5 min';
+    
+    return {
+      totalPosts: posts.length,
+      publishedPosts: publishedPosts.length,
+      totalViews,
+      totalEngagement,
+      viewsGrowth,
+      avgReadTime
+    };
+  }
+
+  // Blog Category operations
+  async getBlogCategories(): Promise<BlogCategory[]> {
+    return await db.select().from(blogCategories).orderBy(blogCategories.sortOrder);
+  }
+
+  async createBlogCategory(category: InsertBlogCategory): Promise<BlogCategory> {
+    const [newCategory] = await db.insert(blogCategories).values(category).returning();
+    return newCategory;
+  }
+
+  async updateBlogCategory(id: string, updates: Partial<BlogCategory>): Promise<BlogCategory> {
+    const [updatedCategory] = await db
+      .update(blogCategories)
+      .set(updates)
+      .where(eq(blogCategories.id, id))
+      .returning();
+    return updatedCategory;
+  }
+
+  async deleteBlogCategory(id: string): Promise<void> {
+    await db.delete(blogCategories).where(eq(blogCategories.id, id));
   }
 }
 

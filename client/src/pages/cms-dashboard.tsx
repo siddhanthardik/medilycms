@@ -34,6 +34,7 @@ import {
   Settings
 } from 'lucide-react';
 import { AdminNavbar } from '@/components/admin-navbar';
+import { BlogManagement } from '@/components/cms/blog-management';
 
 interface CmsPage {
   id: string;
@@ -78,7 +79,7 @@ export default function CmsDashboard() {
   const [showEditPageDialog, setShowEditPageDialog] = useState(false);
   const [showAddSectionDialog, setShowAddSectionDialog] = useState(false);
   const [editingSection, setEditingSection] = useState<CmsContentSection | null>(null);
-  const [activeTab, setActiveTab] = useState<'pages' | 'sections' | 'media'>('pages');
+  const [activeTab, setActiveTab] = useState<'pages' | 'sections' | 'media' | 'blog'>('pages');
   
   const [newPageData, setNewPageData] = useState({
     pageName: '',
@@ -296,6 +297,16 @@ export default function CmsDashboard() {
               }`}
             >
               Media Assets ({mediaAssets?.length || 0})
+            </button>
+            <button
+              onClick={() => setActiveTab('blog')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'blog'
+                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400'
+              }`}
+            >
+              Blog Management
             </button>
           </nav>
         </div>
@@ -696,6 +707,10 @@ export default function CmsDashboard() {
               </div>
             )}
           </div>
+        )}
+
+        {activeTab === 'blog' && (
+          <BlogManagement />
         )}
 
         {/* Edit Page Dialog */}
