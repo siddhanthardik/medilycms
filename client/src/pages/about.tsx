@@ -59,7 +59,7 @@ export default function About() {
     <div className="min-h-screen bg-gray-50">
       <Navbar />
       {/* Hero Section */}
-      <section className="from-primary via-blue-600 to-blue-700 py-20 text-[#000000] bg-[#ffffff00]">
+      <section className="from-primary via-blue-600 to-blue-700 py-20 text-[#000000] bg-[#0079f2]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <div className="flex justify-center mb-6">
