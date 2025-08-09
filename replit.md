@@ -45,6 +45,7 @@ Preferred communication style: Simple, everyday language.
 - **Theme Support**: CSS custom properties for light/dark mode.
 - **Medical Theme**: Custom color palette.
 - **CMS Editor**: WordPress-style full-page DOM editing with inline visual editing.
+- **Blog Editor**: Smooth contentEditable implementation with proper LTR typing, no cursor jumping, and rich text formatting tools.
 
 ### Features
 - Multi-faceted search and filtering for clinical rotations.

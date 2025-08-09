@@ -66,6 +66,7 @@ export function BlogEditorImproved({ postId, onSave, onCancel }: BlogEditorProps
   const [imageUrl, setImageUrl] = useState("");
   const [imageAlt, setImageAlt] = useState("");
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [isEditorInitialized, setIsEditorInitialized] = useState(false);
   
   // SEO Analysis states
   const [seoScore, setSeoScore] = useState(0);
@@ -94,21 +95,34 @@ export function BlogEditorImproved({ postId, onSave, onCancel }: BlogEditorProps
   });
 
   // Fetch existing post if editing
-  const { data: existingPost } = useQuery({
+  const { data: existingPost } = useQuery<BlogPost>({
     queryKey: [`/api/cms/blog/${postId}`],
     enabled: !!postId,
   });
 
   // Fetch blog categories
-  const { data: categories } = useQuery({
+  const { data: categories = [] } = useQuery<Array<{id: string, name: string}>>({
     queryKey: ['/api/cms/blog-categories'],
   });
 
   useEffect(() => {
     if (existingPost) {
       setPost(existingPost);
+      // Initialize editor content when editing existing post
+      if (editorRef.current && existingPost.content) {
+        editorRef.current.innerHTML = existingPost.content;
+        setIsEditorInitialized(true);
+      }
     }
   }, [existingPost]);
+
+  // Initialize empty editor content
+  useEffect(() => {
+    if (editorRef.current && !isEditorInitialized && !postId) {
+      editorRef.current.innerHTML = post.content || "<div><br></div>";
+      setIsEditorInitialized(true);
+    }
+  }, [isEditorInitialized, post.content, postId]);
 
   // Auto-generate slug from title
   useEffect(() => {
@@ -335,13 +349,20 @@ export function BlogEditorImproved({ postId, onSave, onCancel }: BlogEditorProps
       const url = postId ? `/api/cms/blog/${postId}` : "/api/cms/blog";
       const method = postId ? "PUT" : "POST";
       
-      return await apiRequest(url, {
+      const response = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(data),
       });
+
+      if (!response.ok) {
+        throw new Error(`Failed to save: ${response.statusText}`);
+      }
+
+      return response.json();
     },
-    onSuccess: (data) => {
+    onSuccess: (data: BlogPost) => {
       toast({
         title: "Success",
         description: `Blog post ${postId ? "updated" : "created"} successfully`,
@@ -360,7 +381,7 @@ export function BlogEditorImproved({ postId, onSave, onCancel }: BlogEditorProps
     },
   });
 
-  const handleSave = () => {
+  const handleSave = (status?: "draft" | "published") => {
     // Validate required fields
     if (!post.title) {
       toast({
@@ -371,7 +392,8 @@ export function BlogEditorImproved({ postId, onSave, onCancel }: BlogEditorProps
       return;
     }
 
-    if (!post.content || post.content === "<div><br></div>" || post.content === "") {
+    // For drafts, allow empty content
+    if (status !== "draft" && (!post.content || post.content === "<div><br></div>" || post.content === "")) {
       toast({
         title: "Error",
         description: "Please add some content to the blog post",
@@ -383,6 +405,7 @@ export function BlogEditorImproved({ postId, onSave, onCancel }: BlogEditorProps
     // Set default author if not set
     const saveData = {
       ...post,
+      status: status || post.status,
       author: post.author || "Admin",
       metaTitle: post.metaTitle || post.title,
       metaDescription: post.metaDescription || post.excerpt,
@@ -416,7 +439,7 @@ export function BlogEditorImproved({ postId, onSave, onCancel }: BlogEditorProps
           <Button variant="outline" onClick={onCancel}>
             Cancel
           </Button>
-          <Button onClick={handleSave} disabled={saveMutation.isPending}>
+          <Button onClick={() => handleSave()} disabled={saveMutation.isPending}>
             <Save className="h-4 w-4 mr-2" />
             {saveMutation.isPending ? "Saving..." : "Save Post"}
           </Button>
@@ -717,17 +740,34 @@ export function BlogEditorImproved({ postId, onSave, onCancel }: BlogEditorProps
                     ref={editorRef}
                     contentEditable
                     className="min-h-[400px] p-4 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 prose prose-sm max-w-none"
-                    style={{ fontSize: "14px", lineHeight: "1.6" }}
-                    dangerouslySetInnerHTML={{ __html: post.content || "<div><br></div>" }}
+                    style={{ 
+                      fontSize: "14px", 
+                      lineHeight: "1.6",
+                      direction: "ltr",
+                      textAlign: "left",
+                      unicodeBidi: "normal"
+                    }}
                     onInput={(e) => {
                       const target = e.target as HTMLDivElement;
-                      setPost(prev => ({ ...prev, content: target.innerHTML }));
+                      const content = target.innerHTML;
+                      // Only update if content actually changed to prevent unnecessary re-renders
+                      if (content !== post.content) {
+                        setPost(prev => ({ ...prev, content }));
+                      }
                     }}
                     onPaste={(e) => {
                       e.preventDefault();
                       const text = e.clipboardData.getData("text/plain");
                       document.execCommand("insertText", false, text);
                     }}
+                    onFocus={(e) => {
+                      // Initialize content on first focus if not already initialized
+                      if (!isEditorInitialized && editorRef.current) {
+                        editorRef.current.innerHTML = post.content || "<div><br></div>";
+                        setIsEditorInitialized(true);
+                      }
+                    }}
+                    suppressContentEditableWarning={true}
                   />
                 </CardContent>
               </Card>
@@ -1034,7 +1074,7 @@ export function BlogEditorImproved({ postId, onSave, onCancel }: BlogEditorProps
               <Button
                 variant="outline"
                 className="w-full"
-                onClick={handleSave}
+                onClick={() => handleSave("draft")}
                 disabled={saveMutation.isPending}
               >
                 <Save className="h-4 w-4 mr-2" />
@@ -1043,10 +1083,7 @@ export function BlogEditorImproved({ postId, onSave, onCancel }: BlogEditorProps
               {post.status === "draft" && (
                 <Button
                   className="w-full"
-                  onClick={() => {
-                    setPost(prev => ({ ...prev, status: "published" }));
-                    handleSave();
-                  }}
+                  onClick={() => handleSave("published")}
                   disabled={saveMutation.isPending}
                 >
                   Publish Now
