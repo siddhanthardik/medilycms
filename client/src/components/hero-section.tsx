@@ -32,12 +32,13 @@ export default function HeroSection({ onSearch, specialties }: HeroSectionProps)
   });
 
   // Get hero background image from CMS or use default
-  // Look for hero image in header section with hero_image key
+  // Look for hero image in gallery section with hero_image key
   const heroSection = heroContent?.find((section: any) => 
-    (section.section_name === 'header' && section.section_key === 'hero_image') ||
-    (section.section_name === 'hero' && section.content_type === 'image')
+    (section.sectionName === 'gallery' && section.sectionKey === 'hero_image') ||
+    (section.sectionName === 'header' && section.sectionKey === 'hero_image') ||
+    (section.sectionName === 'hero' && section.contentType === 'image')
   );
-  const heroImageUrl = heroSection?.image_url || "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&h=800";
+  const heroImageUrl = heroSection?.imageUrl || "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&h=800";
 
   console.log('Hero Content:', heroContent);
   console.log('Hero Section found:', heroSection);
