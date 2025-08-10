@@ -1203,6 +1203,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Student apply to program
+  app.post('/api/student/apply', async (req: any, res) => {
+    try {
+      if (!(req.session as any)?.user || (req.session as any).user.role !== 'student') {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      const { programId } = req.body;
+      const userId = (req.session as any).user.id;
+      
+      // Check if already applied
+      const existingApplication = await storage.getApplicationByUserAndProgram(userId, programId);
+      if (existingApplication) {
+        return res.status(400).json({ message: "You have already applied to this program" });
+      }
+      
+      // Create application
+      const application = await storage.createApplication({
+        userId,
+        programId,
+        status: 'pending',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+      
+      res.json({ message: "Application submitted successfully", application });
+    } catch (error) {
+      console.error("Error submitting application:", error);
+      res.status(500).json({ message: "Failed to submit application" });
+    }
+  });
+
   // Preceptor-specific routes
   app.get('/api/preceptor/programs', async (req: any, res) => {
     try {

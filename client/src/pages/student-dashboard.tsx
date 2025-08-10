@@ -235,6 +235,41 @@ export default function StudentDashboard() {
     }
   };
 
+  // Handle apply to program
+  const handleApplyToProgram = async (programId: string, programName: string) => {
+    try {
+      const response = await fetch("/api/student/apply", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ programId }),
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Application Submitted",
+          description: `Your application for ${programName} has been submitted successfully!`,
+        });
+        // Refresh applications list
+        queryClient.invalidateQueries({ queryKey: ["/api/student/applications"] });
+      } else {
+        const error = await response.json();
+        toast({
+          title: "Application Failed",
+          description: error.message || "Failed to submit application",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to submit application",
+        variant: "destructive",
+      });
+    }
+  };
+
   // Filter programs
   const filteredPrograms = programs && Array.isArray(programs) ? programs.filter((program: any) => {
     const matchesSearch = program.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -334,7 +369,7 @@ export default function StudentDashboard() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setLocation("/settings")}
+                onClick={() => setActiveView('dashboard')}
                 className="hover:bg-white/50"
               >
                 <Settings className="h-4 w-4 mr-2" />
@@ -586,6 +621,7 @@ export default function StudentDashboard() {
                       <Select 
                         disabled={!isEditingPreferences}
                         value={preferences.specialties.join(', ')}
+                        onValueChange={(value) => setPreferences({...preferences, specialties: value.split(', ')})}
                       >
                         <SelectTrigger className="mt-1">
                           <SelectValue placeholder="Select specialties" />
@@ -609,6 +645,7 @@ export default function StudentDashboard() {
                       <Select 
                         disabled={!isEditingPreferences}
                         value={preferences.preferredMonths.join(', ')}
+                        onValueChange={(value) => setPreferences({...preferences, preferredMonths: value.split(', ')})}
                       >
                         <SelectTrigger className="mt-1">
                           <SelectValue placeholder="Select months" />
@@ -626,6 +663,7 @@ export default function StudentDashboard() {
                       <Select 
                         disabled={!isEditingPreferences}
                         value={preferences.preferredLocations.join(', ')}
+                        onValueChange={(value) => setPreferences({...preferences, preferredLocations: value.split(', ')})}
                       >
                         <SelectTrigger className="mt-1">
                           <SelectValue placeholder="Select locations" />
@@ -816,12 +854,7 @@ export default function StudentDashboard() {
                       <div className="pt-3 border-t">
                         <Button
                           className="w-full bg-gradient-to-r from-teal-500 to-purple-600 text-white hover:opacity-90 group-hover:shadow-lg transition-all"
-                          onClick={() => {
-                            toast({
-                              title: "Application Started",
-                              description: `Applying for ${program.name}`,
-                            });
-                          }}
+                          onClick={() => handleApplyToProgram(program.id, program.name)}
                         >
                           Apply Now
                           <ChevronRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
