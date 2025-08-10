@@ -41,9 +41,11 @@ export default function StudentDashboard() {
   });
 
   // Fetch available programs
-  const { data: programs = [], isLoading: programsLoading } = useQuery({
+  const { data: programsData, isLoading: programsLoading } = useQuery({
     queryKey: ["/api/programs"],
   });
+  
+  const programs = programsData?.programs || [];
 
   // Check authentication and role
   useEffect(() => {
