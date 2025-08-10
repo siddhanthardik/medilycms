@@ -158,6 +158,7 @@ export const programs = pgTable("programs", {
   isHandsOn: boolean("is_hands_on").default(false),
   description: text("description").notNull(),
   requirements: text("requirements").array(),
+  hospitalImage: varchar("hospital_image"),
   isActive: boolean("is_active").default(true),
   isFeatured: boolean("is_featured").default(false),
   preceptorId: varchar("preceptor_id").references(() => users.id), // Link to preceptor who created the program

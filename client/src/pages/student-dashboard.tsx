@@ -1019,11 +1019,29 @@ export default function StudentDashboard() {
                       <Card 
                         key={program.id}
                         className="p-6 hover:shadow-xl transition-all duration-300 ease-in-out transform hover:-translate-y-1 border-0 cursor-pointer group hover-lift fade-in"
-                        onClick={() => setLocation(`/programs/${program.id}`)}
+                        onClick={() => setLocation(`/program/${program.id}`)}
                       >
-                        <div className="flex flex-col lg:flex-row gap-6">
-                          {/* Program Type Badge */}
-                          <div className="flex-shrink-0">
+                        <div className="flex gap-6">
+                          {/* Hospital Image */}
+                          <div className="w-32 h-32 flex-shrink-0">
+                            <div className="w-full h-full bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
+                              {program.hospitalImage ? (
+                                <img 
+                                  src={program.hospitalImage} 
+                                  alt={program.hospitalName || 'Hospital'}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-teal-50 to-blue-50">
+                                  <Building2 className="w-12 h-12 text-teal-500" />
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Main Content */}
+                          <div className="flex-1">
+                            {/* Program Type Badge */}
                             <div className="flex gap-2 mb-3">
                               <Badge 
                                 variant="secondary"
@@ -1040,10 +1058,6 @@ export default function StudentDashboard() {
                                 </Badge>
                               )}
                             </div>
-                          </div>
-
-                          {/* Main Content */}
-                          <div className="flex-1">
                             <h3 className="text-xl font-bold mb-2 group-hover:text-teal-600 transition-colors duration-200">
                               {program.title}
                             </h3>
