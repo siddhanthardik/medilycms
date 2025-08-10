@@ -10,6 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import { apiRequest } from "@/lib/queryClient";
@@ -42,7 +44,8 @@ import {
   X,
   Briefcase,
   Users,
-  Activity
+  Activity,
+  Building2
 } from "lucide-react";
 
 export default function StudentDashboard() {
@@ -88,7 +91,12 @@ export default function StudentDashboard() {
   });
 
   // Fetch available programs
-  const { data: programsData, isLoading: programsLoading } = useQuery({
+  const { data: programsData, isLoading: programsLoading } = useQuery<{
+    programs: any[];
+    totalCount: number;
+    hasMore: boolean;
+    currentPage: number;
+  }>({
     queryKey: ["/api/programs"],
   });
   
@@ -129,8 +137,12 @@ export default function StudentDashboard() {
 
   // Update local preferences when fetched
   useEffect(() => {
-    if (fetchedPreferences) {
-      setPreferences(fetchedPreferences);
+    if (fetchedPreferences && typeof fetchedPreferences === 'object') {
+      setPreferences({
+        specialties: (fetchedPreferences as any).specialties || [],
+        preferredMonths: (fetchedPreferences as any).preferredMonths || [],
+        preferredLocations: (fetchedPreferences as any).preferredLocations || []
+      });
     }
   }, [fetchedPreferences]);
 
@@ -795,134 +807,307 @@ export default function StudentDashboard() {
             </Tabs>
           </div>
         ) : (
-          // Programs View
-          <div className="space-y-8 animate-fadeIn">
-            {/* Search and Filters */}
-            <div className="backdrop-blur-xl bg-white/70 rounded-2xl p-6 shadow-xl border border-white/20">
-              <div className="flex flex-col md:flex-row gap-4">
-                <div className="flex-1 relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                  <Input
-                    placeholder="Search programs..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
+          // Programs View - Modern UI matching the screenshot
+          <div className="space-y-6">
+            {/* Header with Filters */}
+            <div className="flex flex-col lg:flex-row gap-6">
+              {/* Left Sidebar Filters */}
+              <div className="lg:w-64 space-y-6">
+                <Card className="shadow-lg border-0">
+                  <CardHeader className="pb-4">
+                    <div className="flex items-center gap-2">
+                      <Filter className="h-5 w-5 text-gray-600" />
+                      <CardTitle className="text-lg">Filters</CardTitle>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    {/* Specialty Filter */}
+                    <div>
+                      <Label className="text-sm font-semibold mb-3 block">Specialty</Label>
+                      <Select value={filterSpecialty} onValueChange={setFilterSpecialty}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="All Specialties" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Specialties</SelectItem>
+                          {specialties.map((specialty) => (
+                            <SelectItem key={specialty} value={specialty}>
+                              {specialty}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Program Type Filter */}
+                    <div>
+                      <Label className="text-sm font-semibold mb-3 block">Program Type</Label>
+                      <div className="space-y-2">
+                        <div className="flex items-center space-x-2">
+                          <Checkbox id="observership" />
+                          <label htmlFor="observership" className="text-sm cursor-pointer">
+                            Observership
+                          </label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox id="hands-on" />
+                          <label htmlFor="hands-on" className="text-sm cursor-pointer">
+                            Hands-on Training
+                          </label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox id="fellowship" />
+                          <label htmlFor="fellowship" className="text-sm cursor-pointer">
+                            Fellowship
+                          </label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox id="clerkship" />
+                          <label htmlFor="clerkship" className="text-sm cursor-pointer">
+                            Clerkship
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Cost Filter */}
+                    <div>
+                      <Label className="text-sm font-semibold mb-3 block">Cost</Label>
+                      <div className="space-y-2">
+                        <div className="flex items-center space-x-2">
+                          <Checkbox id="free" />
+                          <label htmlFor="free" className="text-sm cursor-pointer">
+                            Free Programs
+                          </label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox id="paid" />
+                          <label htmlFor="paid" className="text-sm cursor-pointer">
+                            Paid Programs
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Duration Filter */}
+                    <div>
+                      <Label className="text-sm font-semibold mb-3 block">Duration (weeks)</Label>
+                      <div className="px-2">
+                        <Slider
+                          defaultValue={[0]}
+                          max={52}
+                          step={1}
+                          className="w-full"
+                        />
+                        <div className="flex justify-between text-xs text-gray-500 mt-1">
+                          <span>Minimum</span>
+                          <span>52 weeks</span>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Main Content Area */}
+              <div className="flex-1 space-y-4">
+                {/* Top Bar */}
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                  <h2 className="text-2xl font-bold">Available Rotations</h2>
+                  <div className="flex items-center gap-4">
+                    <span className="text-sm text-gray-500">
+                      Showing {filteredPrograms.length} programs
+                    </span>
+                    <Select defaultValue="relevant">
+                      <SelectTrigger className="w-40">
+                        <SelectValue placeholder="Sort by" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="relevant">Most Relevant</SelectItem>
+                        <SelectItem value="recent">Most Recent</SelectItem>
+                        <SelectItem value="popular">Most Popular</SelectItem>
+                        <SelectItem value="price-low">Price: Low to High</SelectItem>
+                        <SelectItem value="price-high">Price: High to Low</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-                <Select value={filterSpecialty} onValueChange={setFilterSpecialty}>
-                  <SelectTrigger className="w-full md:w-48">
-                    <SelectValue placeholder="All Specialties" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Specialties</SelectItem>
-                    {specialties.map((specialty) => (
-                      <SelectItem key={specialty} value={specialty}>
-                        {specialty}
-                      </SelectItem>
+
+                {/* Programs List */}
+                {programsLoading ? (
+                  <div className="space-y-4">
+                    {[...Array(4)].map((_, i) => (
+                      <Card key={i} className="p-6">
+                        <div className="flex flex-col lg:flex-row gap-6">
+                          <div className="flex-shrink-0">
+                            <div className="flex gap-2 mb-3">
+                              <div className="h-6 w-24 bg-gray-200 rounded skeleton-shimmer" />
+                              <div className="h-6 w-20 bg-gray-200 rounded skeleton-shimmer" />
+                            </div>
+                          </div>
+                          <div className="flex-1 space-y-3">
+                            <div className="h-6 w-3/4 bg-gray-200 rounded skeleton-shimmer" />
+                            <div className="h-4 w-full bg-gray-200 rounded skeleton-shimmer" />
+                            <div className="h-4 w-2/3 bg-gray-200 rounded skeleton-shimmer" />
+                            <div className="flex gap-4 mt-4">
+                              <div className="h-5 w-24 bg-gray-200 rounded skeleton-shimmer" />
+                              <div className="h-5 w-24 bg-gray-200 rounded skeleton-shimmer" />
+                              <div className="h-5 w-24 bg-gray-200 rounded skeleton-shimmer" />
+                            </div>
+                            <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-gray-200 rounded-full skeleton-shimmer" />
+                                <div className="space-y-2">
+                                  <div className="h-4 w-32 bg-gray-200 rounded skeleton-shimmer" />
+                                  <div className="h-3 w-24 bg-gray-200 rounded skeleton-shimmer" />
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex flex-col items-end justify-between">
+                            <div className="h-8 w-8 bg-gray-200 rounded mb-2 skeleton-shimmer" />
+                            <div className="h-8 w-20 bg-gray-200 rounded mb-3 skeleton-shimmer" />
+                            <div className="h-10 w-28 bg-gray-200 rounded skeleton-shimmer" />
+                          </div>
+                        </div>
+                      </Card>
                     ))}
-                  </SelectContent>
-                </Select>
-                <Select value={filterLocation} onValueChange={setFilterLocation}>
-                  <SelectTrigger className="w-full md:w-48">
-                    <SelectValue placeholder="All Locations" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Locations</SelectItem>
-                    {locations.map((location) => (
-                      <SelectItem key={location} value={location}>
-                        {location}
-                      </SelectItem>
+                  </div>
+                ) : filteredPrograms.length === 0 ? (
+                  <Card className="p-12 text-center">
+                    <GraduationCap className="h-16 w-16 mx-auto text-gray-400 mb-4" />
+                    <h3 className="text-xl font-semibold text-gray-700 mb-2">No programs found</h3>
+                    <p className="text-gray-500">Try adjusting your search filters or check back later for new programs.</p>
+                  </Card>
+                ) : (
+                  <div className="space-y-4">
+                    {filteredPrograms.map((program: any) => (
+                      <Card 
+                        key={program.id}
+                        className="p-6 hover:shadow-xl transition-all duration-300 ease-in-out transform hover:-translate-y-1 border-0 cursor-pointer group hover-lift fade-in"
+                      >
+                        <div className="flex flex-col lg:flex-row gap-6">
+                          {/* Program Type Badge */}
+                          <div className="flex-shrink-0">
+                            <div className="flex gap-2 mb-3">
+                              <Badge 
+                                variant="secondary"
+                                className="bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors duration-200"
+                              >
+                                {program.type || 'Observership'}
+                              </Badge>
+                              {program.availableSeats && program.availableSeats > 0 && (
+                                <Badge 
+                                  variant="secondary"
+                                  className="bg-green-100 text-green-700"
+                                >
+                                  Available
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Main Content */}
+                          <div className="flex-1">
+                            <h3 className="text-xl font-bold mb-2 group-hover:text-teal-600 transition-colors duration-200">
+                              {program.title}
+                            </h3>
+                            <p className="text-gray-600 mb-4 line-clamp-2">
+                              {program.description || `This program is designed for medical students seeking an in-depth observational experience within a fast-paced ${program.specialty} environment.`}
+                            </p>
+                            
+                            {/* Program Details */}
+                            <div className="flex flex-wrap gap-4 text-sm text-gray-600">
+                              <div className="flex items-center gap-1">
+                                <MapPin className="h-4 w-4" />
+                                <span>{program.location || program.city || 'Location TBD'}</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Clock className="h-4 w-4" />
+                                <span>{program.duration || '4 weeks'}</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Calendar className="h-4 w-4" />
+                                <span>{program.startDate ? new Date(program.startDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'Flexible'}</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Users className="h-4 w-4" />
+                                <span>{program.availableSeats || 5} of {program.totalSeats || 5} seats</span>
+                              </div>
+                            </div>
+
+                            {/* Mentor Info */}
+                            <div className="mt-4 p-3 bg-gray-50 rounded-lg flex items-center gap-3">
+                              <div className="w-10 h-10 bg-gradient-to-br from-teal-400 to-purple-600 rounded-full flex items-center justify-center text-white font-bold">
+                                {program.mentorName ? program.mentorName.charAt(0).toUpperCase() : 'D'}
+                              </div>
+                              <div>
+                                <p className="font-semibold text-sm">{program.mentorName || 'Dr John Smith'}</p>
+                                <p className="text-xs text-gray-600">{program.mentorTitle || `Chief of ${program.specialty} Unit`}</p>
+                                <p className="text-xs text-gray-500">{program.hospitalName || 'Medical Center'}</p>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Right Section - Price and Action */}
+                          <div className="flex flex-col items-end justify-between">
+                            {/* Favorite Button */}
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleFavoriteMutation.mutate(program.id);
+                              }}
+                              className="mb-2 hover:bg-gray-100 transition-all duration-200"
+                            >
+                              <Heart 
+                                className={`h-5 w-5 transition-all duration-300 ${
+                                  favoritePrograms.has(program.id) 
+                                    ? 'fill-red-500 text-red-500' 
+                                    : 'text-gray-400 hover:text-red-500'
+                                }`}
+                              />
+                            </Button>
+
+                            {/* Price */}
+                            <div className="text-right mb-3">
+                              <p className="text-2xl font-bold">
+                                {program.fee && program.fee > 0 ? (
+                                  <>
+                                    ${Number(program.fee).toLocaleString()}
+                                  </>
+                                ) : (
+                                  <span className="text-green-600">Free</span>
+                                )}
+                              </p>
+                            </div>
+
+                            {/* Apply Button */}
+                            <Button
+                              onClick={() => handleApplyToProgram(program.id, program.title)}
+                              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 transition-all duration-200 transform hover:scale-105 active:scale-95 ripple scale-click"
+                            >
+                              Apply Now
+                            </Button>
+                          </div>
+                        </div>
+
+                        {/* Hands-On Badge */}
+                        {program.isHandsOn && (
+                          <div className="mt-4 inline-flex items-center gap-1 text-green-600 text-sm font-medium">
+                            <Badge variant="outline" className="border-green-600 text-green-600">
+                              Hands On
+                            </Badge>
+                            <span className="text-xs">- {program.duration || '2 seats left'}</span>
+                          </div>
+                        )}
+                      </Card>
                     ))}
-                  </SelectContent>
-                </Select>
+                  </div>
+                )}
               </div>
             </div>
-
-            {/* Programs Grid */}
-            {programsLoading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {[...Array(8)].map((_, i) => (
-                  <Skeleton key={i} className="h-80 rounded-2xl" />
-                ))}
-              </div>
-            ) : filteredPrograms.length === 0 ? (
-              <div className="backdrop-blur-xl bg-white/70 rounded-2xl p-12 text-center">
-                <GraduationCap className="h-16 w-16 mx-auto text-gray-400 mb-4" />
-                <h3 className="text-xl font-semibold text-gray-700 mb-2">No programs found</h3>
-                <p className="text-gray-500">Try adjusting your search filters or check back later for new programs.</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {filteredPrograms.map((program: any) => (
-                  <div
-                    key={program.id}
-                    className="group backdrop-blur-xl bg-white/70 rounded-2xl shadow-xl border border-white/20 overflow-hidden hover:shadow-2xl transition-all duration-300 hover:-translate-y-2"
-                  >
-                    {/* Program Image/Header */}
-                    <div className="relative h-32 bg-gradient-to-br from-teal-400 to-purple-600">
-                      <div className="absolute inset-0 bg-black/20"></div>
-                      <div className="absolute bottom-4 left-4 right-4">
-                        <Badge className="bg-teal-500 text-white mb-2">
-                          {program.availableSeats || 1} Seat{program.availableSeats !== 1 ? 's' : ''} offered
-                        </Badge>
-                        <h3 className="text-white font-bold text-lg line-clamp-2">
-                          {program.specialty} with Clinical Adjunct Faculty
-                        </h3>
-                      </div>
-                      {/* Favorite button */}
-                      <button
-                        onClick={() => toggleFavoriteMutation.mutate(program.id)}
-                        className="absolute top-4 right-4 p-2 rounded-full bg-white/20 backdrop-blur-md hover:bg-white/30 transition-colors"
-                      >
-                        <Heart
-                          className={`h-5 w-5 ${
-                            favoritePrograms.has(program.id)
-                              ? 'fill-red-500 text-red-500'
-                              : 'text-white'
-                          }`}
-                        />
-                      </button>
-                    </div>
-
-                    {/* Program Details */}
-                    <div className="p-4 space-y-3">
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <MapPin className="h-4 w-4" />
-                        <span>{program.location}</span>
-                      </div>
-                      
-                      <div className="flex items-center justify-between">
-                        <div className="text-2xl font-bold bg-gradient-to-r from-teal-600 to-purple-600 bg-clip-text text-transparent">
-                          ${program.fee || 0}
-                        </div>
-                        <span className="text-sm text-gray-500">{program.currency || 'USD'}</span>
-                      </div>
-
-                      <div className="flex gap-2 flex-wrap">
-                        <Badge variant="outline" className="text-xs">
-                          {program.type || 'Observership'}
-                        </Badge>
-                        {program.isHandsOn && (
-                          <Badge variant="outline" className="text-xs">
-                            Hands-On
-                          </Badge>
-                        )}
-                      </div>
-
-                      <div className="pt-3 border-t">
-                        <Button
-                          className="w-full bg-gradient-to-r from-teal-500 to-purple-600 text-white hover:opacity-90 group-hover:shadow-lg transition-all"
-                          onClick={() => handleApplyToProgram(program.id, program.title || program.specialty)}
-                        >
-                          Apply Now
-                          <ChevronRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
 
 
           </div>

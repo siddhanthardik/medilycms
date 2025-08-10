@@ -2,6 +2,125 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Modern UI Animations and Micro-interactions */
+@layer utilities {
+  /* Smooth hover lift effect for cards */
+  .hover-lift {
+    transition: all 0.3s ease-in-out;
+  }
+  
+  .hover-lift:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.15);
+  }
+  
+  /* Ripple effect for buttons */
+  .ripple {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .ripple::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.5);
+    transform: translate(-50%, -50%);
+    transition: width 0.4s, height 0.4s;
+  }
+  
+  .ripple:active::before {
+    width: 300px;
+    height: 300px;
+  }
+  
+  /* Gradient text animation */
+  .gradient-text {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  /* Skeleton loading shimmer */
+  .skeleton-shimmer {
+    background: linear-gradient(
+      90deg,
+      #f0f0f0 25%,
+      #e0e0e0 50%,
+      #f0f0f0 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+  
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+  
+  /* Smooth fade in animation */
+  .fade-in {
+    animation: fadeIn 0.4s ease-in-out;
+  }
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  /* Card hover glow effect */
+  .card-glow {
+    position: relative;
+    transition: all 0.3s ease-in-out;
+  }
+  
+  .card-glow::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    background: linear-gradient(135deg, #667eea, #764ba2, #f093fb);
+    border-radius: inherit;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+    z-index: -1;
+  }
+  
+  .card-glow:hover::before {
+    opacity: 0.3;
+  }
+  
+  /* Smooth scale on click */
+  .scale-click {
+    transition: transform 0.15s ease-in-out;
+  }
+  
+  .scale-click:active {
+    transform: scale(0.95);
+  }
+  
+  /* Mobile responsive animations */
+  @media (max-width: 768px) {
+    .hover-lift:hover {
+      transform: translateY(-2px);
+    }
+  }
+}
+
 /* Performance optimizations */
 html {
   font-display: swap;
