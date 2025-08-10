@@ -285,8 +285,10 @@ export default function StudentDashboard() {
 
   // Filter programs
   const filteredPrograms = programs && Array.isArray(programs) ? programs.filter((program: any) => {
-    const matchesSearch = program.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         program.institution?.toLowerCase().includes(searchTerm.toLowerCase()) || false;
+    const matchesSearch = !searchTerm || 
+                         program.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         program.institution?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         program.specialty?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesSpecialty = filterSpecialty === "all" || program.specialty === filterSpecialty;
     const matchesLocation = filterLocation === "all" || program.location?.includes(filterLocation);
     return matchesSearch && matchesSpecialty && matchesLocation;
@@ -301,7 +303,7 @@ export default function StudentDashboard() {
     totalApplications: applications?.length || 0,
     pendingApplications: applications?.filter((app: any) => app.status === 'pending').length || 0,
     acceptedApplications: applications?.filter((app: any) => app.status === 'accepted' || app.status === 'approved').length || 0,
-    availablePrograms: programs?.filter((p: any) => p.isActive).length || 0,
+    availablePrograms: programs?.length || 0,
     favoritePrograms: favoritePrograms.size
   };
 
@@ -807,6 +809,12 @@ export default function StudentDashboard() {
                 {[...Array(8)].map((_, i) => (
                   <Skeleton key={i} className="h-80 rounded-2xl" />
                 ))}
+              </div>
+            ) : filteredPrograms.length === 0 ? (
+              <div className="backdrop-blur-xl bg-white/70 rounded-2xl p-12 text-center">
+                <GraduationCap className="h-16 w-16 mx-auto text-gray-400 mb-4" />
+                <h3 className="text-xl font-semibold text-gray-700 mb-2">No programs found</h3>
+                <p className="text-gray-500">Try adjusting your search filters or check back later for new programs.</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
