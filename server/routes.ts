@@ -1235,6 +1235,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Student preferences endpoints
+  app.get('/api/student/preferences', async (req: any, res) => {
+    try {
+      if (!(req.session as any)?.user || (req.session as any).user.role !== 'student') {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      const user = await storage.getUser((req.session as any).user.id);
+      res.json({
+        specialties: user?.preferredSpecialties || [],
+        preferredMonths: user?.preferredMonths || [],
+        preferredLocations: user?.preferredLocations || []
+      });
+    } catch (error) {
+      console.error("Error fetching preferences:", error);
+      res.status(500).json({ message: "Failed to fetch preferences" });
+    }
+  });
+
+  app.put('/api/student/preferences', async (req: any, res) => {
+    try {
+      if (!(req.session as any)?.user || (req.session as any).user.role !== 'student') {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      const { specialties, preferredMonths, preferredLocations } = req.body;
+      await storage.updateUser((req.session as any).user.id, {
+        preferredSpecialties: specialties,
+        preferredMonths,
+        preferredLocations,
+        updatedAt: new Date()
+      });
+      
+      res.json({ message: "Preferences updated successfully" });
+    } catch (error) {
+      console.error("Error updating preferences:", error);
+      res.status(500).json({ message: "Failed to update preferences" });
+    }
+  });
+
+  // Student profile endpoints
+  app.get('/api/student/profile', async (req: any, res) => {
+    try {
+      if (!(req.session as any)?.user || (req.session as any).user.role !== 'student') {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      const user = await storage.getUser((req.session as any).user.id);
+      res.json(user);
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+      res.status(500).json({ message: "Failed to fetch profile" });
+    }
+  });
+
+  app.put('/api/student/profile', async (req: any, res) => {
+    try {
+      if (!(req.session as any)?.user || (req.session as any).user.role !== 'student') {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      const updates = req.body;
+      await storage.updateUser((req.session as any).user.id, {
+        ...updates,
+        updatedAt: new Date()
+      });
+      
+      res.json({ message: "Profile updated successfully" });
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      res.status(500).json({ message: "Failed to update profile" });
+    }
+  });
+
   // Preceptor-specific routes
   app.get('/api/preceptor/programs', async (req: any, res) => {
     try {

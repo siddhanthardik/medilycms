@@ -74,6 +74,8 @@ export default function StudentDashboard() {
     preferredLocations: [] as string[]
   });
 
+  // Fetch preferences query - moved after user query
+
   // Fetch current user
   const { data: user, isLoading: userLoading } = useQuery<any>({
     queryKey: ["/api/auth/current-user"],
@@ -98,6 +100,12 @@ export default function StudentDashboard() {
     enabled: !!user,
   });
 
+  // Fetch preferences query
+  const { data: fetchedPreferences } = useQuery({
+    queryKey: ['/api/student/preferences'],
+    enabled: !!user && currentView === 'dashboard'
+  });
+
   useEffect(() => {
     if (favoritesData) {
       setFavoritePrograms(new Set(favoritesData.map((f: any) => f.programId)));
@@ -118,6 +126,13 @@ export default function StudentDashboard() {
       });
     }
   }, [user]);
+
+  // Update local preferences when fetched
+  useEffect(() => {
+    if (fetchedPreferences) {
+      setPreferences(fetchedPreferences);
+    }
+  }, [fetchedPreferences]);
 
   // Check authentication and role
   useEffect(() => {
@@ -180,8 +195,7 @@ export default function StudentDashboard() {
   // Update profile mutation
   const updateProfileMutation = useMutation({
     mutationFn: async (data: typeof profileForm) => {
-      const res = await apiRequest("PUT", "/api/student/profile", data);
-      return await res.json();
+      return await apiRequest("PUT", "/api/student/profile", data);
     },
     onSuccess: () => {
       toast({
@@ -203,8 +217,7 @@ export default function StudentDashboard() {
   // Update preferences mutation
   const updatePreferencesMutation = useMutation({
     mutationFn: async (data: typeof preferences) => {
-      const res = await apiRequest("PUT", "/api/student/preferences", data);
-      return await res.json();
+      return await apiRequest("PUT", "/api/student/preferences", data);
     },
     onSuccess: () => {
       toast({
