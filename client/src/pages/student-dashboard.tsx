@@ -236,24 +236,24 @@ export default function StudentDashboard() {
   };
 
   // Filter programs
-  const filteredPrograms = programs.filter((program: any) => {
-    const matchesSearch = program.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         program.institution.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredPrograms = programs && Array.isArray(programs) ? programs.filter((program: any) => {
+    const matchesSearch = program.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         program.institution?.toLowerCase().includes(searchTerm.toLowerCase()) || false;
     const matchesSpecialty = filterSpecialty === "all" || program.specialty === filterSpecialty;
-    const matchesLocation = filterLocation === "all" || program.location.includes(filterLocation);
+    const matchesLocation = filterLocation === "all" || program.location?.includes(filterLocation);
     return matchesSearch && matchesSpecialty && matchesLocation;
-  });
+  }) : [];
 
   // Get unique values for filters
-  const specialties = Array.from(new Set(programs.map((p: any) => p.specialty)));
-  const locations = Array.from(new Set(programs.map((p: any) => p.location)));
+  const specialties = programs && Array.isArray(programs) ? Array.from(new Set(programs.map((p: any) => p.specialty).filter(Boolean))) : [];
+  const locations = programs && Array.isArray(programs) ? Array.from(new Set(programs.map((p: any) => p.location).filter(Boolean))) : [];
 
   // Calculate statistics
   const stats = {
-    totalApplications: applications.length,
-    pendingApplications: applications.filter((app: any) => app.status === 'pending').length,
-    acceptedApplications: applications.filter((app: any) => app.status === 'accepted' || app.status === 'approved').length,
-    availablePrograms: programs.filter((p: any) => p.isActive).length,
+    totalApplications: applications?.length || 0,
+    pendingApplications: applications?.filter((app: any) => app.status === 'pending').length || 0,
+    acceptedApplications: applications?.filter((app: any) => app.status === 'accepted' || app.status === 'approved').length || 0,
+    availablePrograms: programs?.filter((p: any) => p.isActive).length || 0,
     favoritePrograms: favoritePrograms.size
   };
 
