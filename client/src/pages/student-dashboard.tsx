@@ -45,7 +45,8 @@ import {
   Briefcase,
   Users,
   Activity,
-  Building2
+  Building2,
+  ChevronLeft
 } from "lucide-react";
 
 export default function StudentDashboard() {
@@ -58,6 +59,9 @@ export default function StudentDashboard() {
   const [filterLocation, setFilterLocation] = useState("all");
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isEditingPreferences, setIsEditingPreferences] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   
   // Profile form state
   const [profileForm, setProfileForm] = useState({
@@ -334,6 +338,15 @@ export default function StudentDashboard() {
     });
   }, [programs, searchTerm, filterSpecialty, filterLocation]);
 
+  // Pagination logic
+  const paginatedPrograms = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return filteredPrograms.slice(startIndex, endIndex);
+  }, [filteredPrograms, currentPage, itemsPerPage]);
+
+  const totalPages = Math.ceil(filteredPrograms.length / itemsPerPage);
+
   // Get unique values for filters with memoization
   const specialties = useMemo(() => {
     if (!programs || !Array.isArray(programs)) return [];
@@ -404,7 +417,7 @@ export default function StudentDashboard() {
                   variant={activeView === 'dashboard' ? 'default' : 'ghost'}
                   size="sm"
                   onClick={() => setActiveView('dashboard')}
-                  className={activeView === 'dashboard' ? 'bg-gradient-to-r from-teal-500 to-purple-600 text-white' : ''}
+                  className={activeView === 'dashboard' ? 'bg-teal-600 hover:bg-teal-700 text-white' : ''}
                 >
                   <Activity className="h-4 w-4 mr-2" />
                   Dashboard
@@ -413,7 +426,7 @@ export default function StudentDashboard() {
                   variant={activeView === 'programs' ? 'default' : 'ghost'}
                   size="sm"
                   onClick={() => setActiveView('programs')}
-                  className={activeView === 'programs' ? 'bg-gradient-to-r from-teal-500 to-purple-600 text-white' : ''}
+                  className={activeView === 'programs' ? 'bg-teal-600 hover:bg-teal-700 text-white' : ''}
                 >
                   <BookOpen className="h-4 w-4 mr-2" />
                   Programs
@@ -809,15 +822,36 @@ export default function StudentDashboard() {
         ) : (
           // Programs View - Modern UI matching the screenshot
           <div className="space-y-6">
+            {/* Mobile Filter Toggle Button */}
+            <div className="lg:hidden">
+              <Button
+                onClick={() => setFiltersOpen(!filtersOpen)}
+                className="w-full bg-teal-600 hover:bg-teal-700 text-white"
+              >
+                <Filter className="h-4 w-4 mr-2" />
+                {filtersOpen ? 'Hide Filters' : 'Show Filters'}
+              </Button>
+            </div>
+
             {/* Header with Filters */}
             <div className="flex flex-col lg:flex-row gap-6">
               {/* Left Sidebar Filters */}
-              <div className="lg:w-64 space-y-6">
+              <div className={`lg:w-64 space-y-6 ${filtersOpen ? 'block' : 'hidden lg:block'}`}>
                 <Card className="shadow-lg border-0">
                   <CardHeader className="pb-4">
-                    <div className="flex items-center gap-2">
-                      <Filter className="h-5 w-5 text-gray-600" />
-                      <CardTitle className="text-lg">Filters</CardTitle>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Filter className="h-5 w-5 text-gray-600" />
+                        <CardTitle className="text-lg">Filters</CardTitle>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setFiltersOpen(false)}
+                        className="lg:hidden"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-6">
@@ -981,10 +1015,11 @@ export default function StudentDashboard() {
                   </Card>
                 ) : (
                   <div className="space-y-4">
-                    {filteredPrograms.map((program: any) => (
+                    {paginatedPrograms.map((program: any) => (
                       <Card 
                         key={program.id}
                         className="p-6 hover:shadow-xl transition-all duration-300 ease-in-out transform hover:-translate-y-1 border-0 cursor-pointer group hover-lift fade-in"
+                        onClick={() => setLocation(`/programs/${program.id}`)}
                       >
                         <div className="flex flex-col lg:flex-row gap-6">
                           {/* Program Type Badge */}
@@ -1085,7 +1120,10 @@ export default function StudentDashboard() {
 
                             {/* Apply Button */}
                             <Button
-                              onClick={() => handleApplyToProgram(program.id, program.title)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleApplyToProgram(program.id, program.title);
+                              }}
                               className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 transition-all duration-200 transform hover:scale-105 active:scale-95 ripple scale-click"
                             >
                               Apply Now
@@ -1104,6 +1142,60 @@ export default function StudentDashboard() {
                         )}
                       </Card>
                     ))}
+                    
+                    {/* Pagination Controls */}
+                    {totalPages > 1 && (
+                      <div className="flex justify-center items-center gap-2 mt-8">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                          disabled={currentPage === 1}
+                          className="bg-white hover:bg-gray-50"
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                          Previous
+                        </Button>
+                        
+                        <div className="flex gap-1">
+                          {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                            let pageNum;
+                            if (totalPages <= 5) {
+                              pageNum = i + 1;
+                            } else if (currentPage <= 3) {
+                              pageNum = i + 1;
+                            } else if (currentPage >= totalPages - 2) {
+                              pageNum = totalPages - 4 + i;
+                            } else {
+                              pageNum = currentPage - 2 + i;
+                            }
+                            
+                            return (
+                              <Button
+                                key={pageNum}
+                                variant={currentPage === pageNum ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => setCurrentPage(pageNum)}
+                                className={currentPage === pageNum ? "bg-teal-600 hover:bg-teal-700 text-white" : "bg-white hover:bg-gray-50"}
+                              >
+                                {pageNum}
+                              </Button>
+                            );
+                          })}
+                        </div>
+                        
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                          disabled={currentPage === totalPages}
+                          className="bg-white hover:bg-gray-50"
+                        >
+                          Next
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
