@@ -54,6 +54,7 @@ function Router() {
       {/* Role-based dashboard routes */}
       <Route path="/student-dashboard" component={StudentDashboard} />
       <Route path="/preceptor-dashboard" component={PreceptorDashboardPage} />
+      <Route path="/program/:id" component={ProgramDetail} />
       
       {/* Admin routes - require admin authentication */}
       <Route path="/cms-dashboard" component={CMSDashboard} />
@@ -71,7 +72,6 @@ function Router() {
           <Route path="/" component={Home} />
           <Route path="/admin" component={AdminDashboard} />
           <Route path="/dashboard" component={UserDashboard} />
-          <Route path="/program/:id" component={ProgramDetail} />
           <Route path="/favorites" component={Favorites} />
           <Route path="/reviews" component={Reviews} />
         </>
