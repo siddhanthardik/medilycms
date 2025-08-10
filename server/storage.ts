@@ -451,7 +451,7 @@ export class DatabaseStorage implements IStorage {
     isActive?: boolean;
     search?: string;
   }, page: number = 1, limit: number = 10): Promise<{
-    programs: Program[];
+    programs: any[];
     totalCount: number;
     hasMore: boolean;
     currentPage: number;
@@ -502,12 +502,41 @@ export class DatabaseStorage implements IStorage {
     const [totalResult] = await db.select({ count: count() }).from(programs).where(whereClause);
     const totalCount = totalResult.count;
     
-    // Get paginated programs
-    const programsData = await db.select().from(programs)
-      .where(whereClause)
-      .orderBy(desc(programs.createdAt))
-      .limit(limit)
-      .offset((page - 1) * limit);
+    // Get paginated programs with specialty name
+    const programsData = await db.select({
+      id: programs.id,
+      title: programs.title,
+      type: programs.type,
+      specialtyId: programs.specialtyId,
+      specialty: specialties.name,
+      hospitalName: programs.hospitalName,
+      mentorName: programs.mentorName,
+      mentorTitle: programs.mentorTitle,
+      location: programs.location,
+      country: programs.country,
+      city: programs.city,
+      startDate: programs.startDate,
+      duration: programs.duration,
+      intakeMonths: programs.intakeMonths,
+      availableSeats: programs.availableSeats,
+      totalSeats: programs.totalSeats,
+      fee: programs.fee,
+      currency: programs.currency,
+      isHandsOn: programs.isHandsOn,
+      description: programs.description,
+      requirements: programs.requirements,
+      isActive: programs.isActive,
+      isFeatured: programs.isFeatured,
+      createdAt: programs.createdAt,
+      updatedAt: programs.updatedAt,
+      preceptorId: programs.preceptorId,
+    })
+    .from(programs)
+    .leftJoin(specialties, eq(programs.specialtyId, specialties.id))
+    .where(whereClause)
+    .orderBy(desc(programs.createdAt))
+    .limit(limit)
+    .offset((page - 1) * limit);
     
     return {
       programs: programsData,

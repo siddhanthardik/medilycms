@@ -286,9 +286,10 @@ export default function StudentDashboard() {
   // Filter programs
   const filteredPrograms = programs && Array.isArray(programs) ? programs.filter((program: any) => {
     const matchesSearch = !searchTerm || 
-                         program.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         program.institution?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         program.specialty?.toLowerCase().includes(searchTerm.toLowerCase());
+                         program.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         program.hospitalName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         program.specialty?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         program.location?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesSpecialty = filterSpecialty === "all" || program.specialty === filterSpecialty;
     const matchesLocation = filterLocation === "all" || program.location?.includes(filterLocation);
     return matchesSearch && matchesSpecialty && matchesLocation;
@@ -858,24 +859,26 @@ export default function StudentDashboard() {
                       
                       <div className="flex items-center justify-between">
                         <div className="text-2xl font-bold bg-gradient-to-r from-teal-600 to-purple-600 bg-clip-text text-transparent">
-                          ${program.price}
+                          ${program.fee || 0}
                         </div>
-                        <span className="text-sm text-gray-500">USD</span>
+                        <span className="text-sm text-gray-500">{program.currency || 'USD'}</span>
                       </div>
 
                       <div className="flex gap-2 flex-wrap">
                         <Badge variant="outline" className="text-xs">
-                          {program.programType || 'Observership'}
+                          {program.type || 'Observership'}
                         </Badge>
-                        <Badge variant="outline" className="text-xs">
-                          {program.shadowing || 'Pre-Med Shadowing'}
-                        </Badge>
+                        {program.isHandsOn && (
+                          <Badge variant="outline" className="text-xs">
+                            Hands-On
+                          </Badge>
+                        )}
                       </div>
 
                       <div className="pt-3 border-t">
                         <Button
                           className="w-full bg-gradient-to-r from-teal-500 to-purple-600 text-white hover:opacity-90 group-hover:shadow-lg transition-all"
-                          onClick={() => handleApplyToProgram(program.id, program.name)}
+                          onClick={() => handleApplyToProgram(program.id, program.title || program.specialty)}
                         >
                           Apply Now
                           <ChevronRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
@@ -887,13 +890,7 @@ export default function StudentDashboard() {
               </div>
             )}
 
-            {filteredPrograms.length === 0 && !programsLoading && (
-              <div className="text-center py-12">
-                <GraduationCap className="h-16 w-16 mx-auto text-gray-400 mb-4" />
-                <h3 className="text-xl font-semibold text-gray-700 mb-2">No programs found</h3>
-                <p className="text-gray-500">Try adjusting your search or filters</p>
-              </div>
-            )}
+
           </div>
         )}
       </main>
