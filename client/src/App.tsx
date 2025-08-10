@@ -29,6 +29,7 @@ import PreceptorDashboard from "@/pages/preceptor-dashboard";
 import ApplicantDetails from "@/pages/applicant-details";
 import TeamManagement from "@/pages/team-management";
 import SignupPage from "@/pages/signup";
+import LoginPage from "@/pages/login";
 import StudentDashboard from "@/pages/student-dashboard";
 import PreceptorDashboardPage from "@/pages/preceptor-dashboard";
 
@@ -48,7 +49,7 @@ function Router() {
       <Route path="/admin-login" component={AdminLogin} />
       <Route path="/preceptor-login" component={PreceptorLogin} />
       <Route path="/signup" component={SignupPage} />
-      <Route path="/login" component={SignupPage} />
+      <Route path="/login" component={LoginPage} />
       
       {/* Role-based dashboard routes */}
       <Route path="/student-dashboard" component={StudentDashboard} />
