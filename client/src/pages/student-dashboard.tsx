@@ -103,7 +103,7 @@ export default function StudentDashboard() {
   // Fetch preferences query
   const { data: fetchedPreferences } = useQuery({
     queryKey: ['/api/student/preferences'],
-    enabled: !!user && currentView === 'dashboard'
+    enabled: !!user && activeView === 'dashboard'
   });
 
   useEffect(() => {
