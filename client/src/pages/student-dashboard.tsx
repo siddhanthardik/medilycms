@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -248,8 +248,27 @@ export default function StudentDashboard() {
     }
   };
 
-  // Handle apply to program
-  const handleApplyToProgram = async (programId: string, programName: string) => {
+  // Handle apply to program with production-grade error handling
+  const handleApplyToProgram = async (programId: string, programTitle: string) => {
+    if (!programId) {
+      toast({
+        title: "Error",
+        description: "Invalid program selected",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to apply for programs",
+        variant: "destructive"
+      });
+      setLocation("/login");
+      return;
+    }
+
     try {
       const response = await fetch("/api/student/apply", {
         method: "POST",
@@ -260,9 +279,10 @@ export default function StudentDashboard() {
       });
 
       if (response.ok) {
+        const data = await response.json();
         toast({
           title: "Application Submitted",
-          description: `Your application for ${programName} has been submitted successfully!`,
+          description: `Your application for ${programTitle || 'this program'} has been submitted successfully!`,
         });
         // Refresh applications list
         queryClient.invalidateQueries({ queryKey: ["/api/student/applications"] });
@@ -283,21 +303,35 @@ export default function StudentDashboard() {
     }
   };
 
-  // Filter programs
-  const filteredPrograms = programs && Array.isArray(programs) ? programs.filter((program: any) => {
-    const matchesSearch = !searchTerm || 
-                         program.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         program.hospitalName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         program.specialty?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         program.location?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesSpecialty = filterSpecialty === "all" || program.specialty === filterSpecialty;
-    const matchesLocation = filterLocation === "all" || program.location?.includes(filterLocation);
-    return matchesSearch && matchesSpecialty && matchesLocation;
-  }) : [];
+  // Filter programs with proper null checks
+  const filteredPrograms = useMemo(() => {
+    if (!programs || !Array.isArray(programs)) return [];
+    
+    return programs.filter((program: any) => {
+      if (!program) return false;
+      
+      const searchLower = searchTerm?.toLowerCase() || '';
+      const matchesSearch = !searchTerm || 
+                           program.title?.toLowerCase().includes(searchLower) ||
+                           program.hospitalName?.toLowerCase().includes(searchLower) ||
+                           program.specialty?.toLowerCase().includes(searchLower) ||
+                           program.location?.toLowerCase().includes(searchLower);
+      const matchesSpecialty = filterSpecialty === "all" || program.specialty === filterSpecialty;
+      const matchesLocation = filterLocation === "all" || program.location?.includes(filterLocation);
+      return matchesSearch && matchesSpecialty && matchesLocation;
+    });
+  }, [programs, searchTerm, filterSpecialty, filterLocation]);
 
-  // Get unique values for filters
-  const specialties = programs && Array.isArray(programs) ? Array.from(new Set(programs.map((p: any) => p.specialty).filter(Boolean))) : [];
-  const locations = programs && Array.isArray(programs) ? Array.from(new Set(programs.map((p: any) => p.location).filter(Boolean))) : [];
+  // Get unique values for filters with memoization
+  const specialties = useMemo(() => {
+    if (!programs || !Array.isArray(programs)) return [];
+    return Array.from(new Set(programs.map((p: any) => p.specialty).filter(Boolean))).sort();
+  }, [programs]);
+  
+  const locations = useMemo(() => {
+    if (!programs || !Array.isArray(programs)) return [];
+    return Array.from(new Set(programs.map((p: any) => p.location).filter(Boolean))).sort();
+  }, [programs]);
 
   // Calculate statistics
   const stats = {

@@ -91,28 +91,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Program routes
+  // Program routes with production-grade error handling
   app.get('/api/programs', async (req, res) => {
     try {
+      // Validate and sanitize query parameters
+      const page = Math.max(1, parseInt(req.query.page as string) || 1);
+      const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 10));
+      
       const filters = {
         specialty: req.query.specialty as string,
         location: req.query.location as string,
         type: req.query.type as string,
-        minDuration: req.query.minDuration ? parseInt(req.query.minDuration as string) : undefined,
-        maxDuration: req.query.maxDuration ? parseInt(req.query.maxDuration as string) : undefined,
+        minDuration: req.query.minDuration ? Math.max(0, parseInt(req.query.minDuration as string)) : undefined,
+        maxDuration: req.query.maxDuration ? Math.max(0, parseInt(req.query.maxDuration as string)) : undefined,
         isFree: req.query.isFree === 'true',
         isActive: req.query.isActive !== 'false',
-        search: req.query.search as string,
+        search: req.query.search ? String(req.query.search).substring(0, 100) : undefined, // Limit search string length
       };
       
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 10;
-      
       const result = await storage.getPrograms(filters, page, limit);
+      
+      // Set cache headers for production
+      res.set('Cache-Control', 'public, max-age=60'); // Cache for 1 minute
       res.json(result);
     } catch (error) {
       console.error("Error fetching programs:", error);
-      res.status(500).json({ message: "Failed to fetch programs" });
+      res.status(500).json({ 
+        message: "Failed to fetch programs",
+        error: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
+      });
     }
   });
 
