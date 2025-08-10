@@ -84,7 +84,28 @@ export function Navbar() {
           </div>
 
           <div className="flex items-center space-x-4">
-
+            {/* Sign In and Sign Up buttons when not authenticated */}
+            {!isAuthenticated && (
+              <>
+                <Link href="/login">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="hidden md:flex border-blue-600 text-blue-600 hover:bg-blue-50 hover:scale-105 transition-all duration-200"
+                  >
+                    Sign In
+                  </Button>
+                </Link>
+                <Link href="/signup">
+                  <Button 
+                    size="sm" 
+                    className="hidden md:flex bg-blue-600 text-white hover:bg-blue-700 hover:scale-105 transition-all duration-200"
+                  >
+                    Sign Up
+                  </Button>
+                </Link>
+              </>
+            )}
 
             {/* Notifications */}
             {isAuthenticated && (
@@ -187,6 +208,37 @@ export function Navbar() {
                   {item.label}
                 </a>
               ))}
+              
+              {/* Mobile Sign In and Sign Up buttons when not authenticated */}
+              {!isAuthenticated && (
+                <div className="border-t border-gray-200 pt-2 mt-2 space-y-2">
+                  <Link href="/login">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="w-full border-blue-600 text-blue-600 hover:bg-blue-50"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setMobileMenuOpen(false);
+                      }}
+                    >
+                      Sign In
+                    </Button>
+                  </Link>
+                  <Link href="/signup">
+                    <Button 
+                      size="sm" 
+                      className="w-full bg-blue-600 text-white hover:bg-blue-700"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setMobileMenuOpen(false);
+                      }}
+                    >
+                      Sign Up
+                    </Button>
+                  </Link>
+                </div>
+              )}
               
               {/* Mobile user actions */}
               {isAuthenticated && user && (

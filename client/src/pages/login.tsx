@@ -88,6 +88,16 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen relative flex items-center justify-center p-4 overflow-hidden">
+      {/* Home button */}
+      <Link href="/">
+        <Button 
+          variant="outline" 
+          className="absolute top-4 left-4 z-20 bg-white/90 hover:bg-white"
+        >
+          ← Back to Home
+        </Button>
+      </Link>
+      
       {/* Animated gradient background */}
       <div className="absolute inset-0 bg-gradient-to-br from-teal-400 via-blue-500 to-purple-600">
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzlIj48cGF0aCBkPSJNIDYwIDAgTCAwIDAgMCA2MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJyZ2JhKDI1NSwgMjU1LCAyNTUsIDAuMSkiIHN0cm9rZS13aWR0aD0iMSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNncmlkKSIgLz48L3N2Zz4=')] opacity-20"></div>
