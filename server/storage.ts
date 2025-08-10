@@ -60,10 +60,12 @@ export interface IStorage {
   getUserByEmail(email: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
   updateUser(id: string, updates: Partial<User>): Promise<User>;
+  createUser(userData: any): Promise<User>;
   createAdminUser(userData: { email: string; password: string; firstName: string; lastName: string; adminRole: string }): Promise<User>;
   getAllUsers(page?: number, limit?: number): Promise<{ users: User[]; totalCount: number; currentPage: number; hasMore: boolean }>;
   deleteUser(id: string): Promise<void>;
   toggleUserStatus(id: string): Promise<User>;
+  getUserApplications(userId: string): Promise<Application[]>;
   
   // Admin operations
   getAdminUser(id: string): Promise<User | undefined>;
@@ -276,6 +278,29 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, id))
       .returning();
     return user;
+  }
+
+  async createUser(userData: any): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values(userData)
+      .returning();
+    return user;
+  }
+
+  async getUserApplications(userId: string): Promise<any[]> {
+    const result = await db.select()
+      .from(applications)
+      .leftJoin(programs, eq(applications.programId, programs.id))
+      .leftJoin(users, eq(applications.userId, users.id))
+      .where(eq(applications.userId, userId))
+      .orderBy(desc(applications.applicationDate));
+    
+    return result.map(row => ({
+      ...row.applications,
+      program: row.programs,
+      user: row.users
+    }));
   }
 
   // Admin operations

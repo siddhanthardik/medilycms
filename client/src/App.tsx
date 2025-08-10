@@ -28,6 +28,9 @@ import PreceptorLogin from "@/pages/preceptor-login";
 import PreceptorDashboard from "@/pages/preceptor-dashboard";
 import ApplicantDetails from "@/pages/applicant-details";
 import TeamManagement from "@/pages/team-management";
+import SignupPage from "@/pages/signup";
+import StudentDashboard from "@/pages/student-dashboard";
+import PreceptorDashboardPage from "@/pages/preceptor-dashboard";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -44,6 +47,12 @@ function Router() {
       <Route path="/clinical-rotations" component={ClinicalRotations} />
       <Route path="/admin-login" component={AdminLogin} />
       <Route path="/preceptor-login" component={PreceptorLogin} />
+      <Route path="/signup" component={SignupPage} />
+      <Route path="/login" component={SignupPage} />
+      
+      {/* Role-based dashboard routes */}
+      <Route path="/student-dashboard" component={StudentDashboard} />
+      <Route path="/preceptor-dashboard" component={PreceptorDashboardPage} />
       
       {/* Admin routes - require admin authentication */}
       <Route path="/cms-dashboard" component={CMSDashboard} />
@@ -52,7 +61,6 @@ function Router() {
       <Route path="/admin-dashboard" component={AdminDashboard} />
       <Route path="/applicant/:id" component={ApplicantDetails} />
       <Route path="/user-management" component={UserManagement} />
-      <Route path="/preceptor-dashboard" component={PreceptorDashboard} />
       <Route path="/add-program" component={AddProgram} />
       
       {isLoading || !isAuthenticated ? (

@@ -26,6 +26,9 @@ export const sessions = pgTable(
   (table) => [index("IDX_session_expire").on(table.expire)],
 );
 
+// User role enum
+export const userRoleEnum = pgEnum('user_role', ['admin', 'preceptor', 'student']);
+
 // User storage table.
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -34,6 +37,7 @@ export const users = pgTable("users", {
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
+  role: varchar("role").notNull().default('student'), // 'admin', 'preceptor', 'student'
   medicalSchool: varchar("medical_school"),
   graduationYear: integer("graduation_year"),
   specialtyOfInterest: varchar("specialty_of_interest"),

@@ -1030,6 +1030,164 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 
 
+  // Signup route
+  app.post('/api/auth/signup', async (req, res) => {
+    try {
+      const { email, password, firstName, lastName, role, phoneNumber, medicalSchool, hospitalAffiliation, medicalLicenseNumber } = req.body;
+      
+      if (!email || !password || !firstName || !lastName || !role) {
+        return res.status(400).json({ message: "Required fields are missing" });
+      }
+
+      // Check if user already exists
+      const existingUser = await storage.getUserByEmail(email);
+      if (existingUser) {
+        return res.status(400).json({ message: "Email already registered" });
+      }
+
+      const bcrypt = await import('bcryptjs');
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      // Create user based on role
+      const userData: any = {
+        email,
+        password: hashedPassword,
+        firstName,
+        lastName,
+        role,
+        phoneNumber,
+        isActive: true,
+      };
+
+      // Add role-specific fields
+      if (role === 'admin') {
+        userData.isAdmin = true;
+        userData.adminRole = 'regular_admin';
+      } else if (role === 'preceptor') {
+        userData.isPreceptor = true;
+        userData.hospitalAffiliation = hospitalAffiliation;
+        userData.medicalLicenseNumber = medicalLicenseNumber;
+      } else if (role === 'student') {
+        userData.medicalSchool = medicalSchool;
+      }
+
+      const newUser = await storage.createUser(userData);
+
+      // Set session
+      (req.session as any).user = {
+        id: newUser.id,
+        email: newUser.email,
+        firstName: newUser.firstName,
+        lastName: newUser.lastName,
+        role: newUser.role,
+      };
+
+      req.session.save((err: any) => {
+        if (err) {
+          console.error('Session save error:', err);
+        }
+      });
+
+      res.json({ 
+        message: "Account created successfully", 
+        user: {
+          id: newUser.id,
+          email: newUser.email,
+          firstName: newUser.firstName,
+          lastName: newUser.lastName,
+          role: newUser.role,
+        }
+      });
+    } catch (error) {
+      console.error("Signup error:", error);
+      res.status(500).json({ message: "Failed to create account" });
+    }
+  });
+
+  // Get current user
+  app.get('/api/auth/current-user', async (req: any, res) => {
+    try {
+      if ((req.session as any)?.user) {
+        const user = await storage.getUser((req.session as any).user.id);
+        res.json(user);
+      } else {
+        res.status(401).json({ message: "Not authenticated" });
+      }
+    } catch (error) {
+      console.error("Error fetching current user:", error);
+      res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+
+  // Logout route
+  app.post('/api/auth/logout', (req, res) => {
+    req.session.destroy((err) => {
+      if (err) {
+        return res.status(500).json({ message: "Failed to logout" });
+      }
+      res.json({ message: "Logged out successfully" });
+    });
+  });
+
+  // Student-specific routes
+  app.get('/api/student/applications', async (req: any, res) => {
+    try {
+      if (!(req.session as any)?.user || (req.session as any).user.role !== 'student') {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      const applications = await storage.getUserApplications((req.session as any).user.id);
+      res.json(applications);
+    } catch (error) {
+      console.error("Error fetching student applications:", error);
+      res.status(500).json({ message: "Failed to fetch applications" });
+    }
+  });
+
+  // Preceptor-specific routes
+  app.get('/api/preceptor/programs', async (req: any, res) => {
+    try {
+      if (!(req.session as any)?.user || (req.session as any).user.role !== 'preceptor') {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      const programs = await storage.getPreceptorPrograms((req.session as any).user.id);
+      res.json(programs);
+    } catch (error) {
+      console.error("Error fetching preceptor programs:", error);
+      res.status(500).json({ message: "Failed to fetch programs" });
+    }
+  });
+
+  app.get('/api/preceptor/applications', async (req: any, res) => {
+    try {
+      if (!(req.session as any)?.user || (req.session as any).user.role !== 'preceptor') {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      const applications = await storage.getPreceptorApplications((req.session as any).user.id);
+      res.json(applications);
+    } catch (error) {
+      console.error("Error fetching preceptor applications:", error);
+      res.status(500).json({ message: "Failed to fetch applications" });
+    }
+  });
+
+  app.put('/api/preceptor/applications/:id', async (req: any, res) => {
+    try {
+      if (!(req.session as any)?.user || (req.session as any).user.role !== 'preceptor') {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      const { status, reviewNotes } = req.body;
+      const application = await storage.updateApplication(req.params.id, { status, reviewNotes });
+      res.json(application);
+    } catch (error) {
+      console.error("Error updating application:", error);
+      res.status(500).json({ message: "Failed to update application" });
+    }
+  });
+
   // Admin authentication routes
   app.post('/api/admin/login', async (req, res) => {
     try {
